@@ -70,8 +70,7 @@ pub(crate) struct GeneralConfig {
     // This does nothing on Windows, but we leave it enabled to make the config
     // file consistent across platforms.
     //
-    // #[cfg(any(target_os = "linux", target_os = "macos", target_os =
-    // "freebsd"))]
+    // #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
     pub(crate) disable_advanced_kill: Option<bool>,
     pub(crate) process_memory_as_value: Option<bool>,
     pub(crate) group_processes: Option<bool>,
@@ -81,4 +80,6 @@ pub(crate) struct GeneralConfig {
     pub(crate) tree: Option<bool>,
     pub(crate) current_usage: Option<bool>,
     pub(crate) unnormalized_cpu: Option<bool>,
+    /// Sets the application name. Defaults to 'btm' if not specified.
+    pub(crate) app_name: Option<String>,
 }

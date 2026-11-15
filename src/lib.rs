@@ -47,6 +47,7 @@ use crossterm::{
         Event, KeyEventKind, MouseEventKind, poll, read,
     },
     execute,
+    terminal::SetTitle,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
 use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
@@ -96,6 +97,9 @@ fn cleanup_terminal(
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
 
+    // Reset terminal window title to default (blank apparently does so).
+    execute!(terminal.backend_mut(), SetTitle(""))?;
+
     Ok(())
 }
 
@@ -121,6 +125,7 @@ pub fn reset_stdout() {
     let _ = execute!(stdout, DisableBracketedPaste);
     let _ = execute!(stdout, LeaveAlternateScreen);
     let _ = execute!(stdout, Show);
+    let _ = execute!(stdout, SetTitle(""));
 }
 
 /// A panic hook to properly restore the terminal in the case of a panic.
@@ -376,6 +381,10 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
 
     let mut stdout_val = stdout();
     execute!(stdout_val, EnterAlternateScreen)?;
+
+    // Set the terminal window title.
+    let app_name = app.app_config_fields.app_name.as_deref().unwrap_or("btm");
+    execute!(stdout_val, SetTitle(app_name))?;
 
     let mut bracketed_paste_enabled = true;
     let mouse_capture_enabled = !app.app_config_fields.disable_click;
