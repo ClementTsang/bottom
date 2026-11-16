@@ -5,26 +5,26 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## General Options
 
-| Option                              | Behaviour                                                                                               |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `--terminal_title`                  | Sets a custom string displayed in the terminal title; add `{hostname}` to substitute for your hostname. |
-| `--autohide_time`                   | Temporarily shows the time scale in graphs.                                                             |
-| `-b`, `--basic`                     | Hides graphs and uses a more basic look.                                                                |
-| `-C`, `--config_location <PATH>`    | Sets the location of the config file.                                                                   |
-| `-t`, `--default_time_value <TIME>` | Default time value for graphs.                                                                          |
-| `--default_widget_count <N>`        | Sets the N'th selected widget type as the default.                                                      |
-| `--default_widget_type <WIDGET>`    | Sets the default widget type. Use --help for more info.                                                 |
-| `--disable_click`                   | Disables mouse clicks.                                                                                  |
-| `--disable_keys`                    | Disables keyboard shortcuts, INCLUDING the ones that stop                                               |
-|                                     | bottom.                                                                                                 |
-| `-m`, `--dot_marker`                | Uses a dot marker for graphs.                                                                           |
-| `-e`, `--expanded`                  | Expand the default widget upon starting the app.                                                        |
-| `--hide_time`                       | Hides the time scale from being shown.                                                                  |
-| `-r`, `--rate <TIME>`               | Sets how often data is refreshed.                                                                       |
-| `--retention <TIME>`                | How far back data will be stored up to.                                                                 |
-| `--show_table_scroll_position`      | Shows the list scroll position tracker in the widget title                                              |
-|                                     | for table widgets.                                                                                      |
-| `-d`, `--time_delta <TIME>`         | The amount of time changed upon zooming.                                                                |
+| Option                              | Behaviour                                                                                                  |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `--terminal_title`                  | Sets a custom string displayed in the terminal title; add `{hostname}` to substitute it for your hostname. |
+| `--autohide_time`                   | Temporarily shows the time scale in graphs.                                                                |
+| `-b`, `--basic`                     | Hides graphs and uses a more basic look.                                                                   |
+| `-C`, `--config_location <PATH>`    | Sets the location of the config file.                                                                      |
+| `-t`, `--default_time_value <TIME>` | Default time value for graphs.                                                                             |
+| `--default_widget_count <N>`        | Sets the N'th selected widget type as the default.                                                         |
+| `--default_widget_type <WIDGET>`    | Sets the default widget type. Use --help for more info.                                                    |
+| `--disable_click`                   | Disables mouse clicks.                                                                                     |
+| `--disable_keys`                    | Disables keyboard shortcuts, INCLUDING the ones that stop                                                  |
+|                                     | bottom.                                                                                                    |
+| `-m`, `--dot_marker`                | Uses a dot marker for graphs.                                                                              |
+| `-e`, `--expanded`                  | Expand the default widget upon starting the app.                                                           |
+| `--hide_time`                       | Hides the time scale from being shown.                                                                     |
+| `-r`, `--rate <TIME>`               | Sets how often data is refreshed.                                                                          |
+| `--retention <TIME>`                | How far back data will be stored up to.                                                                    |
+| `--show_table_scroll_position`      | Shows the list scroll position tracker in the widget title                                                 |
+|                                     | for table widgets.                                                                                         |
+| `-d`, `--time_delta <TIME>`         | The amount of time changed upon zooming.                                                                   |
 
 ## Disk Options
 
