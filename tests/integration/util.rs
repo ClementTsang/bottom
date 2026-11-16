@@ -1,6 +1,6 @@
-use std::{env, ffi::OsString, io::Read, path::Path, process::Command};
+use std::{env, ffi::OsString, path::Path, process::Command};
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
-use std::{thread, time::Duration};
+use std::{io::Read, thread, time::Duration};
 
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
@@ -152,6 +152,7 @@ pub fn spawn_btm_in_pty(args: &[&str]) -> (Box<dyn MasterPty>, Box<dyn Child>) {
     (pair.master, pair.slave.spawn_command(cmd).unwrap())
 }
 
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 fn reader_to_string(mut reader: Box<dyn Read>) -> String {
     let mut buf = String::default();
     reader.read_to_string(&mut buf).unwrap();
