@@ -1460,14 +1460,15 @@ fn parse_title<'a>(title: &'a str) -> Result<String, OptionError> {
     }
 }
 
-pub(crate) fn get_app_title<'a>(
+pub(crate) fn get_terminal_title<'a>(
     args: &'a BottomArgs, config: &'a Config,
 ) -> Option<Result<String, OptionError>> {
-    let title = args
-        .general
-        .app_name
-        .as_ref()
-        .or_else(|| config.flags.as_ref().and_then(|f| f.app_name.as_ref()));
+    let title = args.general.terminal_title.as_ref().or_else(|| {
+        config
+            .flags
+            .as_ref()
+            .and_then(|f| f.terminal_title.as_ref())
+    });
 
     let Some(title) = title else {
         return None;

@@ -474,13 +474,6 @@
     "GeneralConfig": {
       "type": "object",
       "properties": {
-        "app_name": {
-          "description": "Sets the application name.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "autohide_time": {
           "type": [
             "boolean",
@@ -716,6 +709,13 @@
           "default": "space"
         },
         "temperature_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "terminal_title": {
+          "description": "Sets a custom string displayed in the terminal title; use \"{hostname}\" to substitute for your hostname.",
           "type": [
             "string",
             "null"

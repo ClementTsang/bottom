@@ -287,11 +287,11 @@ pub struct GeneralArgs {
     #[arg(
         long,
         value_name = "NAME",
-        help = "Sets the application name.",
-        long_help = "Sets a custom name to display in the terminal title.",
-        alias = "app-name"
+        help = "Sets the terminal title.",
+        long_help = "Sets a custom string displayed in the terminal title; use \"{hostname}\" to substitute for your hostname.",
+        alias = "terminal-title"
     )]
-    pub app_name: Option<String>,
+    pub terminal_title: Option<String>,
 }
 
 /// Process arguments/config options.

@@ -1,0 +1,4 @@
+# A config that sets a custom terminal title.
+
+[flags]
+terminal_title = "test custom title"
