@@ -371,11 +371,6 @@ jobs:
         shell: pwsh
         run: ./scripts/ci/setup_windows_gnullvm.ps1
 
-      # - name: Install Net-Framework-Core
-      #   shell: powershell
-      #   run: |
-      #     choco install dotnet-sdk --pre -y --no-progress;
-
       - name: Install WiX Toolset
         shell: powershell
         run: |
