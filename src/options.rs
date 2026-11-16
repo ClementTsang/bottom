@@ -1444,7 +1444,7 @@ fn get_disk_io_legend_position(config: &Config) -> OptionResult<Option<LegendPos
 /// A very lazy way to parse a templated application title option.
 /// Note that this is very lazy and as such doesn't really do any proper error handling
 /// if you do something like `"{{hostname}"` or `blah {`.
-fn parse_title<'a>(title: &'a str) -> Result<String, OptionError> {
+fn parse_title(title: &str) -> Result<String, OptionError> {
     const HOSTNAME_TEMPLATE: &str = "{hostname}";
 
     match title.find(HOSTNAME_TEMPLATE) {
@@ -1468,13 +1468,9 @@ pub(crate) fn get_terminal_title<'a>(
             .flags
             .as_ref()
             .and_then(|f| f.terminal_title.as_ref())
-    });
+    })?;
 
-    let Some(title) = title else {
-        return None;
-    };
-
-    Some(parse_title(&title))
+    Some(parse_title(title))
 }
 
 #[cfg(test)]
