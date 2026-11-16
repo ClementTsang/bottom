@@ -715,7 +715,7 @@
           ]
         },
         "terminal_title": {
-          "description": "Sets a custom string displayed in the terminal title; use \"{hostname}\" to substitute for your hostname.",
+          "description": "Sets a custom string displayed in the terminal title; add \"{hostname}\" to substitute for your hostname.",
           "type": [
             "string",
             "null"

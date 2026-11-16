@@ -288,7 +288,7 @@ pub struct GeneralArgs {
         long,
         value_name = "NAME",
         help = "Sets the terminal title.",
-        long_help = "Sets a custom string displayed in the terminal title; use \"{hostname}\" to substitute for your hostname.",
+        long_help = "Sets a custom string displayed in the terminal title; add \"{hostname}\" to substitute for your hostname.",
         alias = "terminal-title"
     )]
     pub terminal_title: Option<String>,
