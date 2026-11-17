@@ -28,6 +28,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#2263](https://github.com/ClementTsang/bottom/pull/2263): Add pop-out process command viewer.
 - [#2323](https://github.com/ClementTsang/bottom/pull/2323): Allow setting a custom terminal name.
+- [#2325](https://github.com/ClementTsang/bottom/pull/2325): Add hostname template to terminal title option.
 
 ### Changes
 

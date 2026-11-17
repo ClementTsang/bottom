@@ -552,12 +552,6 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                 .and_then(|cfg| cfg.use_binary_prefix)
                 .unwrap_or(false),
         disk_io_graph_show_unmounted,
-        app_name: args
-            .general
-            .app_name
-            .as_ref()
-            .or_else(|| config.flags.as_ref().and_then(|f| f.app_name.as_ref()))
-            .cloned(),
     };
 
     let process_default_sort = match &args.process.process_default_sort {
@@ -1447,6 +1441,40 @@ fn get_disk_io_legend_position(config: &Config) -> OptionResult<Option<LegendPos
     )
 }
 
+/// A very lazy way to parse a templated application title option.
+/// Note that this is very lazy and as such doesn't really do any proper error handling
+/// if you do something like `"{{hostname}"` or `blah {`.
+///
+/// Note this also only replaces the first instance... hopefully that's enough for most people...
+fn parse_title(title: &str) -> Result<String, OptionError> {
+    const HOSTNAME_TEMPLATE: &str = "{hostname}";
+
+    match title.find(HOSTNAME_TEMPLATE) {
+        Some(start) => {
+            let before = &title[..start];
+            let after = &title[start + HOSTNAME_TEMPLATE.len()..];
+            let hostname = sysinfo::System::host_name().map_err(|err| {
+                OptionError::Other(format!("could not get hostname - {err:?}").into())
+            })?;
+            Ok(format!("{}{}{}", before, hostname, after))
+        }
+        None => Ok(title.to_string()),
+    }
+}
+
+pub(crate) fn get_terminal_title<'a>(
+    args: &'a BottomArgs, config: &'a Config,
+) -> Option<Result<String, OptionError>> {
+    let title = args.general.terminal_title.as_ref().or_else(|| {
+        config
+            .flags
+            .as_ref()
+            .and_then(|f| f.terminal_title.as_ref())
+    })?;
+
+    Some(parse_title(title))
+}
+
 #[cfg(test)]
 mod test {
     use clap::Parser;
@@ -1769,5 +1797,22 @@ mod test {
         // Case one: old non-XDG exists already, XDG var exists.
         // let case_3 = case_1;
         // assert_eq!(get_config_path(None), Some(case_1));
+    }
+
+    #[test]
+    fn test_parse_title() {
+        assert_eq!(parse_title("").unwrap(), "");
+        assert_eq!(parse_title("abc").unwrap(), "abc");
+    }
+
+    #[test]
+    fn test_parse_title_hostname() {
+        let hostname = sysinfo::System::host_name().unwrap();
+
+        assert_eq!(parse_title("{hostname}").unwrap(), hostname);
+        assert_eq!(
+            parse_title("test - {hostname}").unwrap(),
+            format!("test - {hostname}")
+        );
     }
 }

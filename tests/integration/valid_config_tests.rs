@@ -286,8 +286,8 @@ fn test_no_spurious_deprecated_warnings() {
     );
 }
 
-/// Tests that a custom app name can be set via config (https://github.com/ClementTsang/bottom/pull/2323).
+/// Tests that a custom terminal title can be set via config (https://github.com/ClementTsang/bottom/pull/2323).
 #[test]
-fn test_config_custom_name() {
-    run_and_kill_cfg("./tests/valid_configs/custom_name.toml");
+fn test_config_custom_title() {
+    run_and_kill_cfg("./tests/valid_configs/custom_title.toml");
 }

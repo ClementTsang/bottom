@@ -59,7 +59,7 @@ use ratatui_crossterm::CrosstermBackend;
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
 
-use crate::{app::TerminalFeatures, collection::Data};
+use crate::{app::TerminalFeatures, collection::Data, options::get_terminal_title};
 
 // Used for heap allocation debugging purposes.
 // #[global_allocator]
@@ -333,6 +333,9 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // Read from config file.
     let config = get_or_create_config(args.general.config_location.as_deref())?;
 
+    // Get a possible app title. We do this here to avoid having to store it.
+    let title = get_terminal_title(&args, &config);
+
     // Create the "app" and initialize a bunch of stuff.
     let (mut app, widget_layout, styling) = init_app(args, config)?;
 
@@ -388,16 +391,19 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     let mut stdout_val = stdout();
     let mut terminal_features = TerminalFeatures::default();
 
-    // Set the terminal window title.
-    if let Some(app_name) = &app.app_config_fields.app_name {
-        match execute!(stdout_val, SetTitle(app_name)) {
+    match title {
+        Some(Ok(title)) => match execute!(stdout_val, SetTitle(title)) {
             Ok(_) => {
                 terminal_features.custom_name_enabled = true;
             }
             Err(err) => {
                 eprintln!("Failed to set terminal title: {err:?}");
             }
+        },
+        Some(Err(err)) => {
+            eprintln!("{err:?}");
         }
+        None => {}
     }
 
     execute!(stdout_val, EnterAlternateScreen)?;

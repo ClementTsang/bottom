@@ -191,11 +191,11 @@ fn test_help() {
     btm_command(&["-h"]).assert().success();
 }
 
-/// Tests that a custom app name can be set via args (https://github.com/ClementTsang/bottom/pull/2323).
+/// Tests that a custom terminal title can be set via args (https://github.com/ClementTsang/bottom/pull/2323).
 ///
 /// Note this only runs on x86 Linux because the `run_and_kill` function only works there at the moment.
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 #[test]
-fn test_arg_custom_name() {
-    run_and_kill(&["--app-name", "custom test name"]);
+fn test_arg_custom_title() {
+    run_and_kill(&["--terminal-title", "custom test title"]);
 }

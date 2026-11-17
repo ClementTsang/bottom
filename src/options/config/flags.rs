@@ -80,6 +80,6 @@ pub(crate) struct GeneralConfig {
     pub(crate) tree: Option<bool>,
     pub(crate) current_usage: Option<bool>,
     pub(crate) unnormalized_cpu: Option<bool>,
-    /// Sets the application name.
-    pub(crate) app_name: Option<String>,
+    /// Sets a custom string displayed in the terminal title; add "{hostname}" to substitute it for your hostname.
+    pub(crate) terminal_title: Option<String>,
 }
