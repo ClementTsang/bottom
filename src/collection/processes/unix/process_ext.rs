@@ -3,13 +3,13 @@
 use std::{io, time::Duration};
 
 use itertools::Itertools;
-use sysinfo::{ProcessStatus, System};
+use sysinfo::ProcessStatus;
 
 use super::{ProcessHarvest, process_status_str};
 #[cfg(target_os = "macos")]
 use crate::collection::processes::macos::sysctl_bindings;
 use crate::{
-    collection::{Pid, error::CollectionResult, processes::UserTable},
+    collection::{DataCollector, Pid, error::CollectionResult},
     utils::int_hash::IntHashMap,
 };
 
@@ -73,9 +73,17 @@ fn get_priority(pid: Pid) -> i32 {
 
 pub(crate) trait UnixProcessExt {
     fn sysinfo_process_data(
-        sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
-        total_gpu_mem: u64, user_table: &mut UserTable,
+        collector: &mut DataCollector,
     ) -> CollectionResult<Vec<ProcessHarvest>> {
+        let sys = &collector.sys.system;
+        let use_current_cpu_total = collector.use_current_cpu_total;
+        let unnormalized_cpu = collector.unnormalized_cpu;
+        
+        let total_memory = collector.total_memory();
+        #[cfg(feature = "gpu")]
+        let total_gpu_mem = collector.gpus_total_mem.unwrap_or(0);
+
+        let user_table = &mut collector.user_table;
         let mut process_vector: Vec<ProcessHarvest> = Vec::new();
         let process_hashmap = sys.processes();
         let cpu_usage = sys.global_cpu_usage() / 100.0;
