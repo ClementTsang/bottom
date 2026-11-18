@@ -78,7 +78,7 @@ pub(crate) trait UnixProcessExt {
         let sys = &collector.sys.system;
         let use_current_cpu_total = collector.use_current_cpu_total;
         let unnormalized_cpu = collector.unnormalized_cpu;
-        
+
         let total_memory = collector.total_memory();
         #[cfg(feature = "gpu")]
         let total_gpu_mem = collector.gpus_total_mem.unwrap_or(0);
