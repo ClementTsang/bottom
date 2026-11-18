@@ -172,7 +172,7 @@ pub(crate) trait UnixProcessExt {
                 #[cfg(feature = "gpu")]
                 gpu_util: process_val
                     .gpu_usage()
-                    .map(|u| u.min(100.0).max(0.0) as u32)
+                    .map(|u| u.clamp(0.0, 100.0) as u32)
                     .unwrap_or(0),
                 #[cfg(unix)]
                 nice,
