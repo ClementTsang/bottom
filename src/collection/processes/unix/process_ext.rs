@@ -165,7 +165,10 @@ pub(crate) trait UnixProcessExt {
                 #[cfg(feature = "gpu")]
                 gpu_mem_percent: 0.0,
                 #[cfg(feature = "gpu")]
-                gpu_util: 0,
+                gpu_util: process_val
+                    .gpu_usage()
+                    .map(|u| u.min(100.0).max(0.0) as u32)
+                    .unwrap_or(0),
                 #[cfg(unix)]
                 nice,
                 priority,

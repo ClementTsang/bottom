@@ -400,10 +400,10 @@ impl DataCollector {
             if self.widgets_to_harvest.use_gpu {
                 if let Some(gpus) = &mut self.sysinfo_gpus {
                     gpus.refresh(false);
-                } else if let Ok(gpus) = Gpus::new_with_refreshed_list() {
-                    if !gpus.is_empty() {
-                        self.sysinfo_gpus = Some(gpus);
-                    }
+                } else if let Ok(gpus) = Gpus::new_with_refreshed_list()
+                    && !gpus.is_empty()
+                {
+                    self.sysinfo_gpus = Some(gpus);
                 }
             }
         }
@@ -505,12 +505,11 @@ impl DataCollector {
             }
 
             #[cfg(all(feature = "gpu", not(target_os = "linux")))]
-            if let Some(gpus) = &self.sysinfo_gpus {
-                if let Some(mut mem) =
+            if let Some(gpus) = &self.sysinfo_gpus
+                && let Some(mut mem) =
                     gpu::sysinfo_backend::collect_sysinfo_gpu_data(gpus, &self.widgets_to_harvest)
-                {
-                    local_gpu.append(&mut mem);
-                }
+            {
+                local_gpu.append(&mut mem);
             }
 
             self.data.gpu = (!local_gpu.is_empty()).then_some(local_gpu);
