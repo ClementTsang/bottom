@@ -31,6 +31,8 @@ use std::time::{Duration, Instant};
 use processes::Pid;
 #[cfg(feature = "battery")]
 use starship_battery::{Battery, Manager};
+#[cfg(all(feature = "gpu", not(target_os = "linux")))]
+use sysinfo::Gpus;
 
 use super::DataFilters;
 use crate::app::layout_manager::UsedWidgets;
@@ -198,6 +200,11 @@ pub struct DataCollector {
     /// update time.
     nvidia_gpu_list_cache: Option<(Vec<(String, std::path::PathBuf)>, Instant)>,
 
+    #[cfg(all(feature = "gpu", not(target_os = "linux")))]
+    /// GPU list pulled from sysinfo. This is refreshed only periodically to avoid
+    /// overhead.
+    sysinfo_gpus: Option<Gpus>,
+
     #[cfg(feature = "zfs")]
     free_arc_mem: bool,
 
@@ -250,6 +257,8 @@ impl DataCollector {
             gpus_total_mem: None,
             #[cfg(all(target_os = "linux", feature = "gpu", feature = "nvidia"))]
             nvidia_gpu_list_cache: None,
+            #[cfg(all(feature = "gpu", not(target_os = "linux")))]
+            sysinfo_gpus: None,
             #[cfg(feature = "zfs")]
             free_arc_mem: false,
             last_list_collection_time: last_collection_time,
@@ -383,6 +392,20 @@ impl DataCollector {
                     disk.refresh();
                 }
             }
+
+            // Throttle sysinfo GPU list refresh to avoid costly `Gpus::new()` calls.
+            // Only rebuild the list every 60 seconds; data (usage/memory) is
+            // refreshed every cycle via `Gpus::refresh()`.
+            #[cfg(feature = "gpu")]
+            if self.widgets_to_harvest.use_gpu {
+                if let Some(gpus) = &mut self.sysinfo_gpus {
+                    gpus.refresh(false);
+                } else if let Ok(gpus) = Gpus::new_with_refreshed_list() {
+                    if !gpus.is_empty() {
+                        self.sysinfo_gpus = Some(gpus);
+                    }
+                }
+            }
         }
     }
 
@@ -478,6 +501,15 @@ impl DataCollector {
                 if let Some(mut proc) = data.process_data {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
+                }
+            }
+
+            #[cfg(all(feature = "gpu", not(target_os = "linux")))]
+            if let Some(gpus) = &self.sysinfo_gpus {
+                if let Some(mut mem) =
+                    gpu::sysinfo_backend::collect_sysinfo_gpu_data(gpus, &self.widgets_to_harvest)
+                {
+                    local_gpu.append(&mut mem);
                 }
             }
 

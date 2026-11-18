@@ -6,5 +6,8 @@ cfg_select! {
         pub mod intel;
         pub mod amd;
     }
+    all(not(target_os = "linux"), feature = "gpu") => {
+        pub mod sysinfo_backend;
+    }
     _ => {}
 }
