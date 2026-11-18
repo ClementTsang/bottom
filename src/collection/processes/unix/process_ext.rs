@@ -74,7 +74,7 @@ fn get_priority(pid: Pid) -> i32 {
 pub(crate) trait UnixProcessExt {
     fn sysinfo_process_data(
         sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
-        user_table: &mut UserTable,
+        total_gpu_mem: u64, user_table: &mut UserTable,
     ) -> CollectionResult<Vec<ProcessHarvest>> {
         let mut process_vector: Vec<ProcessHarvest> = Vec::new();
         let process_hashmap = sys.processes();
@@ -161,9 +161,14 @@ pub(crate) trait UnixProcessExt {
                     Duration::from_secs(process_val.run_time())
                 },
                 #[cfg(feature = "gpu")]
-                gpu_mem: 0,
+                gpu_mem: process_val.gpu_memory().unwrap_or(0),
                 #[cfg(feature = "gpu")]
-                gpu_mem_percent: 0.0,
+                gpu_mem_percent: if total_gpu_mem > 0 {
+                    (process_val.gpu_memory().unwrap_or(0) as f64 / total_gpu_mem as f64 * 100.0)
+                        as f32
+                } else {
+                    0.0
+                },
                 #[cfg(feature = "gpu")]
                 gpu_util: process_val
                     .gpu_usage()

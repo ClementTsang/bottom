@@ -19,6 +19,7 @@ cfg_select! {
             let use_current_cpu_total = collector.use_current_cpu_total;
             let unnormalized_cpu = collector.unnormalized_cpu;
             let total_memory = collector.total_memory();
+            let total_gpu_mem = collector.gpus_total_mem.unwrap_or(0);
             let user_table = &mut collector.user_table;
 
             cfg_select! {
@@ -27,6 +28,7 @@ cfg_select! {
                     use_current_cpu_total,
                     unnormalized_cpu,
                     total_memory,
+                    total_gpu_mem,
                     user_table,
                 ),
                 target_os = "freebsd" => FreeBSDProcessExt::sysinfo_process_data(
@@ -34,6 +36,7 @@ cfg_select! {
                     use_current_cpu_total,
                     unnormalized_cpu,
                     total_memory,
+                    total_gpu_mem,
                     user_table,
                 ),
                 _ => GenericProcessExt::sysinfo_process_data(
@@ -41,6 +44,7 @@ cfg_select! {
                     use_current_cpu_total,
                     unnormalized_cpu,
                     total_memory,
+                    total_gpu_mem,
                     user_table,
                 ),
             }
