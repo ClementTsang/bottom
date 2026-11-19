@@ -19,6 +19,18 @@ You can also set the sort order by changing `temperature.sort_order` with `"Asce
 sort_order = "Ascending"
 ```
 
+### Sort Mode
+
+By default, string columns use lexicographic sorting (e.g. `"temp10"` comes before `"temp2"`).
+You can enable natural sort ordering to take numbers in the string into account (e.g. now `"temp10"` comes after `"temp2"`):
+
+```toml
+[disk]
+sort_mode = "Natural"
+```
+
+Can be set to either `"Lexical"` (the default) or `"Natural"`.
+
 ## Filtering Entries
 
 You can filter out what entries to show by configuring `[temperature.sensor_filter]`. In particular you can set a list of things to filter with by setting `list`, and configure how that list is processed with the other options.

@@ -30,6 +30,18 @@ You can also set the sort order by changing `disk.sort_order` with `"Ascending"`
 sort_order = "Ascending"
 ```
 
+### Sort Mode
+
+By default, string columns use lexicographic sorting (e.g. `"disk10"` comes before `"disk2"`).
+You can enable natural sort ordering to take numbers in the string into account (e.g. now `"disk10"` comes after `"disk2"`):
+
+```toml
+[disk]
+sort_mode = "Natural"
+```
+
+Can be set to either `"Lexical"` (the default) or `"Natural"`.
+
 ## Using Binary Prefixes
 
 Disk space uses decimal prefixes (e.g. KB, MB, GB, TB) by default. To display using binary prefixes instead
