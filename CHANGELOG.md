@@ -30,6 +30,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2323](https://github.com/ClementTsang/bottom/pull/2323): Allow setting a custom terminal name.
 - [#2325](https://github.com/ClementTsang/bottom/pull/2325): Add hostname template to terminal title option.
 - [#2326](https://github.com/ClementTsang/bottom/pull/2326): Add basic GPU support for non-Linux operating systems using sysinfo's new GPU API.
+- [#2328](https://github.com/ClementTsang/bottom/pull/2328): Add natural sorting options for the process, disk, and temperature widgets.
 
 ### Changes
 
