@@ -25,7 +25,7 @@ By default, string columns use lexicographic sorting (e.g. `"temp10"` comes befo
 You can enable natural sort ordering to take numbers in the string into account (e.g. now `"temp10"` comes after `"temp2"`):
 
 ```toml
-[disk]
+[temperature]
 sort_mode = "Natural"
 ```
 

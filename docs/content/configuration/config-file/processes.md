@@ -62,7 +62,7 @@ By default, string columns use lexicographic sorting (e.g. `"proc10"` comes befo
 You can enable natural sort ordering to take numbers in the string into account (e.g. now `"proc10"` comes after `"proc2"`):
 
 ```toml
-[disk]
+[processes]
 sort_mode = "Natural"
 ```
 

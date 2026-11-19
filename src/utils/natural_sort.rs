@@ -41,7 +41,7 @@ pub fn natural_str_cmp(left: &str, right: &str) -> Ordering {
 
 /// Compares two strings using natural ordering _and_ case-insensitively. Note:
 ///
-/// - **Already uses case-insensitive sorting given the inputs!**
+/// - **Uses ASCII case-insensitive sorting!**
 /// - Numeric substrings are compared by numeric value.
 /// - Non-numeric substrings are compared lexicographically.
 /// - Shorter strings will come first.
