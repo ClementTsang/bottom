@@ -161,7 +161,7 @@ impl SortsRow for ProcColumn {
                 }
                 SortMode::Natural => {
                     data.sort_by(|a, b| {
-                        let ord = natural_str_cmp_insensitive(&a.id.as_str(), &b.id.as_str());
+                        let ord = natural_str_cmp_insensitive(a.id.as_str(), b.id.as_str());
                         if descending { ord.reverse() } else { ord }
                     });
                 }
