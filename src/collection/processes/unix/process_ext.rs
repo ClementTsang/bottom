@@ -3,13 +3,13 @@
 use std::{io, time::Duration};
 
 use itertools::Itertools;
-use sysinfo::{ProcessStatus, System};
+use sysinfo::ProcessStatus;
 
 use super::{ProcessHarvest, process_status_str};
 #[cfg(target_os = "macos")]
 use crate::collection::processes::macos::sysctl_bindings;
 use crate::{
-    collection::{Pid, error::CollectionResult, processes::UserTable},
+    collection::{DataCollector, Pid, error::CollectionResult},
     utils::int_hash::IntHashMap,
 };
 
@@ -73,9 +73,17 @@ fn get_priority(pid: Pid) -> i32 {
 
 pub(crate) trait UnixProcessExt {
     fn sysinfo_process_data(
-        sys: &System, use_current_cpu_total: bool, unnormalized_cpu: bool, total_memory: u64,
-        user_table: &mut UserTable,
+        collector: &mut DataCollector,
     ) -> CollectionResult<Vec<ProcessHarvest>> {
+        let sys = &collector.sys.system;
+        let use_current_cpu_total = collector.use_current_cpu_total;
+        let unnormalized_cpu = collector.unnormalized_cpu;
+
+        let total_memory = collector.total_memory();
+        #[cfg(feature = "gpu")]
+        let total_gpu_mem = collector.gpus_total_mem.unwrap_or(0);
+
+        let user_table = &mut collector.user_table;
         let mut process_vector: Vec<ProcessHarvest> = Vec::new();
         let process_hashmap = sys.processes();
         let cpu_usage = sys.global_cpu_usage() / 100.0;
@@ -161,11 +169,19 @@ pub(crate) trait UnixProcessExt {
                     Duration::from_secs(process_val.run_time())
                 },
                 #[cfg(feature = "gpu")]
-                gpu_mem: 0,
+                gpu_mem: process_val.gpu_memory().unwrap_or(0),
                 #[cfg(feature = "gpu")]
-                gpu_mem_percent: 0.0,
+                gpu_mem_percent: if total_gpu_mem > 0 {
+                    (process_val.gpu_memory().unwrap_or(0) as f64 / total_gpu_mem as f64 * 100.0)
+                        as f32
+                } else {
+                    0.0
+                },
                 #[cfg(feature = "gpu")]
-                gpu_util: 0,
+                gpu_util: process_val
+                    .gpu_usage()
+                    .map(|u| u.clamp(0.0, 100.0) as u32)
+                    .unwrap_or(0),
                 #[cfg(unix)]
                 nice,
                 priority,
