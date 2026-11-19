@@ -102,8 +102,9 @@ fn natural_cmp_token(left: Token<'_>, right: Token<'_>) -> Ordering {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::cmp::Ordering::{Equal, Greater, Less};
+
+    use super::*;
 
     /// Verify that the given list of strings is in natural order.
     fn check_natural_order(strs: &[&str]) {

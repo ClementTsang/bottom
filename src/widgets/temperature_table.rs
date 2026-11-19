@@ -9,8 +9,7 @@ use crate::{
         SortDataTable, SortDataTableProps, SortMode, SortsRow,
     },
     options::config::style::Styles,
-    utils::general::sort_partial_fn,
-    utils::natural_sort::natural_str_cmp,
+    utils::{general::sort_partial_fn, natural_sort::natural_str_cmp},
 };
 
 #[derive(Clone, Debug)]
