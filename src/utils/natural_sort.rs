@@ -14,7 +14,7 @@ enum Token<'s> {
 ///
 /// - Numeric substrings are compared by numeric value.
 /// - Non-numeric substrings are compared lexicographically.
-/// - Shorter string swill come first.
+/// - Shorter strings will come first.
 #[inline]
 pub fn natural_str_cmp(left: &str, right: &str) -> Ordering {
     // We have a max amount of tokens; 16 was chosen as a reasonable upper limit for typical identifiers.
@@ -42,17 +42,20 @@ pub fn natural_str_cmp(left: &str, right: &str) -> Ordering {
 /// Tokenize a string into a fixed-size buffer, returning the count written.
 fn tokenize<'a>(s: &'a str, tokens: &mut [Token<'a>]) -> usize {
     let mut count: usize = 0;
-    let mut is_number: Option<bool> = None;
+    let bytes = s.as_bytes();
+
+    if bytes.is_empty() {
+        return 0;
+    }
+
     let mut start: usize = 0;
+    let mut is_number = bytes[0].is_ascii_digit();
 
-    for (i, c) in s.char_indices() {
-        let digit = c.is_ascii_digit();
-
-        if is_number != Some(digit)
-            && let Some(prev) = is_number.take()
-        {
+    let mut i = 1usize;
+    while i < bytes.len() {
+        if bytes[i].is_ascii_digit() != is_number {
             if count < tokens.len() {
-                tokens[count] = if prev {
+                tokens[count] = if is_number {
                     Token::Number(&s[start..i])
                 } else {
                     Token::Text(&s[start..i])
@@ -60,15 +63,14 @@ fn tokenize<'a>(s: &'a str, tokens: &mut [Token<'a>]) -> usize {
                 count += 1;
             }
             start = i;
-            is_number = Some(digit);
+            is_number = bytes[i].is_ascii_digit();
         }
+        i += 1;
     }
 
     // Emit final segment if buffer has room.
-    if let Some(digit) = is_number
-        && count < tokens.len()
-    {
-        tokens[count] = if digit {
+    if count < tokens.len() {
+        tokens[count] = if is_number {
             Token::Number(&s[start..])
         } else {
             Token::Text(&s[start..])
@@ -107,11 +109,12 @@ mod tests {
     fn check_natural_order(strs: &[&str]) {
         for (i, &a) in strs.iter().enumerate() {
             for (j, &b) in strs.iter().enumerate() {
-                let expected = i.cmp(&j);
                 let actual = natural_str_cmp(a, b);
+                let expected = i.cmp(&j);
+
                 assert_eq!(
                     actual, expected,
-                    "natural_str_cmp(`{a}`, `{b}`) = {actual:?}, expected {expected:?}"
+                    "`{a}` and `{b}` gives {actual:?}, but expected {expected:?}"
                 );
             }
         }
