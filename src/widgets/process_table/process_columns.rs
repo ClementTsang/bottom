@@ -160,6 +160,7 @@ impl SortsRow for ProcColumn {
                     }
                 }
                 SortMode::Natural => {
+                    // TODO: Is there a better way to do this? Can we be more performant?
                     data.sort_by(|a, b| {
                         let ord = natural_str_cmp_insensitive(a.id.as_str(), b.id.as_str());
                         if descending { ord.reverse() } else { ord }
