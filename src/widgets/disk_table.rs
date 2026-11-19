@@ -7,13 +7,14 @@ use crate::{
     app::{AppConfigFields, data::InnerData},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
-        SortDataTable, SortDataTableProps, SortsRow,
+        SortDataTable, SortDataTableProps, SortMode, SortsRow,
     },
     options::config::style::Styles,
     utils::{
         conversion::{bin_bytes_per_second_string, dec_bytes_per_second_string},
         data_units::{convert_bytes, format_byte_decimal_values},
         general::sort_partial_fn,
+        natural_sort::natural_str_cmp,
     },
 };
 
@@ -250,13 +251,27 @@ pub struct DiskTableWidget {
 impl SortsRow for DiskWidgetColumn {
     type DataType = DiskWidgetData;
 
-    fn sort_data(&self, data: &mut [Self::DataType], descending: bool) {
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool, mode: SortMode) {
         match self {
             DiskWidgetColumn::Disk => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.name, &b.name));
+                data.sort_by(|a, b| match mode {
+                    SortMode::Lexical => sort_partial_fn(descending)(&a.name, &b.name),
+                    SortMode::Natural => {
+                        let ord = natural_str_cmp(&a.name, &b.name);
+                        if descending { ord.reverse() } else { ord }
+                    }
+                });
             }
             DiskWidgetColumn::Mount => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(&a.mount_point, &b.mount_point));
+                data.sort_by(|a, b| match mode {
+                    SortMode::Lexical => {
+                        sort_partial_fn(descending)(&a.mount_point, &b.mount_point)
+                    }
+                    SortMode::Natural => {
+                        let ord = natural_str_cmp(&a.mount_point, &b.mount_point);
+                        if descending { ord.reverse() } else { ord }
+                    }
+                });
             }
             DiskWidgetColumn::Used => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.used_bytes, &b.used_bytes));
@@ -374,6 +389,7 @@ impl DiskTableWidget {
                 None => 0,
             },
             order: config.default_disk_sort_order,
+            sort_mode: config.default_disk_sort_mode,
         };
 
         let styling = DataTableStyling::from_palette(palette);
@@ -424,7 +440,7 @@ impl DiskTableWidget {
         };
 
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            column.sort_by(&mut data, self.table.order());
+            column.sort_by(&mut data, self.table.order(), self.table.sort_mode());
         }
         self.table.set_data(data);
         self.force_update_data = false;
@@ -532,9 +548,9 @@ mod test {
                     disk(Some(GIBI_LIMIT), use_binary_prefix),
                     disk(Some(2 * MEBI_LIMIT), use_binary_prefix),
                 ];
-                column.sort_data(&mut data, false);
+                column.sort_data(&mut data, false, SortMode::default());
                 assert_eq!(data[0].total_bytes, Some(2 * MEBI_LIMIT));
-                column.sort_data(&mut data, true);
+                column.sort_data(&mut data, true, SortMode::default());
                 assert_eq!(data[0].total_bytes, Some(GIBI_LIMIT));
             }
         }

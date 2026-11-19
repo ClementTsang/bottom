@@ -1,7 +1,10 @@
 use serde::Deserialize;
 
 use super::IgnoreList;
-use crate::{canvas::components::data_table::SortOrder, widgets::TempWidgetColumn};
+use crate::{
+    canvas::components::data_table::{SortMode, SortOrder},
+    widgets::TempWidgetColumn,
+};
 
 /// Temperature configuration.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -18,6 +21,10 @@ pub(crate) struct TempConfig {
     /// The default sort order. Defaults to ascending.
     #[serde(default)]
     pub(crate) sort_order: SortOrder,
+
+    /// The default sort mode for string columns.
+    #[serde(default)]
+    pub(crate) sort_mode: Option<SortMode>,
 }
 
 #[cfg(test)]

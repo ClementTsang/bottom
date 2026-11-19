@@ -533,6 +533,11 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .as_ref()
             .map(|cfg| cfg.sort_order)
             .unwrap_or_default(),
+        default_temp_sort_mode: config
+            .temperature
+            .as_ref()
+            .and_then(|cfg| cfg.sort_mode)
+            .unwrap_or_default(),
         default_disk_sort_column: config
             .disk
             .as_ref()
@@ -541,6 +546,11 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .disk
             .as_ref()
             .map(|cfg| cfg.sort_order)
+            .unwrap_or_default(),
+        default_disk_sort_mode: config
+            .disk
+            .as_ref()
+            .and_then(|cfg| cfg.sort_mode)
             .unwrap_or_default(),
         temperature_legend_position,
         disk_io_legend_position,
@@ -571,6 +581,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     };
 
     let process_default_sort_order = config.processes.as_ref().and_then(|cfg| cfg.sort_order);
+    let process_default_sort_mode = config.processes.as_ref().and_then(|cfg| cfg.sort_mode);
 
     let table_config = ProcTableConfig {
         is_case_sensitive,
@@ -580,6 +591,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         is_command: is_default_command,
         default_sort: process_default_sort,
         sort_order: process_default_sort_order,
+        sort_mode: process_default_sort_mode,
     };
 
     for row in &widget_layout.rows {

@@ -20,7 +20,8 @@ use crate::{
     },
     canvas::components::data_table::{
         Column, ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps,
-        DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortOrder, SortsRow,
+        DataTableStyling, SortColumn, SortDataTable, SortDataTableProps, SortMode, SortOrder,
+        SortsRow,
     },
     collection::processes::{Pid, ProcessHarvest},
     options::config::style::Styles,
@@ -177,6 +178,7 @@ pub struct ProcTableConfig {
     pub is_command: bool,
     pub default_sort: Option<ProcColumn>,
     pub sort_order: Option<SortOrder>,
+    pub sort_mode: Option<SortMode>,
 }
 
 /// A hacky workaround for now.
@@ -258,7 +260,7 @@ impl ProcWidgetState {
 
     fn new_process_table(
         config: &AppConfigFields, colours: &Styles, columns: Vec<SortColumn<ProcColumn>>,
-        default_index: usize, default_order: SortOrder,
+        default_index: usize, default_order: SortOrder, default_mode: SortMode,
     ) -> ProcessTable {
         let inner_props = DataTableProps {
             title: Some(" Processes ".into()),
@@ -273,6 +275,7 @@ impl ProcWidgetState {
             inner: inner_props,
             sort_index: default_index,
             order: default_order,
+            sort_mode: default_mode,
         };
         let styling = DataTableStyling::from_palette(colours);
 
@@ -437,6 +440,11 @@ impl ProcWidgetState {
                 (0, columns[0].default_order)
             };
 
+        let default_sort_mode = match table_config.sort_mode {
+            Some(mode) => mode,
+            None => SortMode::default(),
+        };
+
         // If configured, override it with this.
         if let Some(order) = table_config.sort_order {
             default_sort_order = order;
@@ -449,6 +457,7 @@ impl ProcWidgetState {
             columns,
             default_sort_index,
             default_sort_order,
+            default_sort_mode,
         );
 
         let id_pid_map = HashMap::default();
@@ -676,7 +685,12 @@ impl ProcWidgetState {
             .columns
             .get(self.table.sort_index())
             .expect("columns should contain the current sort index");
-        sort_skip_pid_asc(column.inner(), &mut stack, self.table.order());
+        sort_skip_pid_asc(
+            column.inner(),
+            &mut stack,
+            self.table.order(),
+            self.table.sort_mode(),
+        );
 
         let mut length_stack = vec![stack.len()];
         stack.reverse();
@@ -775,7 +789,11 @@ impl ProcWidgetState {
                         })
                         .collect_vec();
 
-                    column.sort_by(&mut children, self.table.order().rev());
+                    column.sort_by(
+                        &mut children,
+                        self.table.order().rev(),
+                        self.table.sort_mode(),
+                    );
 
                     length_stack.push(children.len());
                     stack.extend(children);
@@ -887,7 +905,12 @@ impl ProcWidgetState {
         self.id_pid_map = id_pid_map;
 
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            sort_skip_pid_asc(column.inner(), &mut filtered_data, self.table.order());
+            sort_skip_pid_asc(
+                column.inner(),
+                &mut filtered_data,
+                self.table.order(),
+                self.table.sort_mode(),
+            );
         }
 
         filtered_data
@@ -1165,12 +1188,14 @@ impl ProcWidgetState {
 }
 
 #[inline]
-fn sort_skip_pid_asc(column: &ProcColumn, data: &mut [ProcWidgetData], order: SortOrder) {
+fn sort_skip_pid_asc(
+    column: &ProcColumn, data: &mut [ProcWidgetData], order: SortOrder, sort_mode: SortMode,
+) {
     let descending = matches!(order, SortOrder::Descending);
     match column {
         ProcColumn::Pid if !descending => {}
         _ => {
-            column.sort_data(data, descending);
+            column.sort_data(data, descending, sort_mode);
         }
     }
 }
@@ -1252,7 +1277,12 @@ mod test {
 
         // Assume we had sorted over by pid.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Descending);
+        sort_skip_pid_asc(
+            &ProcColumn::CpuPercent,
+            &mut data,
+            SortOrder::Descending,
+            SortMode::default(),
+        );
         assert_eq!(
             [&c, &b, &a, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
@@ -1260,14 +1290,24 @@ mod test {
 
         // Note that the PID ordering for ties is still ascending.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::CpuPercent, &mut data, SortOrder::Ascending);
+        sort_skip_pid_asc(
+            &ProcColumn::CpuPercent,
+            &mut data,
+            SortOrder::Ascending,
+            SortMode::default(),
+        );
         assert_eq!(
             [&a, &d, &b, &c].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Descending);
+        sort_skip_pid_asc(
+            &ProcColumn::MemPercent,
+            &mut data,
+            SortOrder::Descending,
+            SortMode::default(),
+        );
         assert_eq!(
             [&b, &a, &c, &d].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
@@ -1275,21 +1315,36 @@ mod test {
 
         // Note that the PID ordering for ties is still ascending.
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::MemPercent, &mut data, SortOrder::Ascending);
+        sort_skip_pid_asc(
+            &ProcColumn::MemPercent,
+            &mut data,
+            SortOrder::Ascending,
+            SortMode::default(),
+        );
         assert_eq!(
             [&c, &d, &a, &b].iter().map(|d| d.pid).collect::<Vec<_>>(),
             data.iter().map(|d| d.pid).collect::<Vec<_>>(),
         );
 
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::Swap, &mut data, SortOrder::Descending);
+        sort_skip_pid_asc(
+            &ProcColumn::Swap,
+            &mut data,
+            SortOrder::Descending,
+            SortMode::default(),
+        );
         assert_eq!(
             vec![2, 1, 3, 4],
             data.iter().map(|process| process.pid).collect::<Vec<_>>(),
         );
 
         data.sort_by_key(|p| p.pid);
-        sort_skip_pid_asc(&ProcColumn::Swap, &mut data, SortOrder::Ascending);
+        sort_skip_pid_asc(
+            &ProcColumn::Swap,
+            &mut data,
+            SortOrder::Ascending,
+            SortMode::default(),
+        );
         assert_eq!(
             vec![4, 3, 1, 2],
             data.iter().map(|process| process.pid).collect::<Vec<_>>(),

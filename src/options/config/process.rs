@@ -1,6 +1,9 @@
 use serde::Deserialize;
 
-use crate::{canvas::components::data_table::SortOrder, widgets::ProcColumn};
+use crate::{
+    canvas::components::data_table::{SortMode, SortOrder},
+    widgets::ProcColumn,
+};
 
 /// Process configuration fields.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -20,6 +23,10 @@ pub(crate) struct ProcessesConfig {
     /// (e.g. CPU usage is descending, process names are ascending).
     #[serde(default)]
     pub(crate) sort_order: Option<SortOrder>,
+
+    /// The default sort mode for string columns.
+    #[serde(default)]
+    pub(crate) sort_mode: Option<SortMode>,
 
     /// Whether to get process child threads.
     pub get_threads: Option<bool>,

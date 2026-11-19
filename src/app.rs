@@ -13,7 +13,10 @@ pub use states::*;
 
 use crate::{
     canvas::{
-        components::{data_table::SortOrder, time_series::LegendPosition},
+        components::{
+            data_table::{SortMode, SortOrder},
+            time_series::LegendPosition,
+        },
         dialogs::{command_dialog::CommandDialogState, process_kill_dialog::ProcessKillDialog},
     },
     components::time_series::TimeseriesState,
@@ -83,8 +86,10 @@ pub struct AppConfigFields {
     pub default_tree_collapse: bool,
     pub default_temp_sort_column: Option<TempWidgetColumn>,
     pub default_temp_sort_order: SortOrder,
+    pub default_temp_sort_mode: SortMode,
     pub default_disk_sort_column: Option<DiskWidgetColumn>,
     pub default_disk_sort_order: SortOrder,
+    pub default_disk_sort_mode: SortMode,
     pub temperature_legend_position: Option<LegendPosition>,
     pub disk_io_legend_position: Option<LegendPosition>,
     pub disk_show_unmounted: bool,
