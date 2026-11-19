@@ -440,15 +440,12 @@ impl ProcWidgetState {
                 (0, columns[0].default_order)
             };
 
-        let default_sort_mode = match table_config.sort_mode {
-            Some(mode) => mode,
-            None => SortMode::default(),
-        };
-
-        // If configured, override it with this.
+        // If configured, override the above setting it with this.
         if let Some(order) = table_config.sort_order {
             default_sort_order = order;
         }
+
+        let default_sort_mode = table_config.sort_mode.unwrap_or_default();
 
         let sort_table = Self::new_sort_table(config, colours);
         let table = Self::new_process_table(

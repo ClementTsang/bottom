@@ -185,7 +185,7 @@ impl SortsRow for ProcColumn {
                 }
                 SortMode::Natural => {
                     data.sort_by(|a, b| {
-                        let ord = natural_str_cmp(&a.process_state, &b.process_state);
+                        let ord = natural_str_cmp(a.process_state, b.process_state);
                         if descending { ord.reverse() } else { ord }
                     });
                 }
@@ -203,7 +203,7 @@ impl SortsRow for ProcColumn {
                 SortMode::Natural => {
                     data.sort_by(|a, b| match (&a.user, &b.user) {
                         (Some(a_user), Some(b_user)) => {
-                            let ord = natural_str_cmp(&a_user, &b_user);
+                            let ord = natural_str_cmp(a_user, b_user);
                             if descending { ord.reverse() } else { ord }
                         }
                         _ => {
