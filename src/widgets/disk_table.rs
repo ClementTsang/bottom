@@ -253,26 +253,28 @@ impl SortsRow for DiskWidgetColumn {
 
     fn sort_data(&self, data: &mut [Self::DataType], descending: bool, mode: SortMode) {
         match self {
-            DiskWidgetColumn::Disk => {
-                data.sort_by(|a, b| match mode {
-                    SortMode::Lexical => sort_partial_fn(descending)(&a.name, &b.name),
-                    SortMode::Natural => {
-                        let ord = natural_str_cmp(&a.name, &b.name);
-                        if descending { ord.reverse() } else { ord }
-                    }
-                });
-            }
-            DiskWidgetColumn::Mount => {
-                data.sort_by(|a, b| match mode {
-                    SortMode::Lexical => {
+            DiskWidgetColumn::Disk => match mode {
+                SortMode::Lexical => {
+                    data.sort_by(|a, b| sort_partial_fn(descending)(&a.name, &b.name));
+                }
+                SortMode::Natural => data.sort_by(|a, b| {
+                    let ord = natural_str_cmp(&a.name, &b.name);
+                    if descending { ord.reverse() } else { ord }
+                }),
+            },
+            DiskWidgetColumn::Mount => match mode {
+                SortMode::Lexical => {
+                    data.sort_by(|a, b| {
                         sort_partial_fn(descending)(&a.mount_point, &b.mount_point)
-                    }
-                    SortMode::Natural => {
+                    });
+                }
+                SortMode::Natural => {
+                    data.sort_by(|a, b| {
                         let ord = natural_str_cmp(&a.mount_point, &b.mount_point);
                         if descending { ord.reverse() } else { ord }
-                    }
-                });
-            }
+                    });
+                }
+            },
             DiskWidgetColumn::Used => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.used_bytes, &b.used_bytes));
             }
