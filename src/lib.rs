@@ -17,6 +17,7 @@ mod utils {
     pub(crate) mod input;
     pub(crate) mod int_hash;
     pub(crate) mod logging;
+    pub(crate) mod natural_sort;
     pub(crate) mod process_killer;
     pub(crate) mod strings;
 }

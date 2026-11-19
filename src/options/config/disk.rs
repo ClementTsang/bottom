@@ -1,7 +1,10 @@
 use serde::Deserialize;
 
 use super::IgnoreList;
-use crate::{canvas::components::data_table::SortOrder, options::DiskWidgetColumn};
+use crate::{
+    canvas::components::data_table::{SortMode, SortOrder},
+    options::DiskWidgetColumn,
+};
 
 /// Disk configuration.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -37,6 +40,15 @@ pub(crate) struct DiskConfig {
     /// The default sort order. Defaults to ascending.
     #[serde(default)]
     pub(crate) sort_order: SortOrder,
+
+    /// The default sort mode for string columns. One of "Lexical" or "Natural".
+    ///
+    /// Lexical is typical alphanumeric order, while natural will order numbers inside
+    /// strings by their numerical value (e.g. sda10 comes after sda2).
+    ///
+    /// Defaults to "Lexical".
+    #[serde(default)]
+    pub(crate) sort_mode: Option<SortMode>,
 }
 
 #[cfg(test)]

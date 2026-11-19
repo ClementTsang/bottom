@@ -59,6 +59,43 @@ impl Default for SortOrder {
     }
 }
 
+/// The string sorting type used for a widget.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "generate_schema",
+    derive(schemars::JsonSchema, strum::VariantArray)
+)]
+pub enum SortMode {
+    /// Lexicographic sort (default).
+    #[default]
+    Lexical,
+    /// Natural sort.
+    Natural,
+}
+
+impl SortMode {
+    /// A hack to get a const default.
+    pub const fn const_default() -> Self {
+        Self::Lexical
+    }
+}
+
+impl<'de> Deserialize<'de> for SortMode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?.to_lowercase();
+        match value.as_str() {
+            "lexical" => Ok(SortMode::Lexical),
+            "natural" => Ok(SortMode::Natural),
+            _ => Err(serde::de::Error::custom(
+                "doesn't match any sort mode variant",
+            )),
+        }
+    }
+}
+
 /// Denotes the [`DataTable`] is unsorted.
 pub struct Unsortable;
 
@@ -69,6 +106,9 @@ pub struct Sortable {
 
     /// The current sorting order.
     pub order: SortOrder,
+
+    /// The current sort mode.
+    pub sort_mode: SortMode,
 }
 
 /// The [`SortType`] trait is meant to be used in the typing of a [`DataTable`]
@@ -145,7 +185,7 @@ pub trait SortsRow {
     type DataType;
 
     /// Sorts data.
-    fn sort_data(&self, data: &mut [Self::DataType], descending: bool);
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool, mode: SortMode);
 }
 
 /// A wrapper around [`Column`] that also has sorting capabilities.
@@ -156,6 +196,9 @@ pub struct SortColumn<H> {
 
     /// The default sort order.
     pub default_order: SortOrder,
+
+    /// The default sort mode.
+    pub default_mode: SortMode,
 }
 
 impl<D, H> DataTableColumn<H> for SortColumn<H>
@@ -212,6 +255,7 @@ where
         Self {
             column: Column::new(inner),
             default_order: SortOrder::const_default(),
+            default_mode: SortMode::default(),
         }
     }
 
@@ -221,6 +265,7 @@ where
         Self {
             column: Column::hard(inner, width),
             default_order: SortOrder::const_default(),
+            default_mode: SortMode::const_default(),
         }
     }
 
@@ -230,6 +275,7 @@ where
         Self {
             column: Column::soft(inner, max_percentage),
             default_order: SortOrder::const_default(),
+            default_mode: SortMode::const_default(),
         }
     }
 
@@ -241,9 +287,9 @@ where
 
     /// Given a [`SortColumn`] and the sort order, sort a mutable slice of
     /// associated data.
-    pub fn sort_by(&self, data: &mut [D], order: SortOrder) {
+    pub fn sort_by(&self, data: &mut [D], order: SortOrder, mode: SortMode) {
         let descending = matches!(order, SortOrder::Descending);
-        self.column.inner().sort_data(data, descending);
+        self.column.inner().sort_data(data, descending, mode);
     }
 }
 
@@ -251,6 +297,7 @@ pub struct SortDataTableProps {
     pub inner: DataTableProps,
     pub sort_index: usize,
     pub order: SortOrder,
+    pub sort_mode: SortMode,
 }
 
 /// A type alias for a sortable [`DataTable`].
@@ -272,6 +319,7 @@ where
             sort_type: Sortable {
                 sort_index: props.sort_index,
                 order: props.order,
+                sort_mode: props.sort_mode,
             },
             first_draw: true,
             first_index: None,
@@ -293,6 +341,20 @@ where
     /// Toggles the current sort order.
     pub fn toggle_order(&mut self) {
         self.sort_type.order = self.sort_type.order.rev();
+    }
+
+    /// Gets the current sort mode.
+    #[inline]
+    pub fn sort_mode(&self) -> SortMode {
+        self.sort_type.sort_mode
+    }
+
+    /// Toggles the current sort mode between Lexical and Natural.
+    pub fn toggle_sort_mode(&mut self) {
+        self.sort_type.sort_mode = match self.sort_type.sort_mode {
+            SortMode::Lexical => SortMode::Natural,
+            SortMode::Natural => SortMode::Lexical,
+        };
     }
 
     /// Given some `x` and `y`, if possible, select the corresponding column or
@@ -409,7 +471,7 @@ mod test {
     impl SortsRow for ColumnType {
         type DataType = TestType;
 
-        fn sort_data(&self, data: &mut [TestType], descending: bool) {
+        fn sort_data(&self, data: &mut [TestType], descending: bool, _mode: SortMode) {
             match self {
                 ColumnType::Index => data.sort_by_key(|t| t.index),
                 ColumnType::Data => data.sort_by_key(|t| t.data),
@@ -442,6 +504,7 @@ mod test {
                 inner,
                 sort_index: 0,
                 order: SortOrder::Descending,
+                sort_mode: SortMode::Lexical,
             }
         };
 
@@ -475,7 +538,7 @@ mod test {
             .columns
             .get(table.sort_type.sort_index)
             .unwrap()
-            .sort_by(&mut data, SortOrder::Ascending);
+            .sort_by(&mut data, SortOrder::Ascending, SortMode::Lexical);
         assert_eq!(
             data,
             vec![
@@ -506,7 +569,7 @@ mod test {
             .columns
             .get(table.sort_type.sort_index)
             .unwrap()
-            .sort_by(&mut data, SortOrder::Descending);
+            .sort_by(&mut data, SortOrder::Descending, SortMode::Lexical);
         assert_eq!(
             data,
             vec![
@@ -538,7 +601,7 @@ mod test {
             .columns
             .get(table.sort_type.sort_index)
             .unwrap()
-            .sort_by(&mut data, SortOrder::Ascending);
+            .sort_by(&mut data, SortOrder::Ascending, SortMode::Lexical);
         assert_eq!(
             data,
             vec![
@@ -585,6 +648,7 @@ mod test {
             },
             sort_index: 0,
             order: SortOrder::Ascending,
+            sort_mode: SortMode::Lexical,
         };
         let mut table = DataTable::new_sortable(columns, props, DataTableStyling::default());
         table.columns[1].set_hidden(true);

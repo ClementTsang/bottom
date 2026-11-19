@@ -6,10 +6,10 @@ use crate::{
     app::{AppConfigFields, data::TypedTemperature},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
-        SortDataTable, SortDataTableProps, SortsRow,
+        SortDataTable, SortDataTableProps, SortMode, SortsRow,
     },
     options::config::style::Styles,
-    utils::general::sort_partial_fn,
+    utils::{general::sort_partial_fn, natural_sort::natural_str_cmp},
 };
 
 #[derive(Clone, Debug)]
@@ -104,10 +104,16 @@ impl DataToCell<TempWidgetColumn> for TempWidgetData {
 impl SortsRow for TempWidgetColumn {
     type DataType = TempWidgetData;
 
-    fn sort_data(&self, data: &mut [Self::DataType], descending: bool) {
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool, mode: SortMode) {
         match self {
             TempWidgetColumn::Sensor => {
-                data.sort_by(move |a, b| sort_partial_fn(descending)(&a.sensor, &b.sensor));
+                data.sort_by(move |a, b| match mode {
+                    SortMode::Lexical => sort_partial_fn(descending)(&a.sensor, &b.sensor),
+                    SortMode::Natural => {
+                        let ord = natural_str_cmp(&a.sensor, &b.sensor);
+                        if descending { ord.reverse() } else { ord }
+                    }
+                });
             }
             TempWidgetColumn::Temperature => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.temperature, &b.temperature));
@@ -144,6 +150,7 @@ impl TempWidgetState {
                 Some(TempWidgetColumn::Sensor) | None => 0,
             },
             order: config.default_temp_sort_order,
+            sort_mode: config.default_temp_sort_mode,
         };
 
         let styling = DataTableStyling::from_palette(palette);
@@ -164,7 +171,7 @@ impl TempWidgetState {
     pub fn set_table_data(&mut self, data: &[TempWidgetData]) {
         let mut data = data.to_vec();
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            column.sort_by(&mut data, self.table.order());
+            column.sort_by(&mut data, self.table.order(), self.table.sort_mode());
         }
         self.table.set_data(data);
         self.force_update_data = false;

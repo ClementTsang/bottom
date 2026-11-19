@@ -4,8 +4,11 @@ use serde::Deserialize;
 
 use super::{ProcWidgetColumn, ProcWidgetData};
 use crate::{
-    canvas::components::data_table::{ColumnHeader, SortsRow},
-    utils::general::sort_partial_fn,
+    canvas::components::data_table::{ColumnHeader, SortMode, SortsRow},
+    utils::{
+        general::sort_partial_fn,
+        natural_sort::{natural_str_cmp, natural_str_cmp_insensitive},
+    },
 };
 
 /// A column in the process widget.
@@ -126,7 +129,7 @@ impl ColumnHeader for ProcColumn {
 impl SortsRow for ProcColumn {
     type DataType = ProcWidgetData;
 
-    fn sort_data(&self, data: &mut [ProcWidgetData], descending: bool) {
+    fn sort_data(&self, data: &mut [ProcWidgetData], descending: bool, mode: SortMode) {
         match self {
             ProcColumn::CpuPercent => {
                 data.sort_by(|a, b| {
@@ -148,13 +151,22 @@ impl SortsRow for ProcColumn {
             ProcColumn::Count => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.num_similar, b.num_similar));
             }
-            ProcColumn::Name | ProcColumn::Command => {
-                if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.id.to_lowercase()));
-                } else {
-                    data.sort_by_cached_key(|pd| pd.id.to_lowercase());
+            ProcColumn::Name | ProcColumn::Command => match mode {
+                SortMode::Lexical => {
+                    if descending {
+                        data.sort_by_cached_key(|pd| Reverse(pd.id.to_lowercase()));
+                    } else {
+                        data.sort_by_cached_key(|pd| pd.id.to_lowercase());
+                    }
                 }
-            }
+                SortMode::Natural => {
+                    // TODO: Is there a better way to do this? Can we be more performant?
+                    data.sort_by(|a, b| {
+                        let ord = natural_str_cmp_insensitive(a.id.as_str(), b.id.as_str());
+                        if descending { ord.reverse() } else { ord }
+                    });
+                }
+            },
             ProcColumn::ReadPerSecond => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.rps, b.rps));
             }
@@ -167,22 +179,46 @@ impl SortsRow for ProcColumn {
             ProcColumn::TotalWrite => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.total_write, b.total_write));
             }
-            ProcColumn::State => {
-                if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.process_state));
-                } else {
-                    data.sort_by_cached_key(|pd| pd.process_state);
+            ProcColumn::State => match mode {
+                SortMode::Lexical => {
+                    if descending {
+                        data.sort_by_cached_key(|pd| Reverse(pd.process_state));
+                    } else {
+                        data.sort_by_cached_key(|pd| pd.process_state);
+                    }
                 }
-            }
-            ProcColumn::User => {
-                // FIXME: Is there a better way here to keep the to_lowercase?
-                // Usually it shouldn't matter but...
-                if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.user.clone()));
-                } else {
-                    data.sort_by_cached_key(|pd| pd.user.clone());
+                SortMode::Natural => {
+                    data.sort_by(|a, b| {
+                        let ord = natural_str_cmp(a.process_state, b.process_state);
+                        if descending { ord.reverse() } else { ord }
+                    });
                 }
-            }
+            },
+            ProcColumn::User => match mode {
+                SortMode::Lexical => {
+                    // FIXME: Is there a better way here to keep the to_lowercase?
+                    // Usually it shouldn't matter but...
+                    // Also note that pd.user is `Arc` so clones are relatively cheap.
+                    if descending {
+                        data.sort_by_cached_key(|pd| Reverse(pd.user.clone()));
+                    } else {
+                        data.sort_by_cached_key(|pd| pd.user.clone());
+                    }
+                }
+                SortMode::Natural => {
+                    data.sort_by(|a, b| match (&a.user, &b.user) {
+                        (Some(a_user), Some(b_user)) => {
+                            let ord = natural_str_cmp(a_user, b_user);
+                            if descending { ord.reverse() } else { ord }
+                        }
+                        _ => {
+                            // Reverse the comparison result instead of cloning.
+                            let ord = a.user.cmp(&b.user);
+                            if descending { ord.reverse() } else { ord }
+                        }
+                    });
+                }
+            },
             ProcColumn::Time => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.time, b.time));
             }

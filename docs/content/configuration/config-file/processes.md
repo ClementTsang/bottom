@@ -19,6 +19,7 @@ If you want to change some of the default behaviour of the processes widget, you
 | `default_tree`          | Boolean | Makes the process widget use tree mode by default.                                                        |
 | `current_usage`         | Boolean | Calculates process CPU usage as a percentage of current usage rather than total usage.                    |
 | `unnormalized_cpu`      | Boolean | Show process CPU% usage without averaging over the number of CPU cores.                                   |
+| `sort_mode`             | String  | The default sort mode for string columns. One of `"Lexical"` or `"Natural"`. Defaults to `"Lexical"`.     |
 
 ## Columns
 
@@ -54,3 +55,15 @@ You can also set the default order by changing `processes.sort_order` with `"Asc
 [processes]
 sort_order = "Ascending"
 ```
+
+### Sort Mode
+
+By default, string columns use lexicographic sorting (e.g. `"proc10"` comes before `"proc2"`).
+You can enable natural sort ordering to take numbers in the string into account (e.g. now `"proc10"` comes after `"proc2"`):
+
+```toml
+[processes]
+sort_mode = "Natural"
+```
+
+Can be set to either `"Lexical"` (the default) or `"Natural"`.
