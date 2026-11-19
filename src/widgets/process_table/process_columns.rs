@@ -5,7 +5,10 @@ use serde::Deserialize;
 use super::{ProcWidgetColumn, ProcWidgetData};
 use crate::{
     canvas::components::data_table::{ColumnHeader, SortMode, SortsRow},
-    utils::{general::sort_partial_fn, natural_sort::natural_str_cmp},
+    utils::{
+        general::sort_partial_fn,
+        natural_sort::{natural_str_cmp, natural_str_cmp_insensitive},
+    },
 };
 
 /// A column in the process widget.
@@ -158,7 +161,7 @@ impl SortsRow for ProcColumn {
                 }
                 SortMode::Natural => {
                     data.sort_by(|a, b| {
-                        let ord = natural_str_cmp(&a.id.to_lowercase(), &b.id.to_lowercase());
+                        let ord = natural_str_cmp_insensitive(&a.id.as_str(), &b.id.as_str());
                         if descending { ord.reverse() } else { ord }
                     });
                 }

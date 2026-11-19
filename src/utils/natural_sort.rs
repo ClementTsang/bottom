@@ -39,6 +39,36 @@ pub fn natural_str_cmp(left: &str, right: &str) -> Ordering {
     l_count.cmp(&r_count)
 }
 
+/// Compares two strings using natural ordering _and_ case-insensitively. Note:
+///
+/// - **Already uses case-insensitive sorting given the inputs!**
+/// - Numeric substrings are compared by numeric value.
+/// - Non-numeric substrings are compared lexicographically.
+/// - Shorter strings will come first.
+#[inline]
+pub fn natural_str_cmp_insensitive(left: &str, right: &str) -> Ordering {
+    // We have a max amount of tokens; 16 was chosen as a reasonable upper limit for typical identifiers.
+    const MAX_TOKENS: usize = 16;
+
+    // Tokenize both strings into fixed-size stack buffers.
+    let mut l_tokens: [Token<'_>; MAX_TOKENS] = array::from_fn(|_| Token::Text(""));
+    let mut r_tokens: [Token<'_>; MAX_TOKENS] = array::from_fn(|_| Token::Text(""));
+
+    let l_count = tokenize(left, &mut l_tokens);
+    let r_count = tokenize(right, &mut r_tokens);
+
+    // Compare tokens one-by-one.
+    for i in 0..l_count.min(r_count) {
+        match natural_cmp_token_insensitive(l_tokens[i], r_tokens[i]) {
+            Ordering::Equal => continue,
+            ord => return ord,
+        }
+    }
+
+    // All compared tokens are equal; shorter token list comes first.
+    l_count.cmp(&r_count)
+}
+
 /// Tokenize a string into a fixed-size buffer, returning the count written.
 fn tokenize<'a>(s: &'a str, tokens: &mut [Token<'a>]) -> usize {
     let mut count: usize = 0;
@@ -86,6 +116,33 @@ fn tokenize<'a>(s: &'a str, tokens: &mut [Token<'a>]) -> usize {
 fn natural_cmp_token(left: Token<'_>, right: Token<'_>) -> Ordering {
     match (left, right) {
         (Token::Text(l), Token::Text(r)) => l.cmp(r),
+        (Token::Number(l), Token::Number(r)) => {
+            let l_bytes = l.as_bytes();
+            let r_bytes = r.as_bytes();
+            match l_bytes.len().cmp(&r_bytes.len()) {
+                Ordering::Equal => l_bytes.cmp(r_bytes),
+                ord => ord,
+            }
+        }
+        // Text sorts before number if the tokens are not the same type.
+        (Token::Text(_), Token::Number(_)) => Ordering::Less,
+        (Token::Number(_), Token::Text(_)) => Ordering::Greater,
+    }
+}
+
+/// Compare two tokens at the same position. Note it is case-insensitive.
+#[inline]
+fn natural_cmp_token_insensitive(left: Token<'_>, right: Token<'_>) -> Ordering {
+    match (left, right) {
+        (Token::Text(l), Token::Text(r)) => {
+            for (a, b) in l.bytes().zip(r.bytes()) {
+                match a.to_ascii_lowercase().cmp(&b.to_ascii_lowercase()) {
+                    Ordering::Equal => continue,
+                    ord => return ord,
+                }
+            }
+            l.len().cmp(&r.len())
+        }
         (Token::Number(l), Token::Number(r)) => {
             let l_bytes = l.as_bytes();
             let r_bytes = r.as_bytes();
@@ -175,6 +232,21 @@ mod tests {
 
     #[test]
     fn test_case_sensitive() {
-        check_natural_order(&["A", "B", "a", "b"]);
+        assert_eq!(natural_str_cmp("CPU", "cpu"), Less);
+        assert_eq!(natural_str_cmp("bash", "BASH"), Greater);
+        assert_eq!(natural_str_cmp("cpu0", "CPU0"), Greater);
+        assert_eq!(natural_str_cmp("cpu", "cpu0"), Less);
+        assert_eq!(natural_str_cmp("CPU0", "cpu1"), Less);
+        assert_eq!(natural_str_cmp("Zsh", "bash"), Less);
+    }
+
+    #[test]
+    fn test_case_insensitive() {
+        assert_eq!(natural_str_cmp_insensitive("CPU", "cpu"), Equal);
+        assert_eq!(natural_str_cmp_insensitive("bash", "BASH"), Equal);
+        assert_eq!(natural_str_cmp_insensitive("cpu0", "CPU0"), Equal);
+        assert_eq!(natural_str_cmp_insensitive("cpu", "cpu0"), Less);
+        assert_eq!(natural_str_cmp_insensitive("CPU0", "cpu1"), Less);
+        assert_eq!(natural_str_cmp_insensitive("Zsh", "bash"), Greater);
     }
 }
