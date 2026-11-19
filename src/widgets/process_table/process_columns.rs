@@ -197,6 +197,7 @@ impl SortsRow for ProcColumn {
                 SortMode::Lexical => {
                     // FIXME: Is there a better way here to keep the to_lowercase?
                     // Usually it shouldn't matter but...
+                    // Also note that pd.user is `Arc` so clones are relatively cheap.
                     if descending {
                         data.sort_by_cached_key(|pd| Reverse(pd.user.clone()));
                     } else {
@@ -210,11 +211,9 @@ impl SortsRow for ProcColumn {
                             if descending { ord.reverse() } else { ord }
                         }
                         _ => {
-                            if descending {
-                                Reverse(a.user.clone()).cmp(&Reverse(b.user.clone()))
-                            } else {
-                                a.user.cmp(&b.user)
-                            }
+                            // Reverse the comparison result instead of cloning.
+                            let ord = a.user.cmp(&b.user);
+                            if descending { ord.reverse() } else { ord }
                         }
                     });
                 }
