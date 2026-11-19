@@ -24,7 +24,12 @@ pub(crate) struct ProcessesConfig {
     #[serde(default)]
     pub(crate) sort_order: Option<SortOrder>,
 
-    /// The default sort mode for string columns.
+    /// The default sort mode for string columns. One of "Lexical" or "Natural".
+    ///
+    /// Lexical is typical alphanumeric order, while natural will order numbers inside
+    /// strings by their numerical value (e.g. proc10 comes after proc2).
+    ///
+    /// Defaults to "Lexical".
     #[serde(default)]
     pub(crate) sort_mode: Option<SortMode>,
 

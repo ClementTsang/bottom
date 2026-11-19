@@ -22,7 +22,12 @@ pub(crate) struct TempConfig {
     #[serde(default)]
     pub(crate) sort_order: SortOrder,
 
-    /// The default sort mode for string columns.
+    /// The default sort mode for string columns. One of "Lexical" or "Natural".
+    ///
+    /// Lexical is typical alphanumeric order, while natural will order numbers inside
+    /// strings by their numerical value (e.g. temp10 comes after temp2).
+    ///
+    /// Defaults to "Lexical".
     #[serde(default)]
     pub(crate) sort_mode: Option<SortMode>,
 }

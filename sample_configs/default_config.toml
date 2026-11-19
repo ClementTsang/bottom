@@ -211,6 +211,11 @@
 # Show process CPU% usage without averaging over the number of CPU cores.
 #unnormalized_cpu = false
 
+# The default sort mode for string columns. One of "Lexical" or "Natural".
+# Lexical is typical alphanumeric order, while natural will order numbers inside
+# strings by their numerical value (e.g. proc10 comes after proc2). Defaults to "Lexical".
+#sort_mode = "Lexical"
+
 # CPU widget configuration
 #[cpu]
 # One of "all" (default), "average"/"avg"
@@ -241,6 +246,11 @@
 
 # Whether to include block devices that aren't currently mounted (currently Linux only). Defaults to false.
 #include_unmounted = false
+
+# The default sort mode for string columns. One of "Lexical" or "Natural".
+# Lexical is typical alphanumeric order, while natural will order numbers inside
+# strings by their numerical value (e.g. sda10 comes after sda2). Defaults to "Lexical".
+#sort_mode = "Lexical"
 
 # By default, there are no disk name filters enabled. These can be turned on to filter out specific data entries if you
 # don't want to see them. An example use case is provided below.
@@ -327,6 +337,11 @@
 # The default sort order. Can be either "Ascending" or "Descending".
 # Defaults to ascending.
 #sort_order = "Ascending"
+
+# The default sort mode for string columns. One of "Lexical" or "Natural".
+# Lexical is typical alphanumeric order, while natural will order numbers inside
+# strings by their numerical value (e.g. temp10 comes after temp2). Defaults to "Lexical".
+#sort_mode = "Lexical"
 
 # By default, there are no temperature sensor filters enabled. An example use case is provided below.
 #[temperature.sensor_filter]
