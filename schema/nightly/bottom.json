@@ -1278,7 +1278,7 @@
       ]
     },
     "SortMode": {
-      "description": "Denotes the type of string sort to use.",
+      "description": "The string sorting type used for a widget.",
       "oneOf": [
         {
           "description": "Lexicographic sort (default).",

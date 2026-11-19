@@ -59,7 +59,7 @@ impl Default for SortOrder {
     }
 }
 
-/// Denotes the type of string sort to use.
+/// The string sorting type used for a widget.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(
     feature = "generate_schema",
