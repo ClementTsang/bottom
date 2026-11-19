@@ -1461,6 +1461,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Default Sort Column">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sort-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sort Mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2071,6 +2088,13 @@
 <div class="highlight"><pre><span></span><code><span class="k">[temperature]</span>
 <span class="n">sort_order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Ascending"</span>
 </code></pre></div>
+<h3 id="sort-mode"><a class="toclink" href="#sort-mode">Sort Mode</a></h3>
+<p>By default, string columns use lexicographic sorting (e.g. <code>"temp10"</code> comes before <code>"temp2"</code>).
+You can enable natural sort ordering to take numbers in the string into account (e.g. now <code>"temp10"</code> comes after <code>"temp2"</code>):</p>
+<div class="highlight"><pre><span></span><code><span class="k">[temperature]</span>
+<span class="n">sort_mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"Natural"</span>
+</code></pre></div>
+<p>Can be set to either <code>"Lexical"</code> (the default) or <code>"Natural"</code>.</p>
 <h2 id="filtering-entries"><a class="toclink" href="#filtering-entries">Filtering Entries</a></h2>
 <p>You can filter out what entries to show by configuring <code>[temperature.sensor_filter]</code>. In particular you can set a list of things to filter with by setting <code>list</code>, and configure how that list is processed with the other options.</p>
 <p>For example, here we are ignoring any sensor that has "cpu" or "wifi" in it.</p>
@@ -2110,7 +2134,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 27, 2026 00:37:20">July 27, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 19, 2026 10:58:35">November 19, 2026</span>
   </span>
 
     
