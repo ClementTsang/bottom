@@ -2,6 +2,7 @@ pub mod cpu;
 pub mod disk;
 pub mod disk_io_graph;
 pub mod flags;
+pub mod gpu_graph;
 mod ignore_list;
 pub mod layout;
 pub mod memory_graph;
@@ -11,18 +12,21 @@ pub mod style;
 pub mod temperature;
 pub mod temperature_graph;
 
+use cpu::CpuConfig;
 use disk::DiskConfig;
 use disk_io_graph::DiskIoGraphConfig;
 use flags::GeneralConfig;
+use gpu_graph::GpuUsageGraphConfig;
+use memory_graph::MemoryGraphConfig;
 use network_graph::NetworkGraphConfig;
+use process::ProcessesConfig;
 use serde::{Deserialize, Serialize};
 use style::StyleConfig;
 use temperature::TempConfig;
 use temperature_graph::TempGraphConfig;
 
 pub use self::ignore_list::IgnoreList;
-use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
-use crate::options::config::memory_graph::MemoryGraphConfig;
+use self::layout::Row;
 
 /// Overall config for `bottom`.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -42,6 +46,7 @@ pub struct Config {
     #[serde(alias = "memory")]
     pub(crate) memory_graph: Option<MemoryGraphConfig>,
     pub(crate) cpu: Option<CpuConfig>,
+    pub(crate) gpu_usage_graph: Option<GpuUsageGraphConfig>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

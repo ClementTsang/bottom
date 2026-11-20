@@ -62,7 +62,7 @@ pub struct AppConfigFields {
     pub disable_click: bool,
     pub disable_keys: bool,
     pub enable_gpu: bool,
-    pub short_gpu_names: bool,
+    pub mem_short_gpu_names: bool,
     pub enable_cache_memory: bool,
     pub show_table_scroll_position: bool,
     pub show_table_scroll_bar: bool,
@@ -95,6 +95,8 @@ pub struct AppConfigFields {
     pub disk_show_unmounted: bool,
     pub disk_use_binary_prefix: bool,
     pub disk_io_graph_show_unmounted: bool,
+    pub gpu_usage_legend_position: Option<LegendPosition>,
+    pub gpu_usage_short_names: bool,
 }
 
 /// For filtering out information
@@ -248,6 +250,13 @@ impl App {
 
         for widget_state in self.states.temp_graph_state.widget_states.values_mut() {
             widget_state.graph.state_mut().reset_zoom();
+        }
+
+        #[cfg(feature = "gpu")]
+        {
+            for widget_state in self.states.gpu_graph_state.widget_states.values_mut() {
+                widget_state.graph.state_mut().reset_zoom();
+            }
         }
     }
 
@@ -2141,6 +2150,15 @@ impl App {
                 if let Some(widget_state) = self
                     .states
                     .disk_io_graph_state
+                    .get_mut_widget_state(self.current_widget.widget_id) =>
+            {
+                Some(widget_state.graph.state_mut())
+            }
+            #[cfg(feature = "gpu")]
+            BottomWidgetType::GpuUsageGraph
+                if let Some(widget_state) = self
+                    .states
+                    .gpu_graph_state
                     .get_mut_widget_state(self.current_widget.widget_id) =>
             {
                 Some(widget_state.graph.state_mut())

@@ -4,6 +4,7 @@ pub mod cpu_basic;
 pub mod cpu_graph;
 pub mod disk_io_graph;
 pub mod disk_table;
+pub mod gpu_graph;
 pub mod mem_basic;
 pub mod mem_graph;
 pub mod network_basic;
@@ -15,7 +16,9 @@ pub mod temperature_table;
 #[cfg(feature = "battery")]
 pub mod battery_display;
 
-/// Helper struct to hold packet-related data
+/// Helper struct to hold packet-related data.
+///
+/// TODO: Probably should move this yeah?
 pub(super) struct PacketInfo {
     /// Current received packet rate.
     pub(super) rx_packet_rate: u64,

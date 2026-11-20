@@ -383,6 +383,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let mut temp_graph_state_map: FxHashMap<u64, TempGraphWidgetState> = FxHashMap::default();
     let mut disk_state_map: FxHashMap<u64, DiskTableWidget> = FxHashMap::default();
     let mut disk_io_graph_state_map: FxHashMap<u64, DiskIoGraphWidgetState> = FxHashMap::default();
+    #[cfg(feature = "gpu")]
+    let mut gpu_graph_state_map: FxHashMap<u64, GpuGraphWidgetState> = FxHashMap::default();
     let mut battery_state_map: FxHashMap<u64, BatteryWidgetState> = FxHashMap::default();
 
     let autohide_timer = if autohide_time {
@@ -435,6 +437,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let memory_legend_position = get_memory_legend_position(args, config)?;
     let temperature_legend_position = get_temperature_legend_position(config)?;
     let disk_io_legend_position = get_disk_io_legend_position(config)?;
+    let gpu_usage_legend_position = get_gpu_usage_legend_position(config)?;
+
     let disk_io_name_filter = match &config.disk_io_graph {
         Some(cfg) => get_ignore_list(&cfg.name_filter)
             .context("Update 'disk_io_graph.name_filter' in your config file")?,
@@ -494,7 +498,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         disable_click: is_flag_enabled!(disable_click, args.general, config),
         disable_keys: is_flag_enabled!(disable_keys, args.general, config),
         enable_gpu,
-        short_gpu_names: get_short_gpu_names(args, config),
+        mem_short_gpu_names: get_mem_short_gpu_names(args, config),
         enable_cache_memory,
         show_table_scroll_position: is_flag_enabled!(
             show_table_scroll_position,
@@ -562,6 +566,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                 .and_then(|cfg| cfg.use_binary_prefix)
                 .unwrap_or(false),
         disk_io_graph_show_unmounted,
+        gpu_usage_legend_position,
+        gpu_usage_short_names: get_gpu_usage_short_names(config),
     };
 
     let process_default_sort = match &args.process.process_default_sort {
@@ -741,6 +747,13 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                 ),
                             );
                         }
+                        #[cfg(feature = "gpu")]
+                        GpuUsageGraph => {
+                            gpu_graph_state_map.insert(
+                                widget.widget_id,
+                                GpuGraphWidgetState::init(ts_config, autohide_timer),
+                            );
+                        }
                         Battery => {
                             battery_state_map
                                 .insert(widget.widget_id, BatteryWidgetState::default());
@@ -831,6 +844,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temp_graph_state: TempGraphStates::init(temp_graph_state_map),
         disk_state: DiskState::init(disk_state_map),
         disk_io_graph_state: DiskIoGraphStates::init(disk_io_graph_state_map),
+        #[cfg(feature = "gpu")]
+        gpu_graph_state: GpuGraphStates::init(gpu_graph_state_map),
         battery_state: AppBatteryState::init(battery_state_map),
         basic_table_widget_state,
     };
@@ -1223,7 +1238,7 @@ fn get_enable_gpu(_: &BottomArgs, _: &Config) -> bool {
 }
 
 #[cfg(feature = "gpu")]
-fn get_short_gpu_names(args: &BottomArgs, config: &Config) -> bool {
+fn get_mem_short_gpu_names(args: &BottomArgs, config: &Config) -> bool {
     if args.memory.short_gpu_names {
         return true;
     }
@@ -1236,7 +1251,21 @@ fn get_short_gpu_names(args: &BottomArgs, config: &Config) -> bool {
 }
 
 #[cfg(not(feature = "gpu"))]
-fn get_short_gpu_names(_: &BottomArgs, _: &Config) -> bool {
+fn get_mem_short_gpu_names(_: &BottomArgs, _: &Config) -> bool {
+    false
+}
+
+#[cfg(feature = "gpu")]
+fn get_gpu_usage_short_names(config: &Config) -> bool {
+    config
+        .gpu_usage_graph
+        .as_ref()
+        .and_then(|g| g.short_gpu_names)
+        .unwrap_or(false)
+}
+
+#[cfg(not(feature = "gpu"))]
+fn get_gpu_usage_short_names(_: &Config) -> bool {
     false
 }
 
@@ -1449,6 +1478,19 @@ fn get_disk_io_legend_position(config: &Config) -> OptionResult<Option<LegendPos
             .and_then(|settings| settings.legend_position.as_ref()),
         None,
         "disk_io_graph.legend_position",
+        None,
+    )
+}
+
+fn get_gpu_usage_legend_position(config: &Config) -> OptionResult<Option<LegendPosition>> {
+    parse_legend_position(
+        None,
+        config
+            .gpu_usage_graph
+            .as_ref()
+            .and_then(|settings| settings.legend_position.as_ref()),
+        None,
+        "gpu_graph.legend_position",
         None,
     )
 }

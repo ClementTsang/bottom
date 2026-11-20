@@ -138,7 +138,7 @@ impl Painter {
                 {
                     let mut colour_index = 0;
                     let gpu_styles = &self.styles.gpu_colours;
-                    let short_gpu_names = app_state.app_config_fields.short_gpu_names;
+                    let short_gpu_names = app_state.app_config_fields.mem_short_gpu_names;
                     let gpu_count = data.gpu_harvest.len();
 
                     for (gpu_index, (name, harvest)) in data.gpu_harvest.iter().enumerate() {

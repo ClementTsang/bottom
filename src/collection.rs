@@ -61,7 +61,9 @@ pub struct Data {
     #[cfg(feature = "zfs")]
     pub arc: Option<memory::MemData>,
     #[cfg(feature = "gpu")]
-    pub gpu: Option<Vec<(String, memory::MemData)>>,
+    pub gpu_memory: Option<Vec<(String, memory::MemData)>>,
+    #[cfg(feature = "gpu")]
+    pub gpu_usage: Option<Vec<(String, f32)>>,
 }
 
 impl Default for Data {
@@ -84,7 +86,9 @@ impl Default for Data {
             #[cfg(feature = "zfs")]
             arc: None,
             #[cfg(feature = "gpu")]
-            gpu: None,
+            gpu_memory: None,
+            #[cfg(feature = "gpu")]
+            gpu_usage: None,
         }
     }
 }
@@ -109,7 +113,8 @@ impl Data {
         }
         #[cfg(feature = "gpu")]
         {
-            self.gpu = None;
+            self.gpu_memory = None;
+            self.gpu_usage = None;
         }
     }
 }
@@ -459,6 +464,7 @@ impl DataCollector {
             let mut local_gpu: Vec<(String, memory::MemData)> = Vec::new();
             let mut local_gpu_pids: Vec<IntHashMap<Pid, (u64, u32)>> = Vec::new();
             let mut local_gpu_total_mem: u64 = 0;
+            let mut local_gpu_overall_util: Vec<(String, f32)> = Vec::new();
 
             #[cfg(feature = "nvidia")]
             if let Some(data) = nvidia::get_nvidia_gpu_data(self) {
@@ -476,6 +482,9 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
+                if let Some(mut overall) = data.overall_utilization {
+                    local_gpu_overall_util.append(&mut overall);
+                }
             }
 
             #[cfg(target_os = "linux")]
@@ -488,6 +497,9 @@ impl DataCollector {
                 if let Some(mut proc) = data.process_data {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
+                }
+                if let Some(overall) = data.overall_utilization {
+                    local_gpu_overall_util.append(&mut overall.clone());
                 }
             }
 
@@ -502,19 +514,58 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
+                if let Some(mut overall) = data.overall_utilization {
+                    local_gpu_overall_util.append(&mut overall);
+                }
             }
 
             #[cfg(all(feature = "gpu", not(target_os = "linux")))]
             if let Some(gpus) = &self.sysinfo_gpus
-                && let Some(mut mem) =
+                && let Some(data) =
                     gpu::sysinfo_backend::collect_sysinfo_gpu_data(gpus, &self.widgets_to_harvest)
             {
-                local_gpu.append(&mut mem);
+                if let Some(mut mem) = data.memory {
+                    local_gpu.append(&mut mem);
+                }
+
+                if let Some(mut overall) = data.overall_utilization {
+                    local_gpu_overall_util.append(&mut overall);
+                }
             }
 
-            self.data.gpu = (!local_gpu.is_empty()).then_some(local_gpu);
+            let gpu_usage = if !local_gpu.is_empty() {
+                if !local_gpu_overall_util.is_empty() {
+                    Some(local_gpu_overall_util)
+                } else if !local_gpu_pids.is_empty() {
+                    Some(
+                        local_gpu
+                            .iter()
+                            .zip(local_gpu_pids.iter())
+                            .map(|((name, _), procs)| {
+                                let total: u64 = procs.values().map(|(_, u)| *u as u64).sum();
+                                let count = procs.len() as u64;
+                                let avg = total.checked_div(count).unwrap_or(0);
+                                (name.clone(), (avg as f32).clamp(0.0, 100.0))
+                            })
+                            .collect(),
+                    )
+                } else {
+                    // GPUs exist but no process data (idle). Emit 0% for each.
+                    Some(
+                        local_gpu
+                            .iter()
+                            .map(|(name, _)| (name.clone(), 0.0_f32))
+                            .collect(),
+                    )
+                }
+            } else {
+                None
+            };
+
+            self.data.gpu_memory = (!local_gpu.is_empty()).then_some(local_gpu);
             self.gpu_pids = (!local_gpu_pids.is_empty()).then_some(local_gpu_pids);
             self.gpus_total_mem = (local_gpu_total_mem > 0).then_some(local_gpu_total_mem);
+            self.data.gpu_usage = gpu_usage;
         }
     }
 

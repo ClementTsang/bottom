@@ -18,6 +18,7 @@ pub struct GpusData {
     pub memory: Option<Vec<(String, MemData)>>,
     pub temperature: Option<Vec<TempSensorData>>,
     pub procs: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
+    pub overall_utilization: Option<Vec<(String, f32)>>,
 }
 
 /// Wrapper around Nvml::init
@@ -210,10 +211,16 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
     let mut temp_vec = Vec::with_capacity(max_num_gpus);
     let mut mem_vec = Vec::with_capacity(max_num_gpus);
     let mut proc_vec = Vec::with_capacity(max_num_gpus);
+    let mut overall_util_vec = Vec::with_capacity(max_num_gpus);
     let mut total_mem = 0;
 
     for device in gpu_iter {
         if let Ok(name) = device.name() {
+            if let Ok(util_rates) = device.utilization_rates() {
+                let sm_util = util_rates.gpu as f32;
+                overall_util_vec.push((name.clone(), sm_util));
+            }
+
             if widgets_to_harvest.use_mem
                 && let Ok(mem) = device.memory_info()
                 && let Some(total_bytes) = NonZeroU64::new(mem.total)
@@ -326,6 +333,11 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
         },
         procs: if !proc_vec.is_empty() {
             Some((total_mem, proc_vec))
+        } else {
+            None
+        },
+        overall_utilization: if !overall_util_vec.is_empty() {
+            Some(overall_util_vec)
         } else {
             None
         },

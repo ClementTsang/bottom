@@ -62,6 +62,10 @@ pub struct TimeSeriesData {
     /// GPU memory data.
     pub gpu_mem: HashMap<String, Values>,
 
+    #[cfg(feature = "gpu")]
+    /// GPU utilization data as a percentage.
+    pub gpu_usage: HashMap<String, Values>,
+
     /// Temperature data.
     ///
     /// TODO: Maybe make this use TypedTemperature?
@@ -152,14 +156,14 @@ impl TimeSeriesData {
 
         #[cfg(feature = "gpu")]
         {
-            if let Some(gpu) = &data.gpu {
+            if let Some(gpu_mem_data) = &data.gpu_memory {
                 let mut not_visited = self
                     .gpu_mem
                     .keys()
                     .map(String::to_owned)
                     .collect::<HashSet<_>>();
 
-                for (name, new_data) in gpu {
+                for (name, new_data) in gpu_mem_data {
                     not_visited.remove(name);
 
                     if !self.gpu_mem.contains_key(name) {
@@ -181,6 +185,42 @@ impl TimeSeriesData {
                 }
             } else {
                 for g in self.gpu_mem.values_mut() {
+                    g.insert_break();
+                }
+            }
+        }
+
+        #[cfg(feature = "gpu")]
+        {
+            if let Some(gpu_usage_data) = &data.gpu_usage {
+                let mut not_visited = self
+                    .gpu_usage
+                    .keys()
+                    .map(String::to_owned)
+                    .collect::<HashSet<_>>();
+
+                for (name, usage) in gpu_usage_data {
+                    not_visited.remove(name);
+
+                    if !self.gpu_usage.contains_key(name) {
+                        self.gpu_usage
+                            .insert(name.to_string(), ChunkedData::default());
+                    }
+
+                    let curr = self
+                        .gpu_usage
+                        .get_mut(name)
+                        .expect("entry must exist as it was created above");
+                    curr.push(*usage as f64);
+                }
+
+                for nv in not_visited {
+                    if let Some(entry) = self.gpu_usage.get_mut(&nv) {
+                        entry.insert_break();
+                    }
+                }
+            } else {
+                for g in self.gpu_usage.values_mut() {
                     g.insert_break();
                 }
             }
@@ -327,15 +367,26 @@ impl TimeSeriesData {
 
         #[cfg(feature = "gpu")]
         {
-            self.gpu_mem.retain(|_, gpu| {
-                let _ = gpu.prune(end);
+            self.gpu_mem.retain(|_, gpu_mem| {
+                let _ = gpu_mem.prune(end);
 
                 // Remove the entry if it is empty. We can always add it again
                 // later.
-                if gpu.no_elements() {
+                if gpu_mem.no_elements() {
                     false
                 } else {
-                    gpu.shrink_to_fit();
+                    gpu_mem.shrink_to_fit();
+                    true
+                }
+            });
+
+            self.gpu_usage.retain(|_, gpu_usage| {
+                let _ = gpu_usage.prune(end);
+
+                if gpu_usage.no_elements() {
+                    false
+                } else {
+                    gpu_usage.shrink_to_fit();
                     true
                 }
             });

@@ -86,7 +86,10 @@ pub struct InnerData {
     #[cfg(feature = "zfs")]
     pub(crate) arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
+    /// GPU data. In sorted order by name.
     pub(crate) gpu_harvest: Vec<(String, MemData)>,
+    #[cfg(feature = "gpu")]
+    pub(crate) gpu_utilization: Vec<(String, f32)>,
     pub(crate) cpu_harvest: CpuHarvest,
     pub(crate) load_avg_harvest: LoadAvgHarvest,
     pub(crate) process_data: ProcessData,
@@ -124,6 +127,8 @@ impl Default for InnerData {
             arc_harvest: None,
             #[cfg(feature = "gpu")]
             gpu_harvest: Vec::default(),
+            #[cfg(feature = "gpu")]
+            gpu_utilization: Vec::default(),
             starting_total_network: None,
         }
     }
@@ -184,8 +189,14 @@ impl InnerData {
         }
 
         #[cfg(feature = "gpu")]
-        if let Some(gpu) = data.gpu {
+        if let Some(gpu) = data.gpu_memory {
             self.gpu_harvest = gpu;
+            self.gpu_harvest.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        }
+
+        #[cfg(feature = "gpu")]
+        if let Some(gpu_util) = data.gpu_usage {
+            self.gpu_utilization = gpu_util;
         }
 
         if let Some(cpu) = data.cpu {

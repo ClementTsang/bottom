@@ -6,11 +6,12 @@ use crate::{
     utils::input::InputFieldState,
     widgets::{
         BatteryWidgetState, CpuWidgetState, DiskIoGraphWidgetState, DiskTableWidget,
-        MemWidgetState, NetWidgetState, ProcWidgetState, TempGraphWidgetState, TempWidgetState,
-        query::ProcessQuery,
+        GpuGraphWidgetState, MemWidgetState, NetWidgetState, ProcWidgetState, TempGraphWidgetState,
+        TempWidgetState, query::ProcessQuery,
     },
 };
 
+// TODO: Update this system.
 pub struct AppWidgetStates {
     pub cpu_state: CpuState,
     pub mem_state: MemState,
@@ -20,6 +21,7 @@ pub struct AppWidgetStates {
     pub temp_graph_state: TempGraphStates,
     pub disk_state: DiskState,
     pub disk_io_graph_state: DiskIoGraphStates,
+    pub gpu_graph_state: GpuGraphStates,
     pub battery_state: AppBatteryState,
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
 }
@@ -158,6 +160,20 @@ impl MemState {
     }
 
     pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut MemWidgetState> {
+        self.widget_states.get_mut(&widget_id)
+    }
+}
+
+pub struct GpuGraphStates {
+    pub widget_states: HashMap<u64, GpuGraphWidgetState>,
+}
+
+impl GpuGraphStates {
+    pub fn init(widget_states: HashMap<u64, GpuGraphWidgetState>) -> Self {
+        GpuGraphStates { widget_states }
+    }
+
+    pub fn get_mut_widget_state(&mut self, widget_id: u64) -> Option<&mut GpuGraphWidgetState> {
         self.widget_states.get_mut(&widget_id)
     }
 }

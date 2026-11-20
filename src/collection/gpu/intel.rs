@@ -5,6 +5,7 @@
 
 use std::{
     cell::RefCell,
+    fs::read_to_string,
     num::NonZeroU64,
     path::{Path, PathBuf},
     time::{Duration, Instant},
@@ -46,6 +47,7 @@ impl IntelDriver {
 pub struct IntelGpuData {
     pub memory: Option<Vec<(String, MemData)>>,
     pub process_data: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
+    pub overall_utilization: Option<Vec<(String, f32)>>,
 }
 
 /// Intel GPU VRAM usage.
@@ -97,6 +99,74 @@ fn get_intel_vram(_device_path: &Path, _driver: IntelDriver) -> Option<IntelGpuM
     None
 }
 
+#[derive(Default)]
+struct EngineBusy {
+    render: u64,
+    copy: u64,
+    video: u64,
+    video_enhance: u64,
+    compute: u64,
+}
+
+thread_local! {
+    static PREV_ENGINE_BUSY: RefCell<HashMap<PathBuf, EngineBusy>> = RefCell::new(HashMap::default());
+}
+
+/// Read overall GPU utilization. Returns the average percentage across all
+/// engines for the given device path.
+fn get_intel_gpu_busy(device_path: &Path, interval: Duration) -> Option<f32> {
+    let engines_dir = device_path.join("engine");
+    if !engines_dir.exists() {
+        return None;
+    }
+
+    let mut cur = EngineBusy::default();
+    for engine_entry in engines_dir.read_dir().ok()?.flatten() {
+        let engine_path = engine_entry.path();
+        let engine_name = engine_path.file_name()?.to_str()?;
+        let busy_time_path = engine_path.join("busy_time");
+
+        if let Ok(data) = read_to_string(&busy_time_path)
+            && let Ok(ns) = data.trim().parse::<u64>()
+        {
+            match engine_name {
+                "render_3d_0" | "render" => cur.render = ns,
+                "copy" | "copy_1" => cur.copy = ns,
+                "video" | "video_0" => cur.video = ns,
+                "video_enhance" | "video_enhance_0" => cur.video_enhance = ns,
+                "compute" | "compute_0" => cur.compute = ns,
+                _ => {}
+            }
+        }
+    }
+
+    PREV_ENGINE_BUSY.with_borrow_mut(|prev_cache| {
+        let prev = prev_cache.entry(device_path.to_path_buf()).or_default();
+        let interval_ns = interval.as_nanos() as u64;
+
+        if interval_ns == 0 {
+            return None;
+        }
+
+        // Compute busy_time delta across all engines and average.
+        let delta = diff_usage(prev.render, cur.render, &interval)
+            + diff_usage(prev.copy, cur.copy, &interval)
+            + diff_usage(prev.video, cur.video, &interval)
+            + diff_usage(prev.video_enhance, cur.video_enhance, &interval)
+            + diff_usage(prev.compute, cur.compute, &interval);
+
+        // delta is in ns; percentage = (delta / interval) * 100
+        let result = if interval_ns > 0 {
+            (delta as f64 / interval_ns as f64 * 100.0).clamp(0.0, 100.0) as f32
+        } else {
+            0.0
+        };
+
+        *prev = cur;
+        Some(result)
+    })
+}
+
 fn get_intel_fdinfo(
     device_path: &Path, driver: IntelDriver,
 ) -> Option<IntHashMap<Pid, IntelGpuProc>> {
@@ -111,8 +181,9 @@ fn get_intel_fdinfo(
                     "drm-engine-video" => usage.video_usage += value,
                     "drm-engine-video-enhance" => usage.video_enhance_usage += value,
                     "drm-engine-compute" => usage.compute_usage += value,
-                    // Memory keys are in KiB: local0 = discrete VRAM, system0 =
-                    // shared system RAM.
+                    // Memory keys are in KiB:
+                    // - local0 = discrete VRAM
+                    // - system0 = shared system RAM
                     "drm-total-local0" | "drm-total-system0" => usage.mem_used += value << 10,
                     _ => {}
                 }
@@ -196,6 +267,7 @@ pub fn get_intel_gpu_data(
     let num_gpus = i915_devices.len() + xe_devices.len();
     let mut mem_vec = Vec::with_capacity(num_gpus);
     let mut proc_vec = Vec::with_capacity(num_gpus);
+    let mut overall_util_vec = Vec::with_capacity(num_gpus);
     let mut total_mem = 0;
 
     PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
@@ -221,6 +293,10 @@ pub fn get_intel_gpu_data(
         .enumerate()
     {
         let device_name = get_intel_name(num_gpus, idx);
+
+        if let Some(busy) = get_intel_gpu_busy(&device_path, interval) {
+            overall_util_vec.push((device_name.clone(), busy));
+        }
 
         if let Some(mem) = get_intel_vram(&device_path, driver) {
             if widgets_to_harvest.use_mem
@@ -290,5 +366,6 @@ pub fn get_intel_gpu_data(
     Some(IntelGpuData {
         memory: (!mem_vec.is_empty()).then_some(mem_vec),
         process_data: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
+        overall_utilization: (!overall_util_vec.is_empty()).then_some(overall_util_vec),
     })
 }

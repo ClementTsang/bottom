@@ -941,6 +941,7 @@ pub enum BottomWidgetType {
     TempGraph,
     Disk,
     DiskIoGraph,
+    GpuUsageGraph,
     BasicCpu,
     BasicMem,
     BasicNet,
@@ -956,7 +957,10 @@ impl BottomWidgetType {
 
     pub fn is_widget_graph(&self) -> bool {
         use BottomWidgetType::*;
-        matches!(self, Cpu | Net | Mem | TempGraph | DiskIoGraph)
+        matches!(
+            self,
+            Cpu | Net | Mem | TempGraph | DiskIoGraph | GpuUsageGraph
+        )
     }
 
     pub fn get_pretty_name(&self) -> &str {
@@ -970,6 +974,7 @@ impl BottomWidgetType {
             Disk => "Disks",
             Battery => "Battery",
             TempGraph => "Temperature",
+            GpuUsageGraph => "GPU",
             _ => "",
         }
     }
@@ -989,6 +994,7 @@ impl std::str::FromStr for BottomWidgetType {
             "temp_graph" | "temperature_graph" => Ok(BottomWidgetType::TempGraph),
             "disk" => Ok(BottomWidgetType::Disk),
             "disk_io_graph" => Ok(BottomWidgetType::DiskIoGraph),
+            "gpu" => Ok(BottomWidgetType::GpuUsageGraph),
             "empty" => Ok(BottomWidgetType::Empty),
             #[cfg(feature = "battery")]
             "battery" | "batt" => Ok(BottomWidgetType::Battery),
@@ -1045,6 +1051,8 @@ Supported widget names:
 |              disk              |
 +--------------------------------+
 |          disk_io_graph         |
++--------------------------------+
+|              gpu             |
 +--------------------------------+
 |              empty             |
 +--------------------------------+

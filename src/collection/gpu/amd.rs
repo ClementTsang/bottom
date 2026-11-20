@@ -31,12 +31,22 @@ use crate::{
 pub struct AmdGpuData {
     pub memory: Option<Vec<(String, MemData)>>,
     pub process_data: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
+    pub overall_utilization: Option<Vec<(String, f32)>>,
 }
 
 /// AMD GPU VRAM usage.
 pub struct AmdGpuMemory {
     pub total: u64,
     pub used: u64,
+}
+
+/// Read overall GPU utilization from sysfs (`gpu_busy_percent`).
+fn get_amd_gpu_busy(device_path: &Path) -> Option<f32> {
+    let gpu_busy_path = device_path.join("gpu_busy_percent");
+    let Ok(busy_data) = read_to_string(&gpu_busy_path) else {
+        return None;
+    };
+    busy_data.trim().parse::<f32>().ok()
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
@@ -155,6 +165,7 @@ pub fn get_amd_gpu_data(
     let num_gpu = device_paths.len();
     let mut mem_vec = Vec::with_capacity(num_gpu);
     let mut proc_vec = Vec::with_capacity(num_gpu);
+    let mut overall_util_vec = Vec::with_capacity(num_gpu);
     let mut total_mem = 0;
 
     PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
@@ -180,6 +191,11 @@ pub fn get_amd_gpu_data(
             }
 
             total_mem += mem.total
+        }
+
+        // Collect overall GPU utilization from sysfs (independent of use_proc)
+        if let Some(busy) = get_amd_gpu_busy(&device_path) {
+            overall_util_vec.push((device_name.clone(), busy));
         }
 
         if widgets_to_harvest.use_proc
@@ -259,5 +275,6 @@ pub fn get_amd_gpu_data(
     Some(AmdGpuData {
         memory: (!mem_vec.is_empty()).then_some(mem_vec),
         process_data: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
+        overall_utilization: (!overall_util_vec.is_empty()).then_some(overall_util_vec),
     })
 }

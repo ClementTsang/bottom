@@ -9,6 +9,11 @@ use sysinfo::Gpus;
 
 use crate::{app::layout_manager::UsedWidgets, collection::memory::MemData};
 
+pub struct SysinfoGpuData {
+    pub memory: Option<Vec<(String, MemData)>>,
+    pub overall_utilization: Option<Vec<(String, f32)>>,
+}
+
 /// Returns the human-readable name for a GPU vendor.
 fn vendor_name(vendor: Option<&str>) -> String {
     match vendor {
@@ -25,10 +30,9 @@ fn vendor_name(vendor: Option<&str>) -> String {
 /// Only includes memory data if the platform reports VRAM (Windows).
 /// On macOS/FreeBSD, memory is always `None` because GPUs share
 /// system memory with no dedicated VRAM.
-pub fn collect_sysinfo_gpu_data(
-    gpus: &Gpus, widgets: &UsedWidgets,
-) -> Option<Vec<(String, MemData)>> {
+pub fn collect_sysinfo_gpu_data(gpus: &Gpus, widgets: &UsedWidgets) -> Option<SysinfoGpuData> {
     let mut mem_vec: Vec<(String, MemData)> = Vec::new();
+    let mut overall_util_vec: Vec<(String, f32)> = Vec::new();
 
     for gpu in gpus.iter() {
         let name = vendor_name(gpu.vendor());
@@ -45,7 +49,7 @@ pub fn collect_sysinfo_gpu_data(
                 && let Some(total_bytes) = NonZeroU64::new(total)
             {
                 mem_vec.push((
-                    display_name,
+                    display_name.clone(),
                     MemData {
                         total_bytes,
                         used_bytes: used,
@@ -53,11 +57,22 @@ pub fn collect_sysinfo_gpu_data(
                 ));
             }
         }
+
+        if let Some(usage) = gpu.usage() {
+            overall_util_vec.push((display_name, usage));
+        }
     }
 
-    if !mem_vec.is_empty() {
-        Some(mem_vec)
-    } else {
-        None
-    }
+    Some(SysinfoGpuData {
+        memory: if !mem_vec.is_empty() {
+            Some(mem_vec)
+        } else {
+            None
+        },
+        overall_utilization: if !overall_util_vec.is_empty() {
+            Some(overall_util_vec)
+        } else {
+            None
+        },
+    })
 }
