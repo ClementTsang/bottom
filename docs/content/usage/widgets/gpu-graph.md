@@ -34,5 +34,8 @@ How we get GPU data depends on the platform:
 
 - On Linux:
   - NVIDIA: Using the NVML crate
-  - AMD/Intel: Manually parsing sysfs
+  - AMD: Manually parsing sysfs
+  - Intel: Summing per-process engine usage from `/proc/<pid>/fdinfo`. Note this only includes processes that
+    bottom has permissions to inspect, so it may miss some processes unless run with elevated privileges (which
+    comes with its own set of risks).
 - Other platforms use sysinfo's GPU API

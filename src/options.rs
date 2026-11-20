@@ -804,6 +804,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         use_mem,
         use_cache: use_mem && enable_cache_memory,
         use_gpu: enable_gpu,
+        use_gpu_graph: used_widget_set.contains(&GpuUsageGraph),
         use_net: used_widget_set.contains(&Net) || used_widget_set.contains(&BasicNet),
         use_proc: used_widget_set.contains(&Proc),
         use_disk: used_widget_set.contains(&Disk),
