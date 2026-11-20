@@ -994,6 +994,7 @@ impl std::str::FromStr for BottomWidgetType {
             "temp_graph" | "temperature_graph" => Ok(BottomWidgetType::TempGraph),
             "disk" => Ok(BottomWidgetType::Disk),
             "disk_io_graph" => Ok(BottomWidgetType::DiskIoGraph),
+            #[cfg(feature = "gpu")]
             "gpu" => Ok(BottomWidgetType::GpuUsageGraph),
             "empty" => Ok(BottomWidgetType::Empty),
             #[cfg(feature = "battery")]
