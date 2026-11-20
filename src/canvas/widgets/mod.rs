@@ -4,6 +4,7 @@ pub mod cpu_basic;
 pub mod cpu_graph;
 pub mod disk_io_graph;
 pub mod disk_table;
+#[cfg(feature = "gpu")]
 pub mod gpu_graph;
 pub mod mem_basic;
 pub mod mem_graph;

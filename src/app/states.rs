@@ -5,11 +5,16 @@ use crate::{
     constants,
     utils::input::InputFieldState,
     widgets::{
-        BatteryWidgetState, CpuWidgetState, DiskIoGraphWidgetState, DiskTableWidget,
-        GpuGraphWidgetState, MemWidgetState, NetWidgetState, ProcWidgetState, TempGraphWidgetState,
-        TempWidgetState, query::ProcessQuery,
+        CpuWidgetState, DiskIoGraphWidgetState, DiskTableWidget, MemWidgetState, NetWidgetState,
+        ProcWidgetState, TempGraphWidgetState, TempWidgetState, query::ProcessQuery,
     },
 };
+
+#[cfg(feature = "gpu")]
+use crate::widgets::GpuGraphWidgetState;
+
+#[cfg(feature = "battery")]
+use crate::widgets::BatteryWidgetState;
 
 // TODO: Update this system.
 pub struct AppWidgetStates {
@@ -21,9 +26,11 @@ pub struct AppWidgetStates {
     pub temp_graph_state: TempGraphStates,
     pub disk_state: DiskState,
     pub disk_io_graph_state: DiskIoGraphStates,
-    pub gpu_graph_state: GpuGraphStates,
+    #[cfg(feature = "battery")]
     pub battery_state: AppBatteryState,
     pub basic_table_widget_state: Option<BasicTableWidgetState>,
+    #[cfg(feature = "gpu")]
+    pub gpu_graph_state: GpuGraphStates,
 }
 
 #[derive(Debug)]
@@ -164,10 +171,12 @@ impl MemState {
     }
 }
 
+#[cfg(feature = "gpu")]
 pub struct GpuGraphStates {
     pub widget_states: HashMap<u64, GpuGraphWidgetState>,
 }
 
+#[cfg(feature = "gpu")]
 impl GpuGraphStates {
     pub fn init(widget_states: HashMap<u64, GpuGraphWidgetState>) -> Self {
         GpuGraphStates { widget_states }
@@ -254,10 +263,12 @@ pub struct BasicTableWidgetState {
     pub right_brc: Option<(u16, u16)>,
 }
 
+#[cfg(feature = "battery")]
 pub struct AppBatteryState {
     pub widget_states: HashMap<u64, BatteryWidgetState>,
 }
 
+#[cfg(feature = "battery")]
 impl AppBatteryState {
     pub fn init(widget_states: HashMap<u64, BatteryWidgetState>) -> Self {
         AppBatteryState { widget_states }

@@ -95,7 +95,9 @@ pub struct AppConfigFields {
     pub disk_show_unmounted: bool,
     pub disk_use_binary_prefix: bool,
     pub disk_io_graph_show_unmounted: bool,
+    #[cfg(feature = "gpu")]
     pub gpu_usage_legend_position: Option<LegendPosition>,
+    #[cfg(feature = "gpu")]
     pub gpu_usage_short_names: bool,
 }
 

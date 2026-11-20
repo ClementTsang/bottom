@@ -385,6 +385,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let mut disk_io_graph_state_map: FxHashMap<u64, DiskIoGraphWidgetState> = FxHashMap::default();
     #[cfg(feature = "gpu")]
     let mut gpu_graph_state_map: FxHashMap<u64, GpuGraphWidgetState> = FxHashMap::default();
+    #[cfg(feature = "battery")]
     let mut battery_state_map: FxHashMap<u64, BatteryWidgetState> = FxHashMap::default();
 
     let autohide_timer = if autohide_time {
@@ -437,6 +438,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let memory_legend_position = get_memory_legend_position(args, config)?;
     let temperature_legend_position = get_temperature_legend_position(config)?;
     let disk_io_legend_position = get_disk_io_legend_position(config)?;
+    #[cfg(feature = "gpu")]
     let gpu_usage_legend_position = get_gpu_usage_legend_position(config)?;
 
     let disk_io_name_filter = match &config.disk_io_graph {
@@ -566,7 +568,9 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                 .and_then(|cfg| cfg.use_binary_prefix)
                 .unwrap_or(false),
         disk_io_graph_show_unmounted,
+        #[cfg(feature = "gpu")]
         gpu_usage_legend_position,
+        #[cfg(feature = "gpu")]
         gpu_usage_short_names: get_gpu_usage_short_names(config),
     };
 
@@ -747,14 +751,15 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                 ),
                             );
                         }
-                        #[cfg(feature = "gpu")]
                         GpuUsageGraph => {
+                            #[cfg(feature = "gpu")]
                             gpu_graph_state_map.insert(
                                 widget.widget_id,
                                 GpuGraphWidgetState::init(ts_config, autohide_timer),
                             );
                         }
                         Battery => {
+                            #[cfg(feature = "battery")]
                             battery_state_map
                                 .insert(widget.widget_id, BatteryWidgetState::default());
                         }
@@ -844,10 +849,11 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temp_graph_state: TempGraphStates::init(temp_graph_state_map),
         disk_state: DiskState::init(disk_state_map),
         disk_io_graph_state: DiskIoGraphStates::init(disk_io_graph_state_map),
-        #[cfg(feature = "gpu")]
-        gpu_graph_state: GpuGraphStates::init(gpu_graph_state_map),
+        #[cfg(feature = "battery")]
         battery_state: AppBatteryState::init(battery_state_map),
         basic_table_widget_state,
+        #[cfg(feature = "gpu")]
+        gpu_graph_state: GpuGraphStates::init(gpu_graph_state_map),
     };
 
     let current_widget = widget_map
@@ -1264,11 +1270,6 @@ fn get_gpu_usage_short_names(config: &Config) -> bool {
         .unwrap_or(false)
 }
 
-#[cfg(not(feature = "gpu"))]
-fn get_gpu_usage_short_names(_: &Config) -> bool {
-    false
-}
-
 #[cfg(not(target_os = "windows"))]
 fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
     enabled_option_with_deprecated!(
@@ -1482,6 +1483,7 @@ fn get_disk_io_legend_position(config: &Config) -> OptionResult<Option<LegendPos
     )
 }
 
+#[cfg(feature = "gpu")]
 fn get_gpu_usage_legend_position(config: &Config) -> OptionResult<Option<LegendPosition>> {
     parse_legend_position(
         None,

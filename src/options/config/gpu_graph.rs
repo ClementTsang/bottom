@@ -14,6 +14,5 @@ pub struct GpuUsageGraphConfig {
     pub(crate) legend_position: Option<String>,
 
     /// Whether to use short GPU names in the GPU usage widget.
-    #[cfg_attr(not(feature = "gpu"), allow(dead_code))]
     pub(crate) short_gpu_names: Option<bool>,
 }

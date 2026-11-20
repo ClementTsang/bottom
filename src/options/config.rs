@@ -2,6 +2,7 @@ pub mod cpu;
 pub mod disk;
 pub mod disk_io_graph;
 pub mod flags;
+#[cfg(feature = "gpu")]
 pub mod gpu_graph;
 mod ignore_list;
 pub mod layout;
@@ -16,6 +17,7 @@ use cpu::CpuConfig;
 use disk::DiskConfig;
 use disk_io_graph::DiskIoGraphConfig;
 use flags::GeneralConfig;
+#[cfg(feature = "gpu")]
 use gpu_graph::GpuUsageGraphConfig;
 use memory_graph::MemoryGraphConfig;
 use network_graph::NetworkGraphConfig;
@@ -46,6 +48,7 @@ pub struct Config {
     #[serde(alias = "memory")]
     pub(crate) memory_graph: Option<MemoryGraphConfig>,
     pub(crate) cpu: Option<CpuConfig>,
+    #[cfg(feature = "gpu")]
     pub(crate) gpu_graph: Option<GpuUsageGraphConfig>,
 }
 
