@@ -64,7 +64,7 @@ pub struct TimeSeriesData {
 
     #[cfg(feature = "gpu")]
     /// GPU memory data.
-    pub gpu_mem: HashMap<GpuKey, Values>,
+    pub gpu_mem: BTreeMap<GpuKey, Values>,
 
     #[cfg(feature = "gpu")]
     /// GPU utilization data as a percentage.

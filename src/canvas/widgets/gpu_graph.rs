@@ -9,7 +9,7 @@ use crate::{
     canvas::{
         Painter,
         components::time_series::{GraphData, LegendConstraints},
-        drawing_utils::should_hide_x_label,
+        drawing_utils::{has_visible_data, should_hide_x_label},
     },
     collection::duplicate_gpu_names,
     components::time_series::GraphDrawCtx,
@@ -38,13 +38,19 @@ impl Painter {
 
             let gpu_styles = &self.styles.gpu_colours;
             let short_gpu_names = app_state.app_config_fields.gpu_usage_short_names;
-            let gpu_series = &data.time_series_data.gpu_usage;
+            let display_time = gpu_state.graph.state_mut().current_display_time();
+            let gpu_series: Vec<_> = data
+                .time_series_data
+                .gpu_usage
+                .iter()
+                .filter(|(_, values)| has_visible_data(values, time, display_time))
+                .collect();
             let gpu_count = gpu_series.len();
-            let duplicate_names = duplicate_gpu_names(gpu_series.keys());
+            let duplicate_names = duplicate_gpu_names(gpu_series.iter().map(|(key, _)| *key));
 
             let mut graph_data: Vec<GraphData<'_>> = Vec::with_capacity(gpu_count);
 
-            for (itx, (key, values)) in gpu_series.iter().enumerate() {
+            for (itx, (key, values)) in gpu_series.into_iter().enumerate() {
                 let style = if gpu_styles.is_empty() {
                     Style::default()
                 } else {
