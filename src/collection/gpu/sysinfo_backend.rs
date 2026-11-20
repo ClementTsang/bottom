@@ -70,7 +70,7 @@ pub fn collect_sysinfo_gpu_data(
         }
 
         if let Some(usage) = gpu.usage() {
-            overall_util_vec.push((display_name, usage));
+            overall_util_vec.push((display_name, usage.clamp(0.0, 100.0)));
         }
     }
 
