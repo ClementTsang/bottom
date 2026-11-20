@@ -81,6 +81,9 @@ pub struct TimeSeriesData {
 }
 
 impl TimeSeriesData {
+    // FIXME: insert_break doesn't advance the series' index, and new series
+    // start at 0, so they can be misaligned against time. May need to use
+    // `try_push(None)` instead for missing samples.
     /// Add a new data point.
     pub fn add(
         &mut self, data: &Data, used_widgets: &UsedWidgets, settings: &AppConfigFields,
