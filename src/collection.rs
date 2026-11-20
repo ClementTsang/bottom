@@ -498,8 +498,8 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
-                if let Some(overall) = data.overall_utilization {
-                    local_gpu_overall_util.append(&mut overall.clone());
+                if let Some(mut overall) = data.overall_utilization {
+                    local_gpu_overall_util.append(&mut overall);
                 }
             }
 
