@@ -22,7 +22,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 ---
 
-## 0.15.1 - Unreleased
+## 0.16.0 - Unreleased
 
 ### Features
 
