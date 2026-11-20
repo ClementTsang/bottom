@@ -29,12 +29,11 @@ impl Painter {
 
             let gpu_styles = &self.styles.gpu_colours;
             let short_gpu_names = app_state.app_config_fields.gpu_usage_short_names;
-            let gpu_count = data.gpu_harvest.len();
-            let gpu_names = data.gpu_harvest.iter().map(|(name, _)| name);
+            let gpu_count = data.gpu_utilization.len();
 
-            let mut graph_data: Vec<GraphData<'_>> = Vec::with_capacity(gpu_names.len());
+            let mut graph_data: Vec<GraphData<'_>> = Vec::with_capacity(gpu_count);
 
-            for (itx, name) in gpu_names.enumerate() {
+            for (itx, (name, current_util)) in data.gpu_utilization.iter().enumerate() {
                 let Some(values) = data.time_series_data.gpu_usage.get(name) else {
                     continue;
                 };
@@ -55,14 +54,7 @@ impl Painter {
                     name.to_string()
                 };
 
-                let current_util: f32 = data
-                    .gpu_utilization
-                    .iter()
-                    .find(|(n, _)| n == name)
-                    .map(|(_, u)| *u)
-                    .unwrap_or(0.0);
-
-                let label = format!("{display_name}: {:.0}%", current_util);
+                let label = format!("{display_name}: {current_util:.0}%");
 
                 graph_data.push(
                     GraphData::default()

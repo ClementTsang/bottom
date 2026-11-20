@@ -197,6 +197,7 @@ impl InnerData {
         #[cfg(feature = "gpu")]
         if let Some(gpu_util) = data.gpu_usage {
             self.gpu_utilization = gpu_util;
+            self.gpu_utilization.sort_unstable_by(|a, b| a.0.cmp(&b.0));
         }
 
         if let Some(cpu) = data.cpu {

@@ -533,10 +533,10 @@ impl DataCollector {
                 }
             }
 
-            let gpu_usage = if !local_gpu.is_empty() {
-                if !local_gpu_overall_util.is_empty() {
-                    Some(local_gpu_overall_util)
-                } else if !local_gpu_pids.is_empty() {
+            let gpu_usage = if !local_gpu_overall_util.is_empty() {
+                Some(local_gpu_overall_util)
+            } else if !local_gpu.is_empty() {
+                if !local_gpu_pids.is_empty() {
                     Some(
                         local_gpu
                             .iter()
