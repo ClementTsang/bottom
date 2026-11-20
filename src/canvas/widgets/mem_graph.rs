@@ -6,6 +6,8 @@ use ratatui::{
     style::Style,
 };
 
+#[cfg(feature = "gpu")]
+use crate::collection::duplicate_gpu_names;
 use crate::{
     app::{App, data::Values},
     canvas::{
@@ -140,9 +142,11 @@ impl Painter {
                     let gpu_styles = &self.styles.gpu_colours;
                     let short_gpu_names = app_state.app_config_fields.mem_short_gpu_names;
                     let gpu_count = data.gpu_harvest.len();
+                    let duplicate_names =
+                        duplicate_gpu_names(data.gpu_harvest.iter().map(|(key, _)| key));
 
-                    for (gpu_index, (name, harvest)) in data.gpu_harvest.iter().enumerate() {
-                        if let Some(gpu_data) = data.time_series_data.gpu_mem.get(name) {
+                    for (gpu_index, (key, harvest)) in data.gpu_harvest.iter().enumerate() {
+                        if let Some(gpu_data) = data.time_series_data.gpu_mem.get(key) {
                             let style = {
                                 if gpu_styles.is_empty() {
                                     Style::default()
@@ -161,7 +165,8 @@ impl Painter {
                                     format!("GPU{gpu_index}")
                                 }
                             } else {
-                                name.clone()
+                                key.display_name(duplicate_names.contains(key.name.as_str()))
+                                    .into_owned()
                             };
 
                             graph_data(

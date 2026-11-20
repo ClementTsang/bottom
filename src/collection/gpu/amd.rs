@@ -17,7 +17,11 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use crate::{
     app::layout_manager::UsedWidgets,
     collection::{
-        linux::drm::{collect_drm_fdinfo, diff_usage, enumerate_drm_devices, get_drm_render_nodes},
+        GpuKey,
+        linux::drm::{
+            collect_drm_fdinfo, diff_usage, enumerate_drm_devices, get_drm_render_nodes,
+            get_pci_address,
+        },
         memory::MemData,
         processes::Pid,
     },
@@ -29,9 +33,9 @@ use crate::{
 /// TODO: May be able to clean up some of these, Option<Vec> for example is a
 /// bit redundant.
 pub struct AmdGpuData {
-    pub memory: Option<Vec<(String, MemData)>>,
+    pub memory: Option<Vec<(GpuKey, MemData)>>,
     pub process_data: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
-    pub overall_utilization: Option<Vec<(String, f32)>>,
+    pub overall_utilization: Option<Vec<(GpuKey, f32)>>,
 }
 
 /// AMD GPU VRAM usage.
@@ -176,13 +180,18 @@ pub fn get_amd_gpu_data(
     for device_path in device_paths {
         let device_name = get_amd_name(&device_path)
             .unwrap_or(amd_gpu_marketing::AMDGPU_DEFAULT_NAME.to_string());
+        let key = get_pci_address(&device_path).map(|address| GpuKey {
+            address,
+            name: device_name,
+        });
 
         if let Some(mem) = get_amd_vram(&device_path) {
             if widgets_to_harvest.use_mem
+                && let Some(key) = &key
                 && let Some(total_bytes) = NonZeroU64::new(mem.total)
             {
                 mem_vec.push((
-                    device_name.clone(),
+                    key.clone(),
                     MemData {
                         total_bytes,
                         used_bytes: mem.used,
@@ -194,8 +203,10 @@ pub fn get_amd_gpu_data(
         }
 
         // Collect overall GPU utilization from sysfs (independent of use_proc)
-        if let Some(busy) = get_amd_gpu_busy(&device_path) {
-            overall_util_vec.push((device_name.clone(), busy));
+        if let Some(key) = key
+            && let Some(busy) = get_amd_gpu_busy(&device_path)
+        {
+            overall_util_vec.push((key, busy));
         }
 
         if widgets_to_harvest.use_proc

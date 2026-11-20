@@ -8,17 +8,20 @@ use nvml_wrapper::{
 
 use crate::{
     app::filter::Filter,
-    collection::{DataCollector, memory::MemData, processes::Pid, temperature::TempSensorData},
+    collection::{
+        DataCollector, GpuKey, PciAddress, memory::MemData, processes::Pid,
+        temperature::TempSensorData,
+    },
     utils::int_hash::IntHashMap,
 };
 
 pub static NVML_DATA: OnceLock<Result<Nvml, NvmlError>> = OnceLock::new();
 
 pub struct GpusData {
-    pub memory: Option<Vec<(String, MemData)>>,
+    pub memory: Option<Vec<(GpuKey, MemData)>>,
     pub temperature: Option<Vec<TempSensorData>>,
     pub procs: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
-    pub overall_utilization: Option<Vec<(String, f32)>>,
+    pub overall_utilization: Option<Vec<(GpuKey, f32)>>,
 }
 
 /// Wrapper around Nvml::init
@@ -216,17 +219,29 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
 
     for device in gpu_iter {
         if let Ok(name) = device.name() {
-            if let Ok(util_rates) = device.utilization_rates() {
+            let key = device
+                .pci_info()
+                .ok()
+                .and_then(|pci| PciAddress::parse(&pci.bus_id))
+                .map(|address| GpuKey {
+                    address,
+                    name: name.clone(),
+                });
+
+            if let Some(key) = &key
+                && let Ok(util_rates) = device.utilization_rates()
+            {
                 let sm_util = util_rates.gpu as f32;
-                overall_util_vec.push((name.clone(), sm_util));
+                overall_util_vec.push((key.clone(), sm_util));
             }
 
             if widgets_to_harvest.use_mem
+                && let Some(key) = &key
                 && let Ok(mem) = device.memory_info()
                 && let Some(total_bytes) = NonZeroU64::new(mem.total)
             {
                 mem_vec.push((
-                    name.clone(),
+                    key.clone(),
                     MemData {
                         total_bytes,
                         used_bytes: mem.used,

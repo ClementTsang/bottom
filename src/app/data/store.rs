@@ -10,6 +10,8 @@ use std::{
 use rustc_hash::FxHashMap;
 
 use super::{ProcessData, TimeSeriesData};
+#[cfg(feature = "gpu")]
+use crate::collection::GpuKey;
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
 use crate::{
@@ -88,10 +90,10 @@ pub struct InnerData {
     #[cfg(feature = "zfs")]
     pub(crate) arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
-    /// GPU data. In sorted order by name.
-    pub(crate) gpu_harvest: Vec<(String, MemData)>,
+    /// GPU data. In sorted order by PCI address.
+    pub(crate) gpu_harvest: Vec<(GpuKey, MemData)>,
     #[cfg(feature = "gpu")]
-    pub(crate) gpu_utilization: BTreeMap<String, f32>,
+    pub(crate) gpu_utilization: BTreeMap<GpuKey, f32>,
     pub(crate) cpu_harvest: CpuHarvest,
     pub(crate) load_avg_harvest: LoadAvgHarvest,
     pub(crate) process_data: ProcessData,

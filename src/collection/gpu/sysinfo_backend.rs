@@ -7,11 +7,14 @@ use std::num::NonZeroU64;
 
 use sysinfo::Gpus;
 
-use crate::{app::layout_manager::UsedWidgets, collection::memory::MemData};
+use crate::{
+    app::layout_manager::UsedWidgets,
+    collection::{GpuKey, PciAddress, memory::MemData},
+};
 
 pub struct SysinfoGpuData {
-    pub memory: Option<Vec<(String, MemData)>>,
-    pub overall_utilization: Option<Vec<(String, f32)>>,
+    pub memory: Option<Vec<(GpuKey, MemData)>>,
+    pub overall_utilization: Option<Vec<(GpuKey, f32)>>,
 }
 
 /// Returns the human-readable name for a GPU vendor.
@@ -37,8 +40,8 @@ fn vendor_name(vendor: Option<&str>) -> String {
 pub fn collect_sysinfo_gpu_data(
     gpus: &Gpus, widgets: &UsedWidgets, skip_nvidia: bool,
 ) -> Option<SysinfoGpuData> {
-    let mut mem_vec: Vec<(String, MemData)> = Vec::new();
-    let mut overall_util_vec: Vec<(String, f32)> = Vec::new();
+    let mut mem_vec: Vec<(GpuKey, MemData)> = Vec::new();
+    let mut overall_util_vec: Vec<(GpuKey, f32)> = Vec::new();
 
     for gpu in gpus.iter() {
         if skip_nvidia && gpu.vendor() == Some("NVIDIA Corporation") {
@@ -53,6 +56,17 @@ pub fn collect_sysinfo_gpu_data(
             (false, false) => format!("{name} {model}"),
         };
 
+        let pci = gpu.pci();
+        let key = GpuKey {
+            address: PciAddress {
+                domain: pci.domain,
+                bus: pci.bus,
+                device: pci.device,
+                function: pci.function,
+            },
+            name: display_name,
+        };
+
         if widgets.use_mem {
             // total_memory/used_memory returns Some only on Windows (DXGI).
             // On macOS/FreeBSD these always return None (shared memory).
@@ -60,7 +74,7 @@ pub fn collect_sysinfo_gpu_data(
                 && let Some(total_bytes) = NonZeroU64::new(total)
             {
                 mem_vec.push((
-                    display_name.clone(),
+                    key.clone(),
                     MemData {
                         total_bytes,
                         used_bytes: used,
@@ -70,7 +84,7 @@ pub fn collect_sysinfo_gpu_data(
         }
 
         if let Some(usage) = gpu.usage() {
-            overall_util_vec.push((display_name, usage.clamp(0.0, 100.0)));
+            overall_util_vec.push((key, usage.clamp(0.0, 100.0)));
         }
     }
 

@@ -11,6 +11,8 @@ use std::{
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use timeless::data::ChunkedData;
 
+#[cfg(feature = "gpu")]
+use crate::collection::GpuKey;
 use crate::{
     app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
     collection::Data,
@@ -62,11 +64,11 @@ pub struct TimeSeriesData {
 
     #[cfg(feature = "gpu")]
     /// GPU memory data.
-    pub gpu_mem: HashMap<String, Values>,
+    pub gpu_mem: HashMap<GpuKey, Values>,
 
     #[cfg(feature = "gpu")]
     /// GPU utilization data as a percentage.
-    pub gpu_usage: BTreeMap<String, Values>,
+    pub gpu_usage: BTreeMap<GpuKey, Values>,
 
     /// Temperature data.
     ///
@@ -162,23 +164,18 @@ impl TimeSeriesData {
         #[cfg(feature = "gpu")]
         {
             if let Some(gpu_mem_data) = &data.gpu_memory {
-                let mut not_visited = self
-                    .gpu_mem
-                    .keys()
-                    .map(String::to_owned)
-                    .collect::<HashSet<_>>();
+                let mut not_visited = self.gpu_mem.keys().cloned().collect::<HashSet<_>>();
 
-                for (name, new_data) in gpu_mem_data {
-                    not_visited.remove(name);
+                for (key, new_data) in gpu_mem_data {
+                    not_visited.remove(key);
 
-                    if !self.gpu_mem.contains_key(name) {
-                        self.gpu_mem
-                            .insert(name.to_string(), ChunkedData::default());
+                    if !self.gpu_mem.contains_key(key) {
+                        self.gpu_mem.insert(key.clone(), ChunkedData::default());
                     }
 
                     let curr = self
                         .gpu_mem
-                        .get_mut(name)
+                        .get_mut(key)
                         .expect("entry must exist as it was created above");
                     curr.push(new_data.percentage());
                 }
@@ -198,23 +195,18 @@ impl TimeSeriesData {
         #[cfg(feature = "gpu")]
         {
             if let Some(gpu_usage_data) = &data.gpu_usage {
-                let mut not_visited = self
-                    .gpu_usage
-                    .keys()
-                    .map(String::to_owned)
-                    .collect::<HashSet<_>>();
+                let mut not_visited = self.gpu_usage.keys().cloned().collect::<HashSet<_>>();
 
-                for (name, usage) in gpu_usage_data {
-                    not_visited.remove(name);
+                for (key, usage) in gpu_usage_data {
+                    not_visited.remove(key);
 
-                    if !self.gpu_usage.contains_key(name) {
-                        self.gpu_usage
-                            .insert(name.to_string(), ChunkedData::default());
+                    if !self.gpu_usage.contains_key(key) {
+                        self.gpu_usage.insert(key.clone(), ChunkedData::default());
                     }
 
                     let curr = self
                         .gpu_usage
-                        .get_mut(name)
+                        .get_mut(key)
                         .expect("entry must exist as it was created above");
                     curr.push(*usage as f64);
                 }

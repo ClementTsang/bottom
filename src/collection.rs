@@ -63,9 +63,9 @@ pub struct Data {
     #[cfg(feature = "zfs")]
     pub arc: Option<memory::MemData>,
     #[cfg(feature = "gpu")]
-    pub gpu_memory: Option<Vec<(String, memory::MemData)>>,
+    pub gpu_memory: Option<Vec<(GpuKey, memory::MemData)>>,
     #[cfg(feature = "gpu")]
-    pub gpu_usage: Option<BTreeMap<String, f32>>,
+    pub gpu_usage: Option<BTreeMap<GpuKey, f32>>,
 }
 
 impl Default for Data {
@@ -463,10 +463,10 @@ impl DataCollector {
     #[inline]
     fn update_gpus(&mut self) {
         if self.widgets_to_harvest.use_gpu {
-            let mut local_gpu: Vec<(String, memory::MemData)> = Vec::new();
+            let mut local_gpu: Vec<(GpuKey, memory::MemData)> = Vec::new();
             let mut local_gpu_pids: Vec<IntHashMap<Pid, (u64, u32)>> = Vec::new();
             let mut local_gpu_total_mem: u64 = 0;
-            let mut local_gpu_overall_util: BTreeMap<String, f32> = BTreeMap::new();
+            let mut local_gpu_overall_util: BTreeMap<GpuKey, f32> = BTreeMap::new();
 
             #[cfg(feature = "nvidia")]
             let nvidia_data = nvidia::get_nvidia_gpu_data(self);

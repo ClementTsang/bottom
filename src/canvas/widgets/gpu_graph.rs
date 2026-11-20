@@ -11,6 +11,7 @@ use crate::{
         components::time_series::{GraphData, LegendConstraints},
         drawing_utils::should_hide_x_label,
     },
+    collection::duplicate_gpu_names,
     components::time_series::GraphDrawCtx,
 };
 
@@ -39,10 +40,11 @@ impl Painter {
             let short_gpu_names = app_state.app_config_fields.gpu_usage_short_names;
             let gpu_series = &data.time_series_data.gpu_usage;
             let gpu_count = gpu_series.len();
+            let duplicate_names = duplicate_gpu_names(gpu_series.keys());
 
             let mut graph_data: Vec<GraphData<'_>> = Vec::with_capacity(gpu_count);
 
-            for (itx, (name, values)) in gpu_series.iter().enumerate() {
+            for (itx, (key, values)) in gpu_series.iter().enumerate() {
                 let style = if gpu_styles.is_empty() {
                     Style::default()
                 } else {
@@ -56,10 +58,11 @@ impl Painter {
                         format!("GPU{itx}")
                     }
                 } else {
-                    name.to_string()
+                    key.display_name(duplicate_names.contains(key.name.as_str()))
+                        .into_owned()
                 };
 
-                let label = match data.gpu_utilization.get(name) {
+                let label = match data.gpu_utilization.get(key) {
                     Some(current_util) => format!("{display_name}: {current_util:.0}%"),
                     None => display_name,
                 };

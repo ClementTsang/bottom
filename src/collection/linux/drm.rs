@@ -15,9 +15,15 @@ use concat_string::concat_string;
 use rustc_hash::FxHashSet as HashSet;
 
 use crate::{
-    collection::{linux::utils::is_device_awake, processes::Pid},
+    collection::{PciAddress, linux::utils::is_device_awake, processes::Pid},
     utils::int_hash::IntHashMap,
 };
+
+/// Get the PCI address of a PCI device directory returned by
+/// [`enumerate_drm_devices`], which is named after its address.
+pub(crate) fn get_pci_address(device_path: &Path) -> Option<PciAddress> {
+    PciAddress::parse(device_path.file_name()?.to_str()?)
+}
 
 /// Enumerate the PCI device directories bound to a given DRM driver module
 /// (e.g. `amdgpu`, `i915`, `xe`).

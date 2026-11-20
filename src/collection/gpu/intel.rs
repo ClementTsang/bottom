@@ -15,7 +15,11 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use crate::{
     app::layout_manager::UsedWidgets,
     collection::{
-        linux::drm::{collect_drm_fdinfo, diff_usage, enumerate_drm_devices, get_drm_render_nodes},
+        GpuKey,
+        linux::drm::{
+            collect_drm_fdinfo, diff_usage, enumerate_drm_devices, get_drm_render_nodes,
+            get_pci_address,
+        },
         memory::MemData,
         processes::Pid,
     },
@@ -44,9 +48,9 @@ impl IntelDriver {
 /// TODO: May be able to clean up some of these, Option<Vec> for example is a
 /// bit redundant.
 pub struct IntelGpuData {
-    pub memory: Option<Vec<(String, MemData)>>,
+    pub memory: Option<Vec<(GpuKey, MemData)>>,
     pub process_data: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
-    pub overall_utilization: Option<Vec<(String, f32)>>,
+    pub overall_utilization: Option<Vec<(GpuKey, f32)>>,
 }
 
 /// Intel GPU VRAM usage.
@@ -112,14 +116,8 @@ thread_local! {
 /// Apparently there's no marketing name to grab...?
 ///
 /// TODO: Investigate this properly.
-fn get_intel_name(num_gpu: usize, idx: usize) -> String {
-    const INTEL_DEFAULT_NAME: &str = "Intel GPU";
-
-    if num_gpu > 1 {
-        format!("{INTEL_DEFAULT_NAME} {idx}")
-    } else {
-        INTEL_DEFAULT_NAME.to_string()
-    }
+fn get_intel_name() -> String {
+    "Intel GPU".to_string()
 }
 
 /// VRAM used for a device.
@@ -277,23 +275,23 @@ pub fn get_intel_gpu_data(
         (IntelDriver::Xe, xe_devices),
     ];
 
-    for (idx, (device_path, driver)) in devices
-        .into_iter()
-        .flat_map(|(driver, devices)| {
-            devices
-                .into_iter()
-                .map(move |device_path| (device_path, driver))
-        })
-        .enumerate()
-    {
-        let device_name = get_intel_name(num_gpus, idx);
+    for (device_path, driver) in devices.into_iter().flat_map(|(driver, devices)| {
+        devices
+            .into_iter()
+            .map(move |device_path| (device_path, driver))
+    }) {
+        let key = get_pci_address(&device_path).map(|address| GpuKey {
+            address,
+            name: get_intel_name(),
+        });
 
         if let Some(mem) = get_intel_vram(&device_path, driver) {
             if widgets_to_harvest.use_mem
+                && let Some(key) = &key
                 && let Some(total_bytes) = NonZeroU64::new(mem.total)
             {
                 mem_vec.push((
-                    device_name.clone(),
+                    key.clone(),
                     MemData {
                         total_bytes,
                         used_bytes: mem.used,
@@ -349,11 +347,12 @@ pub fn get_intel_gpu_data(
                     proc_vec.push(procs_map);
                 }
 
-                if widgets_to_harvest.use_gpu_graph && has_prev_sample {
-                    overall_util_vec.push((
-                        device_name,
-                        busiest_engine_util(&engine_busy, &engine_capacity),
-                    ));
+                if widgets_to_harvest.use_gpu_graph
+                    && has_prev_sample
+                    && let Some(key) = key
+                {
+                    overall_util_vec
+                        .push((key, busiest_engine_util(&engine_busy, &engine_capacity)));
                 }
             });
         }
