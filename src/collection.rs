@@ -549,39 +549,11 @@ impl DataCollector {
                 }
             }
 
-            let gpu_usage = if !local_gpu_overall_util.is_empty() {
-                Some(local_gpu_overall_util)
-            } else if !local_gpu.is_empty() {
-                if !local_gpu_pids.is_empty() {
-                    Some(
-                        local_gpu
-                            .iter()
-                            .zip(local_gpu_pids.iter())
-                            .map(|((name, _), procs)| {
-                                let total: u64 = procs.values().map(|(_, u)| *u as u64).sum();
-                                let count = procs.len() as u64;
-                                let avg = total.checked_div(count).unwrap_or(0);
-                                (name.clone(), (avg as f32).clamp(0.0, 100.0))
-                            })
-                            .collect(),
-                    )
-                } else {
-                    // GPUs exist but no process data (idle). Emit 0% for each.
-                    Some(
-                        local_gpu
-                            .iter()
-                            .map(|(name, _)| (name.clone(), 0.0_f32))
-                            .collect(),
-                    )
-                }
-            } else {
-                None
-            };
-
             self.data.gpu_memory = (!local_gpu.is_empty()).then_some(local_gpu);
             self.gpu_pids = (!local_gpu_pids.is_empty()).then_some(local_gpu_pids);
             self.gpus_total_mem = (local_gpu_total_mem > 0).then_some(local_gpu_total_mem);
-            self.data.gpu_usage = gpu_usage;
+            self.data.gpu_usage =
+                (!local_gpu_overall_util.is_empty()).then_some(local_gpu_overall_util);
         }
     }
 
