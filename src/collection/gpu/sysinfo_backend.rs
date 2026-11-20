@@ -30,11 +30,20 @@ fn vendor_name(vendor: Option<&str>) -> String {
 /// Only includes memory data if the platform reports VRAM (Windows).
 /// On macOS/FreeBSD, memory is always `None` because GPUs share
 /// system memory with no dedicated VRAM.
-pub fn collect_sysinfo_gpu_data(gpus: &Gpus, widgets: &UsedWidgets) -> Option<SysinfoGpuData> {
+///
+/// If `skip_nvidia` is set, NVIDIA GPUs are skipped, e.g. if NVML already
+/// reported them.
+pub fn collect_sysinfo_gpu_data(
+    gpus: &Gpus, widgets: &UsedWidgets, skip_nvidia: bool,
+) -> Option<SysinfoGpuData> {
     let mut mem_vec: Vec<(String, MemData)> = Vec::new();
     let mut overall_util_vec: Vec<(String, f32)> = Vec::new();
 
     for gpu in gpus.iter() {
+        if skip_nvidia && gpu.vendor() == Some("NVIDIA Corporation") {
+            continue;
+        }
+
         let name = vendor_name(gpu.vendor());
         let model = gpu.model().unwrap_or("");
         let display_name = match (model.is_empty(), model.starts_with(&name)) {

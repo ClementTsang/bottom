@@ -469,7 +469,18 @@ impl DataCollector {
             let mut local_gpu_overall_util: BTreeMap<String, f32> = BTreeMap::new();
 
             #[cfg(feature = "nvidia")]
-            if let Some(data) = nvidia::get_nvidia_gpu_data(self) {
+            let nvidia_data = nvidia::get_nvidia_gpu_data(self);
+
+            // sysinfo also reports NVIDIA GPUs, so skip those if NVML has them.
+            #[cfg(all(feature = "nvidia", not(target_os = "linux")))]
+            let nvml_reported_gpus = nvidia_data
+                .as_ref()
+                .is_some_and(|data| data.memory.is_some() || data.overall_utilization.is_some());
+            #[cfg(all(not(feature = "nvidia"), not(target_os = "linux")))]
+            let nvml_reported_gpus = false;
+
+            #[cfg(feature = "nvidia")]
+            if let Some(data) = nvidia_data {
                 if let Some(mut temp) = data.temperature {
                     if let Some(sensors) = &mut self.data.temperature_sensors {
                         sensors.append(&mut temp);
@@ -523,8 +534,11 @@ impl DataCollector {
 
             #[cfg(all(feature = "gpu", not(target_os = "linux")))]
             if let Some(gpus) = &self.sysinfo_gpus
-                && let Some(data) =
-                    gpu::sysinfo_backend::collect_sysinfo_gpu_data(gpus, &self.widgets_to_harvest)
+                && let Some(data) = gpu::sysinfo_backend::collect_sysinfo_gpu_data(
+                    gpus,
+                    &self.widgets_to_harvest,
+                    nvml_reported_gpus,
+                )
             {
                 if let Some(mut mem) = data.memory {
                     local_gpu.append(&mut mem);
