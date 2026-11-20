@@ -797,6 +797,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     };
 
     let use_mem = used_widget_set.contains(&Mem) || used_widget_set.contains(&BasicMem);
+
+    // FIXME: Add a separate use_gpu_mem, use_gpu_usage, and maybe even use_gpu_proc (probably just a UseGpu struct lol)
     let used_widgets = UsedWidgets {
         use_cpu: used_widget_set.contains(&Cpu) || used_widget_set.contains(&BasicCpu),
         use_mem,
