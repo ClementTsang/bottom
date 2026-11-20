@@ -1,0 +1,3 @@
+[gpu_graph]
+legend_position = "top-left"
+short_gpu_names = true
