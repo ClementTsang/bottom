@@ -18,8 +18,9 @@ pub struct SysinfoGpuData {
 fn vendor_name(vendor: Option<&str>) -> String {
     match vendor {
         Some("Intel Corporation") => "Intel".to_string(),
-        Some("Advanced Micro Devices, Inc.") => "AMD".to_string(),
+        Some(vendor) if vendor.starts_with("Advanced Micro Devices") => "AMD".to_string(),
         Some("NVIDIA Corporation") => "NVIDIA".to_string(),
+        Some("Apple Inc.") => "Apple".to_string(),
         Some("") | None => "Unknown".to_string(),
         Some(other) => other.to_string(),
     }
@@ -47,7 +48,8 @@ pub fn collect_sysinfo_gpu_data(
         let name = vendor_name(gpu.vendor());
         let model = gpu.model().unwrap_or("");
         let display_name = match (model.is_empty(), model.starts_with(&name)) {
-            (true, _) | (false, true) => name,
+            (true, _) => name,
+            (false, true) => model.to_string(),
             (false, false) => format!("{name} {model}"),
         };
 
