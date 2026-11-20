@@ -31,6 +31,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2325](https://github.com/ClementTsang/bottom/pull/2325): Add hostname template to terminal title option.
 - [#2326](https://github.com/ClementTsang/bottom/pull/2326): Add basic GPU support for non-Linux operating systems using sysinfo's new GPU API.
 - [#2328](https://github.com/ClementTsang/bottom/pull/2328): Add natural sorting options for the process, disk, and temperature widgets.
+- [#2329](https://github.com/ClementTsang/bottom/pull/2329): Add a GPU usage graph widget.
 
 ### Changes
 
@@ -40,6 +41,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 
 - [#2300](https://github.com/ClementTsang/bottom/pull/2300): Fix dialog screens not blocking certain user events.
 - [#2298](https://github.com/ClementTsang/bottom/pull/2298): Fix hidden table columns shifting the widths of later columns and header clicks.
+- [#2329](https://github.com/ClementTsang/bottom/pull/2329): Fix `--default_widget_type` not accepting `memory`, `temp_graph`, `temperature_graph`, and `disk_io_graph`.
 
 ### Other
 
