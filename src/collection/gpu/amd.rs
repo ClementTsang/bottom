@@ -203,7 +203,8 @@ pub fn get_amd_gpu_data(
         }
 
         // Collect overall GPU utilization from sysfs (independent of use_proc)
-        if let Some(key) = key
+        if widgets_to_harvest.use_gpu_graph
+            && let Some(key) = key
             && let Some(busy) = get_amd_gpu_busy(&device_path)
         {
             overall_util_vec.push((key, busy));

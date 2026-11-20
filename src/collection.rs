@@ -404,7 +404,9 @@ impl DataCollector {
             // Only rebuild the list every 60 seconds; data (usage/memory) is
             // refreshed every cycle via `Gpus::refresh()`.
             #[cfg(feature = "gpu")]
-            if self.widgets_to_harvest.use_gpu {
+            if self.widgets_to_harvest.use_gpu
+                && (self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_gpu_graph)
+            {
                 if let Some(gpus) = &mut self.sysinfo_gpus {
                     gpus.refresh(false);
                 } else if let Ok(gpus) = Gpus::new_with_refreshed_list()

@@ -193,7 +193,7 @@ impl TimeSeriesData {
         }
 
         #[cfg(feature = "gpu")]
-        {
+        if used_widgets.use_gpu_graph {
             if let Some(gpu_usage_data) = &data.gpu_usage {
                 let mut not_visited = self.gpu_usage.keys().cloned().collect::<HashSet<_>>();
 

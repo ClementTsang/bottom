@@ -219,16 +219,21 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
 
     for device in gpu_iter {
         if let Ok(name) = device.name() {
-            let key = device
-                .pci_info()
-                .ok()
-                .and_then(|pci| PciAddress::parse(&pci.bus_id))
-                .map(|address| GpuKey {
-                    address,
-                    name: name.clone(),
-                });
+            let key = if widgets_to_harvest.use_mem || widgets_to_harvest.use_gpu_graph {
+                device
+                    .pci_info()
+                    .ok()
+                    .and_then(|pci| PciAddress::parse(&pci.bus_id))
+                    .map(|address| GpuKey {
+                        address,
+                        name: name.clone(),
+                    })
+            } else {
+                None
+            };
 
-            if let Some(key) = &key
+            if widgets_to_harvest.use_gpu_graph
+                && let Some(key) = &key
                 && let Ok(util_rates) = device.utilization_rates()
             {
                 let sm_util = util_rates.gpu as f32;
