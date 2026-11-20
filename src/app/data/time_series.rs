@@ -2,6 +2,7 @@
 
 use std::{
     cmp::Ordering,
+    collections::BTreeMap,
     time::{Duration, Instant},
     vec::Vec,
 };
@@ -64,7 +65,7 @@ pub struct TimeSeriesData {
 
     #[cfg(feature = "gpu")]
     /// GPU utilization data as a percentage.
-    pub gpu_usage: HashMap<String, Values>,
+    pub gpu_usage: BTreeMap<String, Values>,
 
     /// Temperature data.
     ///

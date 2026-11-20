@@ -1,8 +1,16 @@
-use ratatui::{Frame, layout::Rect, style::Style};
+use ratatui::{
+    Frame,
+    layout::{Constraint, Rect},
+    style::Style,
+};
 
 use crate::{
     app::App,
-    canvas::{Painter, components::time_series::GraphData, drawing_utils::should_hide_x_label},
+    canvas::{
+        Painter,
+        components::time_series::{GraphData, LegendConstraints},
+        drawing_utils::should_hide_x_label,
+    },
     components::time_series::GraphDrawCtx,
 };
 
@@ -29,15 +37,12 @@ impl Painter {
 
             let gpu_styles = &self.styles.gpu_colours;
             let short_gpu_names = app_state.app_config_fields.gpu_usage_short_names;
-            let gpu_count = data.gpu_utilization.len();
+            let gpu_series = &data.time_series_data.gpu_usage;
+            let gpu_count = gpu_series.len();
 
             let mut graph_data: Vec<GraphData<'_>> = Vec::with_capacity(gpu_count);
 
-            for (itx, (name, current_util)) in data.gpu_utilization.iter().enumerate() {
-                let Some(values) = data.time_series_data.gpu_usage.get(name) else {
-                    continue;
-                };
-
+            for (itx, (name, values)) in gpu_series.iter().enumerate() {
                 let style = if gpu_styles.is_empty() {
                     Style::default()
                 } else {
@@ -54,7 +59,10 @@ impl Painter {
                     name.to_string()
                 };
 
-                let label = format!("{display_name}: {current_util:.0}%");
+                let label = match data.gpu_utilization.iter().find(|(n, _)| n == name) {
+                    Some((_, current_util)) => format!("{display_name}: {current_util:.0}%"),
+                    None => display_name,
+                };
 
                 graph_data.push(
                     GraphData::default()
@@ -83,7 +91,10 @@ impl Painter {
                     is_selected: app_state.current_widget.widget_id == widget_id,
                     is_expanded: app_state.is_expanded,
                     legend_position: app_state.app_config_fields.gpu_usage_legend_position,
-                    legend_constraints: None,
+                    legend_constraints: Some(LegendConstraints {
+                        width: Constraint::Ratio(9, 10),
+                        height: Constraint::Ratio(1, 2),
+                    }),
                 },
                 graph_data,
             );
