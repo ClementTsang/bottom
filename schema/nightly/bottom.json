@@ -45,7 +45,7 @@
         }
       ]
     },
-    "gpu_usage_graph": {
+    "gpu_graph": {
       "anyOf": [
         {
           "$ref": "#/$defs/GpuUsageGraphConfig"

@@ -46,7 +46,7 @@ pub struct Config {
     #[serde(alias = "memory")]
     pub(crate) memory_graph: Option<MemoryGraphConfig>,
     pub(crate) cpu: Option<CpuConfig>,
-    pub(crate) gpu_usage_graph: Option<GpuUsageGraphConfig>,
+    pub(crate) gpu_graph: Option<GpuUsageGraphConfig>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

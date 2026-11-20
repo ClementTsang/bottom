@@ -1258,7 +1258,7 @@ fn get_mem_short_gpu_names(_: &BottomArgs, _: &Config) -> bool {
 #[cfg(feature = "gpu")]
 fn get_gpu_usage_short_names(config: &Config) -> bool {
     config
-        .gpu_usage_graph
+        .gpu_graph
         .as_ref()
         .and_then(|g| g.short_gpu_names)
         .unwrap_or(false)
@@ -1486,7 +1486,7 @@ fn get_gpu_usage_legend_position(config: &Config) -> OptionResult<Option<LegendP
     parse_legend_position(
         None,
         config
-            .gpu_usage_graph
+            .gpu_graph
             .as_ref()
             .and_then(|settings| settings.legend_position.as_ref()),
         None,
