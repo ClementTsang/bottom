@@ -1,8 +1,9 @@
 //! Time series data.
 
+#[cfg(feature = "gpu")]
+use std::collections::BTreeMap;
 use std::{
     cmp::Ordering,
-    collections::BTreeMap,
     time::{Duration, Instant},
     vec::Vec,
 };

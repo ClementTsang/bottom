@@ -59,8 +59,8 @@ impl Painter {
                     name.to_string()
                 };
 
-                let label = match data.gpu_utilization.iter().find(|(n, _)| n == name) {
-                    Some((_, current_util)) => format!("{display_name}: {current_util:.0}%"),
+                let label = match data.gpu_utilization.get(name) {
+                    Some(current_util) => format!("{display_name}: {current_util:.0}%"),
                     None => display_name,
                 };
 

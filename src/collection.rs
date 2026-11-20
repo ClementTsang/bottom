@@ -25,6 +25,8 @@ pub mod network;
 pub mod processes;
 pub mod temperature;
 
+#[cfg(feature = "gpu")]
+use std::collections::BTreeMap;
 use std::time::{Duration, Instant};
 
 #[cfg(any(not(target_os = "windows"), feature = "gpu"))]
@@ -63,7 +65,7 @@ pub struct Data {
     #[cfg(feature = "gpu")]
     pub gpu_memory: Option<Vec<(String, memory::MemData)>>,
     #[cfg(feature = "gpu")]
-    pub gpu_usage: Option<Vec<(String, f32)>>,
+    pub gpu_usage: Option<BTreeMap<String, f32>>,
 }
 
 impl Default for Data {
@@ -464,7 +466,7 @@ impl DataCollector {
             let mut local_gpu: Vec<(String, memory::MemData)> = Vec::new();
             let mut local_gpu_pids: Vec<IntHashMap<Pid, (u64, u32)>> = Vec::new();
             let mut local_gpu_total_mem: u64 = 0;
-            let mut local_gpu_overall_util: Vec<(String, f32)> = Vec::new();
+            let mut local_gpu_overall_util: BTreeMap<String, f32> = BTreeMap::new();
 
             #[cfg(feature = "nvidia")]
             if let Some(data) = nvidia::get_nvidia_gpu_data(self) {
@@ -482,8 +484,8 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
-                if let Some(mut overall) = data.overall_utilization {
-                    local_gpu_overall_util.append(&mut overall);
+                if let Some(overall) = data.overall_utilization {
+                    local_gpu_overall_util.extend(overall);
                 }
             }
 
@@ -498,8 +500,8 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
-                if let Some(mut overall) = data.overall_utilization {
-                    local_gpu_overall_util.append(&mut overall);
+                if let Some(overall) = data.overall_utilization {
+                    local_gpu_overall_util.extend(overall);
                 }
             }
 
@@ -514,8 +516,8 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
-                if let Some(mut overall) = data.overall_utilization {
-                    local_gpu_overall_util.append(&mut overall);
+                if let Some(overall) = data.overall_utilization {
+                    local_gpu_overall_util.extend(overall);
                 }
             }
 
@@ -528,8 +530,8 @@ impl DataCollector {
                     local_gpu.append(&mut mem);
                 }
 
-                if let Some(mut overall) = data.overall_utilization {
-                    local_gpu_overall_util.append(&mut overall);
+                if let Some(overall) = data.overall_utilization {
+                    local_gpu_overall_util.extend(overall);
                 }
             }
 

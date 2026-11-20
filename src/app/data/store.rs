@@ -1,3 +1,5 @@
+#[cfg(feature = "gpu")]
+use std::collections::BTreeMap;
 use std::{
     borrow::Borrow,
     hash::{Hash, Hasher},
@@ -89,7 +91,7 @@ pub struct InnerData {
     /// GPU data. In sorted order by name.
     pub(crate) gpu_harvest: Vec<(String, MemData)>,
     #[cfg(feature = "gpu")]
-    pub(crate) gpu_utilization: Vec<(String, f32)>,
+    pub(crate) gpu_utilization: BTreeMap<String, f32>,
     pub(crate) cpu_harvest: CpuHarvest,
     pub(crate) load_avg_harvest: LoadAvgHarvest,
     pub(crate) process_data: ProcessData,
@@ -128,7 +130,7 @@ impl Default for InnerData {
             #[cfg(feature = "gpu")]
             gpu_harvest: Vec::default(),
             #[cfg(feature = "gpu")]
-            gpu_utilization: Vec::default(),
+            gpu_utilization: BTreeMap::default(),
             starting_total_network: None,
         }
     }
