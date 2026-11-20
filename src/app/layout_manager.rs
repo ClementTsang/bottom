@@ -1000,66 +1000,36 @@ impl std::str::FromStr for BottomWidgetType {
             #[cfg(feature = "battery")]
             "battery" | "batt" => Ok(BottomWidgetType::Battery),
             _ => {
-                #[cfg(feature = "battery")]
-                {
-                    Err(OptionError::config(format!(
-                        "'{s}' is an invalid widget name.
-        
-Supported widget names:
-+--------------------------------+
-|               cpu              |
-+--------------------------------+
-|           mem, memory          |
-+--------------------------------+
-|          net, network          |
-+--------------------------------+
-|    proc, process, processes    |
-+--------------------------------+
-|        temp, temperature       |
-+--------------------------------+
-|  temp_graph, temperature_graph |
-+--------------------------------+
-|              disk              |
-+--------------------------------+
-|          disk_io_graph         |
-+--------------------------------+
-|          batt, battery         |
-+--------------------------------+
-|              empty             |
-+--------------------------------+
-                ",
-                    )))
-                }
-                #[cfg(not(feature = "battery"))]
-                {
-                    Err(OptionError::config(format!(
-                        "'{s}' is an invalid widget name.
+                const WIDGET_NAMES: &[&str] = &[
+                    "cpu",
+                    "mem, memory",
+                    "net, network",
+                    "proc, process, processes",
+                    "temp, temperature",
+                    "temp_graph, temperature_graph",
+                    "disk",
+                    "disk_io_graph",
+                    #[cfg(feature = "gpu")]
+                    "gpu",
+                    #[cfg(feature = "battery")]
+                    "batt, battery",
+                    "empty",
+                ];
+                const WIDTH: usize = 32;
 
-Supported widget names:
-+--------------------------------+
-|               cpu              |
-+--------------------------------+
-|           mem, memory          |
-+--------------------------------+
-|          net, network          |
-+--------------------------------+
-|    proc, process, processes    |
-+--------------------------------+
-|        temp, temperature       |
-+--------------------------------+
-|  temp_graph, temperature_graph |
-+--------------------------------+
-|              disk              |
-+--------------------------------+
-|          disk_io_graph         |
-+--------------------------------+
-|              gpu             |
-+--------------------------------+
-|              empty             |
-+--------------------------------+
-                ",
-                    )))
-                }
+                let divider = format!("+{}+", "-".repeat(WIDTH));
+                let rows: String = WIDGET_NAMES
+                    .iter()
+                    .map(|name| {
+                        let left = (WIDTH - name.len()).div_ceil(2);
+                        let right = WIDTH - name.len() - left;
+                        format!("|{:left$}{name}{:right$}|\n{divider}\n", "", "")
+                    })
+                    .collect();
+
+                Err(OptionError::config(format!(
+                    "'{s}' is an invalid widget name.\n\nSupported widget names:\n{divider}\n{rows}"
+                )))
             }
         }
     }
