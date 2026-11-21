@@ -131,7 +131,8 @@ pub fn reset_stdout() {
     let _ = execute!(stdout, DisableBracketedPaste);
     let _ = execute!(stdout, LeaveAlternateScreen);
     let _ = execute!(stdout, Show);
-    // We unconditionally reset the terminal title back to the default here by doing this.
+    // We unconditionally reset the terminal title back to the default here by
+    // doing this.
     let _ = execute!(stdout, SetTitle(""));
 }
 
