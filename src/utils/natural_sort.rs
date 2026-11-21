@@ -17,7 +17,8 @@ enum Token<'s> {
 /// - Shorter strings will come first.
 #[inline]
 pub fn natural_str_cmp(left: &str, right: &str) -> Ordering {
-    // We have a max amount of tokens; 16 was chosen as a reasonable upper limit for typical identifiers.
+    // We have a max amount of tokens; 16 was chosen as a reasonable upper limit
+    // for typical identifiers.
     const MAX_TOKENS: usize = 16;
 
     // Tokenize both strings into fixed-size stack buffers.
@@ -45,9 +46,12 @@ pub fn natural_str_cmp(left: &str, right: &str) -> Ordering {
 /// - Numeric substrings are compared by numeric value.
 /// - Non-numeric substrings are compared lexicographically.
 /// - Shorter strings will come first.
+///
+/// TODO: Maybe combine the impl with [`natural_str_cmp`].
 #[inline]
 pub fn natural_str_cmp_insensitive(left: &str, right: &str) -> Ordering {
-    // We have a max amount of tokens; 16 was chosen as a reasonable upper limit for typical identifiers.
+    // We have a max amount of tokens; 16 was chosen as a reasonable upper limit
+    // for typical identifiers.
     const MAX_TOKENS: usize = 16;
 
     // Tokenize both strings into fixed-size stack buffers.
