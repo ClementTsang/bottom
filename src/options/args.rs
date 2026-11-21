@@ -185,6 +185,7 @@ pub struct GeneralArgs {
         value_parser = [
             "cpu",
             "mem",
+            "memory",
             "net",
             "network",
             "proc",
@@ -192,7 +193,12 @@ pub struct GeneralArgs {
             "processes",
             "temp",
             "temperature",
+            "temp_graph",
+            "temperature_graph",
             "disk",
+            "disk_io_graph",
+            #[cfg(feature = "gpu")]
+            "gpu",
             #[cfg(feature = "battery")]
             "batt",
             #[cfg(feature = "battery")]

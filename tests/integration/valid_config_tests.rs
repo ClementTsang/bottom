@@ -249,6 +249,11 @@ fn test_disk_io_graph() {
     run_and_kill_cfg("./tests/valid_configs/widget/disk_io_graph.toml");
 }
 
+#[test]
+fn test_gpu_graph() {
+    run_and_kill_cfg("./tests/valid_configs/gpu_graph.toml");
+}
+
 /// This uses deprecated temperature settings - once they are removed, this test
 /// file should be moved to invalid configs.
 #[test]

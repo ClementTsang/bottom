@@ -45,6 +45,16 @@
         }
       ]
     },
+    "gpu_graph": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/GpuUsageGraphConfig"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "memory_graph": {
       "anyOf": [
         {
@@ -767,6 +777,26 @@
           ]
         },
         "whole_word": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "GpuUsageGraphConfig": {
+      "description": "GPU graph-related configuration file options.",
+      "type": "object",
+      "properties": {
+        "legend_position": {
+          "description": "Where to place the legend for the GPU usage chart widget.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "short_gpu_names": {
+          "description": "Whether to use short GPU names in the GPU usage widget.",
           "type": [
             "boolean",
             "null"

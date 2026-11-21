@@ -15,7 +15,11 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use crate::{
     app::layout_manager::UsedWidgets,
     collection::{
-        linux::drm::{collect_drm_fdinfo, diff_usage, enumerate_drm_devices, get_drm_render_nodes},
+        GpuKey,
+        linux::drm::{
+            collect_drm_fdinfo, diff_usage, enumerate_drm_devices, get_drm_render_nodes,
+            get_pci_address,
+        },
         memory::MemData,
         processes::Pid,
     },
@@ -44,8 +48,9 @@ impl IntelDriver {
 /// TODO: May be able to clean up some of these, Option<Vec> for example is a
 /// bit redundant.
 pub struct IntelGpuData {
-    pub memory: Option<Vec<(String, MemData)>>,
+    pub memory: Option<Vec<(GpuKey, MemData)>>,
     pub process_data: Option<(u64, Vec<IntHashMap<Pid, (u64, u32)>>)>,
+    pub overall_utilization: Option<Vec<(GpuKey, f32)>>,
 }
 
 /// Intel GPU VRAM usage.
@@ -59,17 +64,47 @@ pub struct IntelGpuMemory {
 /// [`get_intel_fdinfo`]).
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 struct IntelGpuProc {
-    // i915: per-engine busy time, in nanoseconds (accumulating counters).
-    render_usage: u64,
-    copy_usage: u64,
-    video_usage: u64,
-    video_enhance_usage: u64,
-    compute_usage: u64,
-    // xe: busy + elapsed cycle counters, summed across all engines.
-    cycles: u64,
-    total_cycles: u64,
-    // Per-process GPU memory, in bytes.
+    /// Per-engine-class busy counters (accumulating). i915 reports nanoseconds,
+    /// xe reports cycles.
+    busy: [u64; NUM_ENGINE_CLASSES],
+    /// xe: per-engine-class elapsed cycle counters.
+    total_cycles: [u64; NUM_ENGINE_CLASSES],
+    /// Per-engine-class engine count. 0 means unreported, which implies 1.
+    capacity: [u64; NUM_ENGINE_CLASSES],
+    /// Per-process GPU memory, in bytes.
     mem_used: u64,
+}
+
+const NUM_ENGINE_CLASSES: usize = 5;
+
+/// i915 fdinfo engine class names, in [`IntelGpuProc`] array order.
+const I915_ENGINES: [&str; NUM_ENGINE_CLASSES] =
+    ["render", "copy", "video", "video-enhance", "compute"];
+
+/// xe fdinfo engine class names, in [`IntelGpuProc`] array order.
+///
+/// rcs = render, bcs = copy, vcs = video decode, vecs = video enhance, ccs =
+/// compute.
+const XE_ENGINES: [&str; NUM_ENGINE_CLASSES] = ["rcs", "bcs", "vcs", "vecs", "ccs"];
+
+impl IntelGpuProc {
+    /// Accumulate a per-engine-class fdinfo value, if `keyword` is one.
+    fn add_engine_stat(&mut self, engines: &[&str; NUM_ENGINE_CLASSES], keyword: &str, value: u64) {
+        let class_of = |prefix: &str| {
+            let name = keyword.strip_prefix(prefix)?;
+            engines.iter().position(|engine| *engine == name)
+        };
+
+        if let Some(class) = class_of("drm-engine-capacity-") {
+            self.capacity[class] = self.capacity[class].max(value);
+        } else if let Some(class) = class_of("drm-engine-").or_else(|| class_of("drm-cycles-")) {
+            self.busy[class] += value;
+        } else if let Some(class) = class_of("drm-total-cycles-") {
+            // This is a GPU timestamp rather than a per-client counter, so
+            // don't sum it across a process's clients.
+            self.total_cycles[class] = self.total_cycles[class].max(value);
+        }
+    }
 }
 
 // TODO: This is kind of a hack.
@@ -81,20 +116,51 @@ thread_local! {
 /// Apparently there's no marketing name to grab...?
 ///
 /// TODO: Investigate this properly.
-fn get_intel_name(num_gpu: usize, idx: usize) -> String {
-    const INTEL_DEFAULT_NAME: &str = "Intel GPU";
-
-    if num_gpu > 1 {
-        format!("{INTEL_DEFAULT_NAME} {idx}")
-    } else {
-        INTEL_DEFAULT_NAME.to_string()
-    }
+fn get_intel_name() -> String {
+    "Intel GPU".to_string()
 }
 
 /// VRAM used for a device.
 fn get_intel_vram(_device_path: &Path, _driver: IntelDriver) -> Option<IntelGpuMemory> {
     // TODO: Not yet implemented.
     None
+}
+
+/// The fraction of each engine class's time spent on a client's work between
+/// two samples.
+fn engine_busy_fractions(
+    driver: IntelDriver, prev: &IntelGpuProc, cur: &IntelGpuProc, interval: &Duration,
+) -> [f64; NUM_ENGINE_CLASSES] {
+    std::array::from_fn(|class| {
+        let busy = cur.busy[class].saturating_sub(prev.busy[class]);
+        let elapsed = match driver {
+            IntelDriver::I915 => interval.as_nanos() as f64,
+            IntelDriver::Xe if prev.total_cycles[class] == 0 => 0.0,
+            IntelDriver::Xe => {
+                cur.total_cycles[class].saturating_sub(prev.total_cycles[class]) as f64
+            }
+        };
+
+        if elapsed > 0.0 {
+            busy as f64 / elapsed
+        } else {
+            0.0
+        }
+    })
+}
+
+/// Overall GPU utilization as a percentage, taken as the busiest engine class
+/// (normalized by the number of engines in that class).
+fn busiest_engine_util(
+    busy: &[f64; NUM_ENGINE_CLASSES], capacity: &[u64; NUM_ENGINE_CLASSES],
+) -> f32 {
+    let busiest = busy
+        .iter()
+        .zip(capacity)
+        .map(|(busy, capacity)| busy / *capacity as f64)
+        .fold(0.0, f64::max);
+
+    (busiest.clamp(0.0, 1.0) * 100.0) as f32
 }
 
 fn get_intel_fdinfo(
@@ -106,33 +172,20 @@ fn get_intel_fdinfo(
         IntelDriver::I915 => {
             collect_drm_fdinfo(&drm_paths, |usage: &mut IntelGpuProc, (keyword, value)| {
                 match keyword {
-                    "drm-engine-render" => usage.render_usage += value,
-                    "drm-engine-copy" => usage.copy_usage += value,
-                    "drm-engine-video" => usage.video_usage += value,
-                    "drm-engine-video-enhance" => usage.video_enhance_usage += value,
-                    "drm-engine-compute" => usage.compute_usage += value,
-                    // Memory keys are in KiB: local0 = discrete VRAM, system0 =
-                    // shared system RAM.
+                    // Memory keys are in KiB:
+                    // - local0 = discrete VRAM
+                    // - system0 = shared system RAM
                     "drm-total-local0" | "drm-total-system0" => usage.mem_used += value << 10,
-                    _ => {}
+                    _ => usage.add_engine_stat(&I915_ENGINES, keyword, value),
                 }
             })
         }
         IntelDriver::Xe => {
             collect_drm_fdinfo(&drm_paths, |usage: &mut IntelGpuProc, (keyword, value)| {
                 match keyword {
-                    // rcs = render, ccs = compute, vcs = video decode, vecs =
-                    // video enhance, bcs = copy.
-                    "drm-cycles-rcs" | "drm-cycles-ccs" | "drm-cycles-vcs" | "drm-cycles-vecs"
-                    | "drm-cycles-bcs" => usage.cycles += value,
-                    "drm-total-cycles-rcs"
-                    | "drm-total-cycles-ccs"
-                    | "drm-total-cycles-vcs"
-                    | "drm-total-cycles-vecs"
-                    | "drm-total-cycles-bcs" => usage.total_cycles += value,
                     // Memory key is in KiB.
                     "drm-total-vram0" => usage.mem_used += value << 10,
-                    _ => {}
+                    _ => usage.add_engine_stat(&XE_ENGINES, keyword, value),
                 }
             })
         }
@@ -146,20 +199,30 @@ fn compute_util(
         // Busy-time deltas over the interval, summed across engines (as AMD
         // does).
         IntelDriver::I915 => {
-            let util = diff_usage(prev.render_usage, cur.render_usage, interval)
-                + diff_usage(prev.copy_usage, cur.copy_usage, interval)
-                + diff_usage(prev.video_usage, cur.video_usage, interval)
-                + diff_usage(prev.video_enhance_usage, cur.video_enhance_usage, interval)
-                + diff_usage(prev.compute_usage, cur.compute_usage, interval);
+            let util: u64 = prev
+                .busy
+                .iter()
+                .zip(&cur.busy)
+                .map(|(&prev, &cur)| diff_usage(prev, cur, interval))
+                .sum();
 
             util.try_into().unwrap_or(0)
         }
         // Ratio of busy cycles to elapsed cycles over the interval.
         IntelDriver::Xe => {
-            let cycles_delta = cur.cycles.saturating_sub(prev.cycles);
-            let total_delta = cur.total_cycles.saturating_sub(prev.total_cycles);
+            let prev_total: u64 = prev.total_cycles.iter().sum();
+            let cycles_delta = cur
+                .busy
+                .iter()
+                .sum::<u64>()
+                .saturating_sub(prev.busy.iter().sum());
+            let total_delta = cur
+                .total_cycles
+                .iter()
+                .sum::<u64>()
+                .saturating_sub(prev_total);
 
-            if prev.total_cycles == 0 || total_delta == 0 {
+            if prev_total == 0 || total_delta == 0 {
                 0
             } else {
                 cycles_delta
@@ -196,6 +259,7 @@ pub fn get_intel_gpu_data(
     let num_gpus = i915_devices.len() + xe_devices.len();
     let mut mem_vec = Vec::with_capacity(num_gpus);
     let mut proc_vec = Vec::with_capacity(num_gpus);
+    let mut overall_util_vec = Vec::with_capacity(num_gpus);
     let mut total_mem = 0;
 
     PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
@@ -211,23 +275,23 @@ pub fn get_intel_gpu_data(
         (IntelDriver::Xe, xe_devices),
     ];
 
-    for (idx, (device_path, driver)) in devices
-        .into_iter()
-        .flat_map(|(driver, devices)| {
-            devices
-                .into_iter()
-                .map(move |device_path| (device_path, driver))
-        })
-        .enumerate()
-    {
-        let device_name = get_intel_name(num_gpus, idx);
+    for (device_path, driver) in devices.into_iter().flat_map(|(driver, devices)| {
+        devices
+            .into_iter()
+            .map(move |device_path| (device_path, driver))
+    }) {
+        let key = get_pci_address(&device_path).map(|address| GpuKey {
+            address,
+            name: get_intel_name(),
+        });
 
         if let Some(mem) = get_intel_vram(&device_path, driver) {
             if widgets_to_harvest.use_mem
+                && let Some(key) = &key
                 && let Some(total_bytes) = NonZeroU64::new(mem.total)
             {
                 mem_vec.push((
-                    device_name.clone(),
+                    key.clone(),
                     MemData {
                         total_bytes,
                         used_bytes: mem.used,
@@ -238,21 +302,37 @@ pub fn get_intel_gpu_data(
             total_mem += mem.total;
         }
 
-        if widgets_to_harvest.use_proc
+        if (widgets_to_harvest.use_proc || widgets_to_harvest.use_gpu_graph)
             && let Some(procs) = get_intel_fdinfo(&device_path, driver)
         {
             PREV_PROC_DATA.with_borrow_mut(|prev_proc_data| {
+                let has_prev_sample = prev_proc_data.contains_key(&device_path);
                 let prev_fdinfo = prev_proc_data.entry(device_path).or_default();
                 let mut seen_pids = IntHashSet::default();
+                let mut engine_busy = [0.0; NUM_ENGINE_CLASSES];
+                let mut engine_capacity = [1; NUM_ENGINE_CLASSES];
 
                 let mut procs_map = IntHashMap::default();
                 for (proc_pid, proc_usage) in procs {
                     seen_pids.insert(proc_pid);
+
+                    for (capacity, &reported) in
+                        engine_capacity.iter_mut().zip(&proc_usage.capacity)
+                    {
+                        *capacity = (*capacity).max(reported);
+                    }
+
                     if let Some(prev_usage) = prev_fdinfo.get_mut(&proc_pid) {
                         let gpu_util = compute_util(driver, prev_usage, &proc_usage, &interval);
 
                         if gpu_util > 0 || proc_usage.mem_used > 0 {
                             procs_map.insert(proc_pid, (proc_usage.mem_used, gpu_util));
+                        }
+
+                        let fractions =
+                            engine_busy_fractions(driver, prev_usage, &proc_usage, &interval);
+                        for (busy, fraction) in engine_busy.iter_mut().zip(fractions) {
+                            *busy += fraction;
                         }
 
                         *prev_usage = proc_usage;
@@ -263,8 +343,16 @@ pub fn get_intel_gpu_data(
 
                 prev_fdinfo.retain(|k, _| seen_pids.contains(k));
 
-                if !procs_map.is_empty() {
+                if widgets_to_harvest.use_proc && !procs_map.is_empty() {
                     proc_vec.push(procs_map);
+                }
+
+                if widgets_to_harvest.use_gpu_graph
+                    && has_prev_sample
+                    && let Some(key) = key
+                {
+                    overall_util_vec
+                        .push((key, busiest_engine_util(&engine_busy, &engine_capacity)));
                 }
             });
         }
@@ -290,5 +378,6 @@ pub fn get_intel_gpu_data(
     Some(IntelGpuData {
         memory: (!mem_vec.is_empty()).then_some(mem_vec),
         process_data: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
+        overall_utilization: (!overall_util_vec.is_empty()).then_some(overall_util_vec),
     })
 }

@@ -125,8 +125,12 @@ impl Painter {
                 app_state.process_kill_dialog.handle_redraw();
 
                 // Reset battery dialog button locations...
-                for battery_widget in app_state.states.battery_state.widget_states.values_mut() {
-                    battery_widget.tab_click_locs = None;
+                #[cfg(feature = "battery")]
+                {
+                    for battery_widget in app_state.states.battery_state.widget_states.values_mut()
+                    {
+                        battery_widget.tab_click_locs = None;
+                    }
                 }
             }
 
@@ -295,6 +299,16 @@ impl Painter {
                         rect[0],
                         app_state.current_widget.widget_id,
                     ),
+                    GpuUsageGraph =>
+                    {
+                        #[cfg(feature = "gpu")]
+                        self.draw_gpu_graph(
+                            f,
+                            app_state,
+                            rect[0],
+                            app_state.current_widget.widget_id,
+                        )
+                    }
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
@@ -508,6 +522,11 @@ impl Painter {
                     }
                     DiskIoGraph => {
                         self.draw_disk_io_graph(f, app_state, *draw_loc, widget.widget_id)
+                    }
+                    GpuUsageGraph =>
+                    {
+                        #[cfg(feature = "gpu")]
+                        self.draw_gpu_graph(f, app_state, *draw_loc, widget.widget_id)
                     }
                     _ => {}
                 }

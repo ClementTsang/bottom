@@ -6,6 +6,8 @@ use ratatui::{
     style::Style,
 };
 
+#[cfg(feature = "gpu")]
+use crate::collection::duplicate_gpu_names;
 use crate::{
     app::{App, data::Values},
     canvas::{
@@ -40,6 +42,7 @@ fn graph_data<'a>(
     out: &mut Vec<GraphData<'a>>, name: &str, last_harvest: Option<&'a MemData>,
     time: &'a [Instant], values: &'a Values, style: Style,
 ) {
+    // TODO: Make this if not visible instead...?
     if !values.no_elements() {
         let label = memory_legend_label(name, last_harvest).into();
 
@@ -64,6 +67,7 @@ impl Painter {
                 mem_state.graph.state_mut().autohide_timer_mut(),
                 draw_loc,
             );
+
             let graph_data = {
                 let mut size = 1;
                 let data = app_state.data_store.get_data();
@@ -138,41 +142,49 @@ impl Painter {
                 {
                     let mut colour_index = 0;
                     let gpu_styles = &self.styles.gpu_colours;
-                    let short_gpu_names = app_state.app_config_fields.short_gpu_names;
-                    let gpu_count = data.gpu_harvest.len();
+                    let short_gpu_names = app_state.app_config_fields.mem_short_gpu_names;
+                    let gpu_count = time_series.gpu_mem.len();
+                    let duplicate_names = duplicate_gpu_names(time_series.gpu_mem.keys());
 
-                    for (gpu_index, (name, harvest)) in data.gpu_harvest.iter().enumerate() {
-                        if let Some(gpu_data) = data.time_series_data.gpu_mem.get(name) {
-                            let style = {
-                                if gpu_styles.is_empty() {
-                                    Style::default()
-                                } else {
-                                    let colour = gpu_styles[colour_index % gpu_styles.len()];
-                                    colour_index += 1;
-
-                                    colour
-                                }
-                            };
-
-                            let display_name = if short_gpu_names {
-                                if gpu_count == 1 {
-                                    "GPU".to_string()
-                                } else {
-                                    format!("GPU{gpu_index}")
-                                }
-                            } else {
-                                name.clone()
-                            };
-
-                            graph_data(
-                                &mut points,
-                                &display_name,
-                                Some(harvest),
-                                time,
-                                gpu_data,
-                                style,
-                            );
+                    for (gpu_index, (key, gpu_data)) in time_series.gpu_mem.iter().enumerate() {
+                        if !gpu_data.no_elements() {
+                            continue;
                         }
+
+                        let style = {
+                            if gpu_styles.is_empty() {
+                                Style::default()
+                            } else {
+                                let colour = gpu_styles[colour_index % gpu_styles.len()];
+                                colour_index += 1;
+
+                                colour
+                            }
+                        };
+
+                        let display_name = if short_gpu_names {
+                            if gpu_count == 1 {
+                                "GPU".to_string()
+                            } else {
+                                format!("GPU{gpu_index}")
+                            }
+                        } else {
+                            key.display_name(duplicate_names.contains(key.name.as_str()))
+                                .into_owned()
+                        };
+
+                        let label = match data.gpu_harvest.iter().find(|(k, _)| k == key) {
+                            Some((_, harvest)) => memory_legend_label(&display_name, Some(harvest)),
+                            None => display_name,
+                        };
+
+                        points.push(
+                            GraphData::default()
+                                .name(label.into())
+                                .time(time)
+                                .values(gpu_data)
+                                .style(style),
+                        );
                     }
                 }
 

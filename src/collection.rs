@@ -25,6 +25,8 @@ pub mod network;
 pub mod processes;
 pub mod temperature;
 
+#[cfg(feature = "gpu")]
+use std::collections::BTreeMap;
 use std::time::{Duration, Instant};
 
 #[cfg(any(not(target_os = "windows"), feature = "gpu"))]
@@ -61,7 +63,9 @@ pub struct Data {
     #[cfg(feature = "zfs")]
     pub arc: Option<memory::MemData>,
     #[cfg(feature = "gpu")]
-    pub gpu: Option<Vec<(String, memory::MemData)>>,
+    pub gpu_memory: Option<Vec<(GpuKey, memory::MemData)>>,
+    #[cfg(feature = "gpu")]
+    pub gpu_usage: Option<BTreeMap<GpuKey, f32>>,
 }
 
 impl Default for Data {
@@ -84,7 +88,9 @@ impl Default for Data {
             #[cfg(feature = "zfs")]
             arc: None,
             #[cfg(feature = "gpu")]
-            gpu: None,
+            gpu_memory: None,
+            #[cfg(feature = "gpu")]
+            gpu_usage: None,
         }
     }
 }
@@ -109,7 +115,8 @@ impl Data {
         }
         #[cfg(feature = "gpu")]
         {
-            self.gpu = None;
+            self.gpu_memory = None;
+            self.gpu_usage = None;
         }
     }
 }
@@ -397,7 +404,9 @@ impl DataCollector {
             // Only rebuild the list every 60 seconds; data (usage/memory) is
             // refreshed every cycle via `Gpus::refresh()`.
             #[cfg(feature = "gpu")]
-            if self.widgets_to_harvest.use_gpu {
+            if self.widgets_to_harvest.use_gpu
+                && (self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_gpu_graph)
+            {
                 if let Some(gpus) = &mut self.sysinfo_gpus {
                     gpus.refresh(false);
                 } else if let Ok(gpus) = Gpus::new_with_refreshed_list()
@@ -456,12 +465,24 @@ impl DataCollector {
     #[inline]
     fn update_gpus(&mut self) {
         if self.widgets_to_harvest.use_gpu {
-            let mut local_gpu: Vec<(String, memory::MemData)> = Vec::new();
+            let mut local_gpu: Vec<(GpuKey, memory::MemData)> = Vec::new();
             let mut local_gpu_pids: Vec<IntHashMap<Pid, (u64, u32)>> = Vec::new();
             let mut local_gpu_total_mem: u64 = 0;
+            let mut local_gpu_utilization: BTreeMap<GpuKey, f32> = BTreeMap::new();
 
             #[cfg(feature = "nvidia")]
-            if let Some(data) = nvidia::get_nvidia_gpu_data(self) {
+            let nvidia_data = nvidia::get_nvidia_gpu_data(self);
+
+            // sysinfo also reports NVIDIA GPUs, so skip those if NVML has them.
+            #[cfg(all(feature = "nvidia", not(target_os = "linux")))]
+            let nvml_reported_gpus = nvidia_data
+                .as_ref()
+                .is_some_and(|data| data.memory.is_some() || data.overall_utilization.is_some());
+            #[cfg(all(not(feature = "nvidia"), not(target_os = "linux")))]
+            let nvml_reported_gpus = false;
+
+            #[cfg(feature = "nvidia")]
+            if let Some(data) = nvidia_data {
                 if let Some(mut temp) = data.temperature {
                     if let Some(sensors) = &mut self.data.temperature_sensors {
                         sensors.append(&mut temp);
@@ -476,6 +497,9 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
+                if let Some(utilization) = data.overall_utilization {
+                    local_gpu_utilization.extend(utilization);
+                }
             }
 
             #[cfg(target_os = "linux")]
@@ -488,6 +512,9 @@ impl DataCollector {
                 if let Some(mut proc) = data.process_data {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
+                }
+                if let Some(utilization) = data.overall_utilization {
+                    local_gpu_utilization.extend(utilization);
                 }
             }
 
@@ -502,19 +529,33 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
+                if let Some(utilization) = data.overall_utilization {
+                    local_gpu_utilization.extend(utilization);
+                }
             }
 
             #[cfg(all(feature = "gpu", not(target_os = "linux")))]
             if let Some(gpus) = &self.sysinfo_gpus
-                && let Some(mut mem) =
-                    gpu::sysinfo_backend::collect_sysinfo_gpu_data(gpus, &self.widgets_to_harvest)
+                && let Some(data) = gpu::sysinfo_backend::collect_sysinfo_gpu_data(
+                    gpus,
+                    &self.widgets_to_harvest,
+                    nvml_reported_gpus,
+                )
             {
-                local_gpu.append(&mut mem);
+                if let Some(mut mem) = data.memory {
+                    local_gpu.append(&mut mem);
+                }
+
+                if let Some(utilization) = data.overall_utilization {
+                    local_gpu_utilization.extend(utilization);
+                }
             }
 
-            self.data.gpu = (!local_gpu.is_empty()).then_some(local_gpu);
+            self.data.gpu_memory = (!local_gpu.is_empty()).then_some(local_gpu);
             self.gpu_pids = (!local_gpu_pids.is_empty()).then_some(local_gpu_pids);
             self.gpus_total_mem = (local_gpu_total_mem > 0).then_some(local_gpu_total_mem);
+            self.data.gpu_usage =
+                (!local_gpu_utilization.is_empty()).then_some(local_gpu_utilization);
         }
     }
 

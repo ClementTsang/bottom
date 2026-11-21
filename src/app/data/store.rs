@@ -1,3 +1,5 @@
+#[cfg(feature = "gpu")]
+use std::collections::BTreeMap;
 use std::{
     borrow::Borrow,
     hash::{Hash, Hasher},
@@ -8,6 +10,8 @@ use std::{
 use rustc_hash::FxHashMap;
 
 use super::{ProcessData, TimeSeriesData};
+#[cfg(feature = "gpu")]
+use crate::collection::GpuKey;
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
 use crate::{
@@ -86,7 +90,10 @@ pub struct InnerData {
     #[cfg(feature = "zfs")]
     pub(crate) arc_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
-    pub(crate) gpu_harvest: Vec<(String, MemData)>,
+    /// GPU data. In sorted order by PCI address.
+    pub(crate) gpu_harvest: Vec<(GpuKey, MemData)>,
+    #[cfg(feature = "gpu")]
+    pub(crate) gpu_utilization: BTreeMap<GpuKey, f32>,
     pub(crate) cpu_harvest: CpuHarvest,
     pub(crate) load_avg_harvest: LoadAvgHarvest,
     pub(crate) process_data: ProcessData,
@@ -124,6 +131,8 @@ impl Default for InnerData {
             arc_harvest: None,
             #[cfg(feature = "gpu")]
             gpu_harvest: Vec::default(),
+            #[cfg(feature = "gpu")]
+            gpu_utilization: BTreeMap::default(),
             starting_total_network: None,
         }
     }
@@ -184,8 +193,15 @@ impl InnerData {
         }
 
         #[cfg(feature = "gpu")]
-        if let Some(gpu) = data.gpu {
+        if let Some(gpu) = data.gpu_memory {
             self.gpu_harvest = gpu;
+            self.gpu_harvest.sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        }
+
+        #[cfg(feature = "gpu")]
+        {
+            // No need to sort, since it's a BTreeMap.
+            self.gpu_utilization = data.gpu_usage.unwrap_or_default();
         }
 
         if let Some(cpu) = data.cpu {

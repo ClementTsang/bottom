@@ -15,9 +15,15 @@ use concat_string::concat_string;
 use rustc_hash::FxHashSet as HashSet;
 
 use crate::{
-    collection::{linux::utils::is_device_awake, processes::Pid},
+    collection::{PciAddress, linux::utils::is_device_awake, processes::Pid},
     utils::int_hash::IntHashMap,
 };
+
+/// Get the PCI address of a PCI device directory returned by
+/// [`enumerate_drm_devices`], which is named after its address.
+pub(crate) fn get_pci_address(device_path: &Path) -> Option<PciAddress> {
+    PciAddress::parse(device_path.file_name()?.to_str()?)
+}
 
 /// Enumerate the PCI device directories bound to a given DRM driver module
 /// (e.g. `amdgpu`, `i915`, `xe`).
@@ -146,6 +152,9 @@ pub(crate) fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
 /// Scan every process for open fds pointing at the given DRM device nodes,
 /// parse each fd's `fdinfo`, and accumulate per-process usage keyed by pid.
 ///
+/// Each DRM client (`drm-client-id`) is only counted for the first process it
+/// is seen in, so fds shared between processes aren't double counted.
+///
 /// - `T` is the accumulator type (e.g. a struct holding a bunch of counters).
 /// - `F` is a function that takes an accumulator and a keyword/value pair from
 ///   the fdinfo, and updates the accumulator with that info.
@@ -183,6 +192,8 @@ where
         })
         .collect();
 
+    let mut observed_ids: HashSet<usize> = HashSet::default();
+
     for pid in pids {
         // collect file descriptors that point to our device renderers
         let Some(fds) = get_pid_fds(pid, render_nodes) else {
@@ -190,8 +201,6 @@ where
         };
 
         let mut current_usage: T = Default::default();
-
-        let mut observed_ids: HashSet<usize> = HashSet::default();
 
         for fd in fds {
             let fdinfo_path = format!("/proc/{pid}/fdinfo/{fd}");

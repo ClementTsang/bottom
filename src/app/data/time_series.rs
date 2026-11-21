@@ -1,5 +1,7 @@
 //! Time series data.
 
+#[cfg(feature = "gpu")]
+use std::collections::BTreeMap;
 use std::{
     cmp::Ordering,
     time::{Duration, Instant},
@@ -9,6 +11,8 @@ use std::{
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use timeless::data::ChunkedData;
 
+#[cfg(feature = "gpu")]
+use crate::collection::GpuKey;
 use crate::{
     app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
     collection::Data,
@@ -59,8 +63,14 @@ pub struct TimeSeriesData {
     pub arc_mem: Values,
 
     #[cfg(feature = "gpu")]
-    /// GPU memory data.
-    pub gpu_mem: HashMap<String, Values>,
+    /// GPU memory data. As it is stored in a BTreeMap, it's inherently
+    /// sorted.
+    pub gpu_mem: BTreeMap<GpuKey, Values>,
+
+    #[cfg(feature = "gpu")]
+    /// GPU utilization data as a percentage. As it is stored in a BTreeMap,
+    /// it's inherently sorted.
+    pub gpu_usage: BTreeMap<GpuKey, Values>,
 
     /// Temperature data.
     ///
@@ -82,6 +92,9 @@ impl TimeSeriesData {
     ) {
         self.time.push(data.collection_time);
 
+        // FIXME: insert_break doesn't advance the series' index, and new series
+        // start at 0, so they can be misaligned against time. May need to use
+        // `try_push(None)` instead for missing samples.
         if let Some(network) = &data.network {
             self.rx.push(network.rx as f64);
             self.tx.push(network.tx as f64);
@@ -152,24 +165,19 @@ impl TimeSeriesData {
 
         #[cfg(feature = "gpu")]
         {
-            if let Some(gpu) = &data.gpu {
-                let mut not_visited = self
-                    .gpu_mem
-                    .keys()
-                    .map(String::to_owned)
-                    .collect::<HashSet<_>>();
+            if let Some(gpu_mem_data) = &data.gpu_memory {
+                let mut not_visited = self.gpu_mem.keys().cloned().collect::<HashSet<_>>();
 
-                for (name, new_data) in gpu {
-                    not_visited.remove(name);
+                for (key, new_data) in gpu_mem_data {
+                    not_visited.remove(key);
 
-                    if !self.gpu_mem.contains_key(name) {
-                        self.gpu_mem
-                            .insert(name.to_string(), ChunkedData::default());
+                    if !self.gpu_mem.contains_key(key) {
+                        self.gpu_mem.insert(key.clone(), ChunkedData::default());
                     }
 
                     let curr = self
                         .gpu_mem
-                        .get_mut(name)
+                        .get_mut(key)
                         .expect("entry must exist as it was created above");
                     curr.push(new_data.percentage());
                 }
@@ -181,6 +189,37 @@ impl TimeSeriesData {
                 }
             } else {
                 for g in self.gpu_mem.values_mut() {
+                    g.insert_break();
+                }
+            }
+        }
+
+        #[cfg(feature = "gpu")]
+        if used_widgets.use_gpu_graph {
+            if let Some(gpu_usage_data) = &data.gpu_usage {
+                let mut not_visited = self.gpu_usage.keys().cloned().collect::<HashSet<_>>();
+
+                for (key, usage) in gpu_usage_data {
+                    not_visited.remove(key);
+
+                    if !self.gpu_usage.contains_key(key) {
+                        self.gpu_usage.insert(key.clone(), ChunkedData::default());
+                    }
+
+                    let curr = self
+                        .gpu_usage
+                        .get_mut(key)
+                        .expect("entry must exist as it was created above");
+                    curr.push(*usage as f64);
+                }
+
+                for nv in not_visited {
+                    if let Some(entry) = self.gpu_usage.get_mut(&nv) {
+                        entry.insert_break();
+                    }
+                }
+            } else {
+                for g in self.gpu_usage.values_mut() {
                     g.insert_break();
                 }
             }
@@ -327,15 +366,26 @@ impl TimeSeriesData {
 
         #[cfg(feature = "gpu")]
         {
-            self.gpu_mem.retain(|_, gpu| {
-                let _ = gpu.prune(end);
+            self.gpu_mem.retain(|_, gpu_mem| {
+                let _ = gpu_mem.prune(end);
 
                 // Remove the entry if it is empty. We can always add it again
                 // later.
-                if gpu.no_elements() {
+                if gpu_mem.no_elements() {
                     false
                 } else {
-                    gpu.shrink_to_fit();
+                    gpu_mem.shrink_to_fit();
+                    true
+                }
+            });
+
+            self.gpu_usage.retain(|_, gpu_usage| {
+                let _ = gpu_usage.prune(end);
+
+                if gpu_usage.no_elements() {
+                    false
+                } else {
+                    gpu_usage.shrink_to_fit();
                     true
                 }
             });

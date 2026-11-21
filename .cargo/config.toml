@@ -8,4 +8,4 @@ rustflags = ["-C", "target-feature=+crt-static"]
 rustflags = ["-C", "target-feature=+crt-static"]
 
 [registry]
-global-min-publish-age = "7 days"
+global-min-publish-age = "14 days"
