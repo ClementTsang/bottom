@@ -1515,7 +1515,7 @@ fn parse_title(title: &str) -> Result<String, OptionError> {
             let hostname = sysinfo::System::host_name().map_err(|err| {
                 OptionError::Other(format!("could not get hostname - {err:?}").into())
             })?;
-            Ok(format!("{}{}{}", before, hostname, after))
+            Ok(format!("{before}{hostname}{after}"))
         }
         None => Ok(title.to_string()),
     }

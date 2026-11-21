@@ -18,7 +18,7 @@ pub struct SysinfoGpuData {
 }
 
 /// Returns the human-readable name for a GPU vendor.
-fn vendor_name(vendor: Option<&str>) -> String {
+fn vendor_name_mapping(vendor: Option<&str>) -> String {
     match vendor {
         Some("Intel Corporation") => "Intel".to_string(),
         Some(vendor) if vendor.starts_with("Advanced Micro Devices") => "AMD".to_string(),
@@ -48,7 +48,7 @@ pub fn collect_sysinfo_gpu_data(
             continue;
         }
 
-        let name = vendor_name(gpu.vendor());
+        let name = vendor_name_mapping(gpu.vendor());
         let model = gpu.model().unwrap_or("");
         let display_name = match (model.is_empty(), model.starts_with(&name)) {
             (true, _) => name,

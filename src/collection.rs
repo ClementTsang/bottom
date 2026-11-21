@@ -468,7 +468,7 @@ impl DataCollector {
             let mut local_gpu: Vec<(GpuKey, memory::MemData)> = Vec::new();
             let mut local_gpu_pids: Vec<IntHashMap<Pid, (u64, u32)>> = Vec::new();
             let mut local_gpu_total_mem: u64 = 0;
-            let mut local_gpu_overall_util: BTreeMap<GpuKey, f32> = BTreeMap::new();
+            let mut local_gpu_utilization: BTreeMap<GpuKey, f32> = BTreeMap::new();
 
             #[cfg(feature = "nvidia")]
             let nvidia_data = nvidia::get_nvidia_gpu_data(self);
@@ -497,8 +497,8 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
-                if let Some(overall) = data.overall_utilization {
-                    local_gpu_overall_util.extend(overall);
+                if let Some(utilization) = data.overall_utilization {
+                    local_gpu_utilization.extend(utilization);
                 }
             }
 
@@ -513,8 +513,8 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
-                if let Some(overall) = data.overall_utilization {
-                    local_gpu_overall_util.extend(overall);
+                if let Some(utilization) = data.overall_utilization {
+                    local_gpu_utilization.extend(utilization);
                 }
             }
 
@@ -529,8 +529,8 @@ impl DataCollector {
                     local_gpu_pids.append(&mut proc.1);
                     local_gpu_total_mem += proc.0;
                 }
-                if let Some(overall) = data.overall_utilization {
-                    local_gpu_overall_util.extend(overall);
+                if let Some(utilization) = data.overall_utilization {
+                    local_gpu_utilization.extend(utilization);
                 }
             }
 
@@ -546,8 +546,8 @@ impl DataCollector {
                     local_gpu.append(&mut mem);
                 }
 
-                if let Some(overall) = data.overall_utilization {
-                    local_gpu_overall_util.extend(overall);
+                if let Some(utilization) = data.overall_utilization {
+                    local_gpu_utilization.extend(utilization);
                 }
             }
 
@@ -555,7 +555,7 @@ impl DataCollector {
             self.gpu_pids = (!local_gpu_pids.is_empty()).then_some(local_gpu_pids);
             self.gpus_total_mem = (local_gpu_total_mem > 0).then_some(local_gpu_total_mem);
             self.data.gpu_usage =
-                (!local_gpu_overall_util.is_empty()).then_some(local_gpu_overall_util);
+                (!local_gpu_utilization.is_empty()).then_some(local_gpu_utilization);
         }
     }
 

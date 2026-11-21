@@ -31,8 +31,8 @@ pub struct PciAddress {
 }
 
 impl PciAddress {
-    /// Parse a `domain:bus:device.function` PCI address where each part is in
-    /// hex, e.g. `0000:01:00.0` from sysfs or `00000000:01:00.0` from NVML.
+    /// Parse a PCI address (e.g. `0000:01:00.0` from sysfs or
+    /// `00000000:01:00.0` from NVML) in the form `domain:bus:device.function`.
     pub fn parse(address: &str) -> Option<Self> {
         let mut parts = address.trim().split(':');
         let domain = u32::from_str_radix(parts.next()?, 16).ok()?;
@@ -69,10 +69,8 @@ impl fmt::Display for PciAddress {
     }
 }
 
-/// Identifies a GPU.
-///
-/// Equality, ordering, and hashing only use the PCI address, as the name is
-/// just for display and isn't guaranteed to be unique.
+/// Identifies a GPU. Equality is solely done via PCI address (as
+/// that's unique), but we also store the display name for convenience.
 #[derive(Clone, Debug)]
 pub struct GpuKey {
     pub address: PciAddress,

@@ -63,11 +63,13 @@ pub struct TimeSeriesData {
     pub arc_mem: Values,
 
     #[cfg(feature = "gpu")]
-    /// GPU memory data.
+    /// GPU memory data. As it is stored in a BTreeMap, it's inherently
+    /// sorted.
     pub gpu_mem: BTreeMap<GpuKey, Values>,
 
     #[cfg(feature = "gpu")]
-    /// GPU utilization data as a percentage.
+    /// GPU utilization data as a percentage. As it is stored in a BTreeMap,
+    /// it's inherently sorted.
     pub gpu_usage: BTreeMap<GpuKey, Values>,
 
     /// Temperature data.
@@ -83,9 +85,6 @@ pub struct TimeSeriesData {
 }
 
 impl TimeSeriesData {
-    // FIXME: insert_break doesn't advance the series' index, and new series
-    // start at 0, so they can be misaligned against time. May need to use
-    // `try_push(None)` instead for missing samples.
     /// Add a new data point.
     pub fn add(
         &mut self, data: &Data, used_widgets: &UsedWidgets, settings: &AppConfigFields,
@@ -93,6 +92,9 @@ impl TimeSeriesData {
     ) {
         self.time.push(data.collection_time);
 
+        // FIXME: insert_break doesn't advance the series' index, and new series
+        // start at 0, so they can be misaligned against time. May need to use
+        // `try_push(None)` instead for missing samples.
         if let Some(network) = &data.network {
             self.rx.push(network.rx as f64);
             self.tx.push(network.tx as f64);

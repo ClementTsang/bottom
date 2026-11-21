@@ -6,6 +6,8 @@ use ratatui::{
     style::Style,
 };
 
+#[cfg(feature = "gpu")]
+use crate::collection::duplicate_gpu_names;
 use crate::{
     app::{App, data::Values},
     canvas::{
@@ -17,8 +19,6 @@ use crate::{
     components::time_series::GraphDrawCtx,
     get_binary_unit_and_denominator,
 };
-#[cfg(feature = "gpu")]
-use crate::{canvas::drawing_utils::has_visible_data, collection::duplicate_gpu_names};
 
 /// Convert memory info into a combined memory label.
 #[inline]
@@ -42,6 +42,7 @@ fn graph_data<'a>(
     out: &mut Vec<GraphData<'a>>, name: &str, last_harvest: Option<&'a MemData>,
     time: &'a [Instant], values: &'a Values, style: Style,
 ) {
+    // TODO: Make this if not visible instead...?
     if !values.no_elements() {
         let label = memory_legend_label(name, last_harvest).into();
 
@@ -67,7 +68,6 @@ impl Painter {
                 draw_loc,
             );
             #[cfg(feature = "gpu")]
-            let display_time = mem_state.graph.state_mut().current_display_time();
             let graph_data = {
                 let mut size = 1;
                 let data = app_state.data_store.get_data();
@@ -143,16 +143,14 @@ impl Painter {
                     let mut colour_index = 0;
                     let gpu_styles = &self.styles.gpu_colours;
                     let short_gpu_names = app_state.app_config_fields.mem_short_gpu_names;
-                    let gpu_series: Vec<_> = time_series
-                        .gpu_mem
-                        .iter()
-                        .filter(|(_, values)| has_visible_data(values, time, display_time))
-                        .collect();
-                    let gpu_count = gpu_series.len();
-                    let duplicate_names =
-                        duplicate_gpu_names(gpu_series.iter().map(|(key, _)| *key));
+                    let gpu_count = time_series.gpu_mem.len();
+                    let duplicate_names = duplicate_gpu_names(time_series.gpu_mem.keys());
 
-                    for (gpu_index, (key, gpu_data)) in gpu_series.into_iter().enumerate() {
+                    for (gpu_index, (key, gpu_data)) in time_series.gpu_mem.iter().enumerate() {
+                        if !gpu_data.no_elements() {
+                            continue;
+                        }
+
                         let style = {
                             if gpu_styles.is_empty() {
                                 Style::default()

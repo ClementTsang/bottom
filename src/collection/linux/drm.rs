@@ -153,8 +153,7 @@ pub(crate) fn diff_usage(pre: u64, cur: u64, interval: &Duration) -> u64 {
 /// parse each fd's `fdinfo`, and accumulate per-process usage keyed by pid.
 ///
 /// Each DRM client (`drm-client-id`) is only counted for the first process it
-/// is seen in, so fds shared between processes (e.g. inherited via `fork`)
-/// aren't double counted.
+/// is seen in, so fds shared between processes aren't double counted.
 ///
 /// - `T` is the accumulator type (e.g. a struct holding a bunch of counters).
 /// - `F` is a function that takes an accumulator and a keyword/value pair from

@@ -241,12 +241,12 @@ pub fn get_nvidia_gpu_data(collector: &mut DataCollector) -> Option<GpusData> {
             }
 
             if widgets_to_harvest.use_mem
-                && let Some(key) = &key
+                && let Some(key) = key
                 && let Ok(mem) = device.memory_info()
                 && let Some(total_bytes) = NonZeroU64::new(mem.total)
             {
                 mem_vec.push((
-                    key.clone(),
+                    key,
                     MemData {
                         total_bytes,
                         used_bytes: mem.used,

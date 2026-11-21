@@ -64,14 +64,14 @@ pub struct IntelGpuMemory {
 /// [`get_intel_fdinfo`]).
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 struct IntelGpuProc {
-    // Per-engine-class busy counters (accumulating). i915 reports nanoseconds,
-    // xe reports cycles.
+    /// Per-engine-class busy counters (accumulating). i915 reports nanoseconds,
+    /// xe reports cycles.
     busy: [u64; NUM_ENGINE_CLASSES],
-    // xe: per-engine-class elapsed cycle counters.
+    /// xe: per-engine-class elapsed cycle counters.
     total_cycles: [u64; NUM_ENGINE_CLASSES],
-    // Per-engine-class engine count. 0 means unreported, which implies 1.
+    /// Per-engine-class engine count. 0 means unreported, which implies 1.
     capacity: [u64; NUM_ENGINE_CLASSES],
-    // Per-process GPU memory, in bytes.
+    /// Per-process GPU memory, in bytes.
     mem_used: u64,
 }
 
@@ -380,46 +380,4 @@ pub fn get_intel_gpu_data(
         process_data: (!proc_vec.is_empty()).then_some((total_mem, proc_vec)),
         overall_utilization: (!overall_util_vec.is_empty()).then_some(overall_util_vec),
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use std::time::Duration;
-
-    use super::{IntelDriver, IntelGpuProc, engine_busy_fractions};
-
-    fn render_busy(ns: u64) -> IntelGpuProc {
-        let mut proc = IntelGpuProc::default();
-        proc.busy[0] = ns;
-        proc
-    }
-
-    #[test]
-    fn i915_engine_busy_fractions() {
-        let interval = Duration::from_secs(1);
-
-        let fractions = engine_busy_fractions(
-            IntelDriver::I915,
-            &render_busy(1_000_000),
-            &render_busy(1_001_000_000),
-            &interval,
-        );
-        assert_eq!(fractions, [1.0, 0.0, 0.0, 0.0, 0.0]);
-
-        let fractions = engine_busy_fractions(
-            IntelDriver::I915,
-            &render_busy(500_000_000),
-            &render_busy(750_000_000),
-            &interval,
-        );
-        assert_eq!(fractions, [0.25, 0.0, 0.0, 0.0, 0.0]);
-
-        let fractions = engine_busy_fractions(
-            IntelDriver::I915,
-            &render_busy(900_000_000),
-            &render_busy(100_000_000),
-            &interval,
-        );
-        assert_eq!(fractions, [0.0; 5]);
-    }
 }

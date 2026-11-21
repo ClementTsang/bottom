@@ -6,27 +6,8 @@ use ratatui::{
     widgets::{Block, BorderType, Borders},
 };
 
-#[cfg(feature = "gpu")]
-use crate::app::data::Values;
-
 pub const SIDE_BORDERS: Borders = Borders::LEFT.union(Borders::RIGHT);
 pub const AUTOHIDE_TIMEOUT_MILLISECONDS: u64 = 5000; // 5 seconds to autohide
-
-/// Whether `values` has any data within the last `display_time` milliseconds
-/// of `time`, i.e. whether any of it would be visible on a time graph.
-#[cfg(feature = "gpu")]
-pub fn has_visible_data(values: &Values, time: &[Instant], display_time: u64) -> bool {
-    let Some(latest) = time.last() else {
-        return false;
-    };
-
-    values
-        .iter_along_base(time)
-        .next_back()
-        .is_some_and(|(last, _)| {
-            latest.duration_since(*last).as_millis() <= u128::from(display_time)
-        })
-}
 
 /// Determine whether a graph x-label should be hidden.
 pub fn should_hide_x_label(

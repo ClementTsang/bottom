@@ -200,6 +200,7 @@ impl InnerData {
 
         #[cfg(feature = "gpu")]
         {
+            // No need to sort, since it's a BTreeMap.
             self.gpu_utilization = data.gpu_usage.unwrap_or_default();
         }
 
