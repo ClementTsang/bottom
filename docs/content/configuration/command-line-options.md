@@ -102,9 +102,13 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 
 ## Style Options
 
-| Option             | Behaviour                                                          |
-| ------------------ | ------------------------------------------------------------------ |
-| `--theme <SCHEME>` | Use a built-in colour theme, use '--help' for info on the colours. |
+| Option                   | Behaviour                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| `--theme <SCHEME>`       | Use a built-in colour theme, or `auto`/`dark`/`light` for dark/light detection. |
+| `--theme_dark <SCHEME>`  | Theme for dark backgrounds (or when `--theme dark` is set).                     |
+| `--theme_light <SCHEME>` | Theme for light backgrounds (or when `--theme light` is set).                   |
+
+Use `--help` for more info on the colour themes and options.
 
 ## Other Options
 

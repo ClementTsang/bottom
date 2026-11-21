@@ -213,15 +213,16 @@ impl Styles {
     /// This must take into account light/dark modes if configured.
     ///
     /// In terms of priority:
-    /// - If the `--theme` argument is set to a specific colour scheme, it will always take priority.
-    /// - If `--theme-dark`/`--theme-light` are set, we assume that the user wants automatic switching.
-    ///   We will use either automatic detection or dark/light if specified in `--theme`/`config.styles.theme`.
-    /// - If NONE of the theme arguments are set, we then look at the config.
-    /// - If a custom palette is set, then use that. If an explicit theme is also set, apply the palette on top of the theme.
-    /// - If no custom palette is set, then use the theme as is if set.
-    /// - If no theme is set, then use the default palette (auto based on light/dark).
+    /// - If `--theme` is set via arguments, then we will use that to determine which theme to apply.
+    /// - We then check if `--theme_dark` or `--theme_light` are set, depending on what `--theme`
+    ///   was set to. If it was not set, then this is skipped.
+    /// - If not, then either keep trying with the argument value of `--theme` or check if the
+    ///   config has it set. If neither is set, defaults to `auto`.
+    /// - Then try resolving the config's `theme_dark` or `theme_light` as appropriate.
+    /// - If they weren't set, they will default to `default` or `default-light` respectively,
+    ///   and then the custom palette from the config will be applied on top if available.
     ///
-    /// Note this is possibly subject to change! I may make it so you can define custom light and dark palettes instead.
+    /// Note this is possibly subject to change! I may make it so you can define custom light and dark palettes instead, for example.
     pub fn new(args: &BottomArgs, config: &Config) -> anyhow::Result<Self> {
         // First, check if the theme is set via args.
         let arg_is_dark = {

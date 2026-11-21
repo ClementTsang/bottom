@@ -36,6 +36,37 @@ To set the theme using the config file:
 theme = "gruvbox"
 ```
 
+### Automatic dark/light theme switching
+
+bottom can automatically detect your terminal's background colour (dark or light) and switch to the appropriate theme at startup. This is enabled by default, as if the config
+was set like:
+
+```toml
+[styles]
+theme = "auto"
+theme_dark = "default"
+theme_light = "default-light"
+```
+
+You can also use the special value `"custom"` for either `theme_dark` or `theme_light` to use your custom colour
+palette from the config file for that mode.
+
+If you only want to force a specific mode (e.g. always dark regardless of terminal background), set `theme` to
+`"dark"` or `"light"`:
+
+```toml
+[styles]
+theme = "dark"
+theme_dark = "nord"
+```
+
+Alternatively, you can just directly set the theme like so:
+
+```toml
+[styles]
+theme = "nord"
+```
+
 ## Custom styling
 
 bottom's components can also be individually styled by the user to control the colour of the text style.
@@ -114,6 +145,16 @@ selected_text = "#fff"
 ```
 
 ### Configuration
+
+#### Theme
+
+These can be set under `[styles]`:
+
+| Config field    | Details                                                                                      | Examples                      |
+| --------------- | -------------------------------------------------------------------------------------------- | ----------------------------- |
+| `theme`         | A built-in theme name, or `"auto"`, `"dark"`, `"light"` for dark/light detection             | `theme = "auto"`              |
+| `theme_dark`    | Theme to use for dark backgrounds or when `theme = "dark"`; use `"custom"` for custom palette | `theme_dark = "nord"`         |
+| `theme_light`   | Theme to use for light backgrounds or when `theme = "light"`; use `"custom"` for custom palette | `theme_light = "default-light"` |
 
 #### CPU
 
