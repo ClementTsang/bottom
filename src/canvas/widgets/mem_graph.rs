@@ -67,7 +67,7 @@ impl Painter {
                 mem_state.graph.state_mut().autohide_timer_mut(),
                 draw_loc,
             );
-            #[cfg(feature = "gpu")]
+
             let graph_data = {
                 let mut size = 1;
                 let data = app_state.data_store.get_data();
