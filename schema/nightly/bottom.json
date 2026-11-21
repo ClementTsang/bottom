@@ -1435,7 +1435,21 @@
           ]
         },
         "theme": {
-          "description": "A built-in theme.\n\nIf this is and a custom colour are both set, in the config file,\nthe custom colour scheme will be prioritized first. If a theme\nis set in the command-line args, however, it will always be\nprioritized first.",
+          "description": "A built-in theme. Currently supported themes are:\n- default\n- default-light: default but adjusted for lighter backgrounds\n- gruvbox: a bright theme with 'retro groove' colours\n- gruvbox-light: gruvbox but adjusted for lighter backgrounds\n- nord: an arctic, north-bluish colour palette\n- nord-light: nord but adjusted for lighter backgrounds\n\nNote that if both this argument is used and a custom theme is set in the configuration\nfile, the argument will take precedence.\n\nIn addition, you can use special values to control dark/light detection:\n- auto: (default) automatically pick a dark or light theme based on the terminal,\n  controlled by '--theme-dark' and '--theme-light' respectively\n- dark: force the dark theme set by '--theme-dark'\n- light: force the light theme set by '--theme-light'\"\n\nIf this is and a custom colour are both set, in the config file,\nthe custom colour scheme will be prioritized first. If a theme\nis set in the command-line args, however, it will always be\nprioritized first.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "theme_dark": {
+          "description": "Specify a theme to use when the terminal has a dark background\nor 'theme' is set to 'dark'. Defaults to using the 'default'\ntheme.\n\nNote that if the '--theme/--theme_dark' args are used while this\noption is set in the configuration file, the arguments will take\nprecedence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "theme_light": {
+          "description": "Specify a theme to use when the terminal has a light background\nor 'theme' is set to 'light'. Defaults to using the 'default-light'\ntheme.\n\nNote that if the '--theme/--theme_light' args are used while this\noption is set in the configuration file, the arguments will take\nprecedence.",
           "type": [
             "string",
             "null"
