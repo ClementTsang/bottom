@@ -26,6 +26,7 @@ use ratatui::{style::Style, widgets::BorderType};
 use serde::{Deserialize, Serialize};
 use tables::TableStyle;
 use temp_graph::TempGraphStyle;
+use terminal_colorsaurus::ThemeMode;
 use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
 
@@ -79,6 +80,24 @@ pub(crate) struct StyleConfig {
     /// prioritized first.
     pub(crate) theme: Option<Cow<'static, str>>,
 
+    /// Specify a theme to use when the terminal has a dark background
+    /// or 'theme' is set to 'dark'. Defaults to using the 'default'
+    /// theme.
+    ///
+    /// Note that if the '--theme/--theme_dark' args are used while this
+    /// option is set in the configuration file, the arguments will take
+    /// precedence.
+    pub(crate) theme_dark: Option<Cow<'static, str>>,
+
+    /// Specify a theme to use when the terminal has a light background
+    /// or 'theme' is set to 'light'. Defaults to using the 'default-light'
+    /// theme.
+    ///
+    /// Note that if the '--theme/--theme_light' args are used while this
+    /// option is set in the configuration file, the arguments will take
+    /// precedence.
+    pub(crate) theme_light: Option<Cow<'static, str>>,
+
     /// Styling for the CPU widget.
     pub(crate) cpu: Option<CpuStyle>,
 
@@ -105,6 +124,26 @@ pub(crate) struct StyleConfig {
 
     /// Styling for general widgets.
     pub(crate) widgets: Option<WidgetStyle>,
+}
+
+enum StyleMode {
+    Auto,
+    Dark,
+    Light,
+}
+
+impl StyleMode {
+    fn is_dark(style_mode: Self) -> bool {
+        match style_mode {
+            StyleMode::Auto => {
+                terminal_colorsaurus::theme_mode(terminal_colorsaurus::QueryOptions::default())
+                    .map(|mode| mode == ThemeMode::Dark)
+                    .unwrap_or(true)
+            }
+            StyleMode::Dark => true,
+            StyleMode::Light => false,
+        }
+    }
 }
 
 /// The actual internal representation of the configured styles.
@@ -155,24 +194,152 @@ impl Default for Styles {
 }
 
 impl Styles {
+    /// Resolve the correct styling to use throughout the application.
+    /// This must take into account light/dark modes if configured.
+    ///
+    /// In terms of priority:
+    /// - If the `--theme` argument is set to a specific colour scheme, it will always take priority.
+    /// - If `--theme-dark`/`--theme-light` are set, we assume that the user wants automatic switching.
+    ///   We will use either automatic detection or dark/light if specified in `--theme`/`config.styles.theme`.
+    /// - If NONE of the theme arguments are set, we then look at the config.
+    /// - If a custom palette is set, then use that. If an explicit theme is also set, apply the palette on top of the theme.
+    /// - If no custom palette is set, then use the theme as is if set.
+    /// - If no theme is set, then use the default palette (auto based on light/dark).
+    ///
+    /// Note this is possibly subject to change! I may make it so you can define custom light and dark palettes instead.
     pub fn new(args: &BottomArgs, config: &Config) -> anyhow::Result<Self> {
-        let mut palette = match &args.style.theme {
-            Some(theme) => Self::from_theme(theme)?,
-            None => match config.styles.as_ref().and_then(|s| s.theme.as_ref()) {
-                Some(theme) => Self::from_theme(theme)?,
-                None => Self::default(),
-            },
+        // First, check if the theme is set via args.
+        let arg_is_dark = {
+            let arg_style_mode = if let Some(theme) = &args.style.theme {
+                if let Ok(style) = Self::from_built_in_theme(theme) {
+                    return Ok(style);
+                } else {
+                    Some(match theme.to_lowercase().as_str() {
+                        "dark" => StyleMode::Dark,
+                        "light" => StyleMode::Light,
+                        "auto" => StyleMode::Auto,
+                        _ => {
+                            return Err(OptionError::other(format!(
+                                "'{theme}' is an invalid argument."
+                            )))?;
+                        }
+                    })
+                }
+            } else {
+                None
+            };
+
+            arg_style_mode.map(StyleMode::is_dark)
+        };
+
+        // If the theme_dark/theme_light args or config options are set, resolve them here.
+        if let Some(is_dark) = arg_is_dark {
+            let resolved_theme = if is_dark {
+                args.style.theme_dark.as_deref().or_else(|| {
+                    config
+                        .styles
+                        .as_ref()
+                        .and_then(|s| s.theme_dark.as_ref())
+                        .map(|v| &**v)
+                })
+            } else {
+                args.style.theme_light.as_deref().or_else(|| {
+                    config
+                        .styles
+                        .as_ref()
+                        .and_then(|s| s.theme_light.as_ref())
+                        .map(|v| &**v)
+                })
+            };
+
+            if let Some(theme) = resolved_theme {
+                match theme {
+                    "custom" => {
+                        return Self::resolve_theme_from_config(config);
+                    }
+                    _ => {
+                        return Self::from_built_in_theme(theme);
+                    }
+                }
+            }
+        }
+
+        // At this point, if we still haven't set a theme, that must me we did not set any theme via args,
+        // or we couldn't resolve a theme via theme_light/theme_dark. If it wasn't set via arg, let's next check
+        // if it was set via config.
+        let config_is_dark = match arg_is_dark {
+            Some(is_dark) => Some(is_dark),
+            None => {
+                let config_style_mode =
+                    if let Some(theme) = config.styles.as_ref().and_then(|s| s.theme.as_ref()) {
+                        if let Ok(style) = Self::from_built_in_theme(theme) {
+                            return Ok(style);
+                        } else {
+                            match theme.to_lowercase().as_str() {
+                                "dark" => Some(StyleMode::Dark),
+                                "light" => Some(StyleMode::Light),
+                                "auto" => Some(StyleMode::Auto),
+                                _ => None,
+                            }
+                        }
+                    } else {
+                        None
+                    };
+
+                config_style_mode.map(StyleMode::is_dark)
+            }
+        };
+
+        if let Some(is_dark) = config_is_dark {
+            let resolved_theme = if is_dark {
+                args.style.theme_dark.as_deref().or_else(|| {
+                    config
+                        .styles
+                        .as_ref()
+                        .and_then(|s| s.theme_dark.as_ref())
+                        .map(|v| &**v)
+                })
+            } else {
+                args.style.theme_light.as_deref().or_else(|| {
+                    config
+                        .styles
+                        .as_ref()
+                        .and_then(|s| s.theme_light.as_ref())
+                        .map(|v| &**v)
+                })
+            };
+
+            if let Some(theme) = resolved_theme {
+                match theme {
+                    "custom" => {
+                        return Self::resolve_theme_from_config(config);
+                    }
+                    _ => {
+                        return Self::from_built_in_theme(theme);
+                    }
+                }
+            }
+        }
+
+        // Otherwise, resolve the theme from the config.
+        Self::resolve_theme_from_config(config)
+    }
+
+    fn resolve_theme_from_config(config: &Config) -> anyhow::Result<Self> {
+        let mut current_styling = match config.styles.as_ref().and_then(|s| s.theme.as_ref()) {
+            Some(theme) => Self::from_built_in_theme(theme)?,
+            None => Self::default(),
         };
 
         // Apply theme from config on top.
         if let Some(config_style) = &config.styles {
-            palette.set_styles_from_config(config_style)?;
+            current_styling.set_styles_from_config(config_style)?;
         }
 
-        Ok(palette)
+        Ok(current_styling)
     }
 
-    fn from_theme(theme: &str) -> anyhow::Result<Self> {
+    fn from_built_in_theme(theme: &str) -> anyhow::Result<Self> {
         let lower_case = theme.to_lowercase();
         match lower_case.as_str() {
             "default" => Ok(Self::default_palette()),
@@ -358,11 +525,11 @@ mod test {
 
     #[test]
     fn built_in_colour_schemes_work() {
-        Styles::from_theme("default").unwrap();
-        Styles::from_theme("default-light").unwrap();
-        Styles::from_theme("gruvbox").unwrap();
-        Styles::from_theme("gruvbox-light").unwrap();
-        Styles::from_theme("nord").unwrap();
-        Styles::from_theme("nord-light").unwrap();
+        Styles::from_built_in_theme("default").unwrap();
+        Styles::from_built_in_theme("default-light").unwrap();
+        Styles::from_built_in_theme("gruvbox").unwrap();
+        Styles::from_built_in_theme("gruvbox-light").unwrap();
+        Styles::from_built_in_theme("nord").unwrap();
+        Styles::from_built_in_theme("nord-light").unwrap();
     }
 }

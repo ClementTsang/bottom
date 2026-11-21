@@ -694,22 +694,88 @@ pub struct StyleArgs {
             "gruvbox-light",
             "nord",
             "nord-light",
+            "auto",
+            "dark",
+            "light",
         ],
         hide_possible_values = true,
         help = indoc! {
-            "Use a built-in colour theme, use '--help' for info on the colours. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
+            "Use a built-in colour theme, use '--help' for info on the themes.",
         },
         long_help = indoc! {
             "Use a pre-defined colour theme. Currently supported themes are:
             - default
-            - default-light (default but adjusted for lighter backgrounds)
-            - gruvbox       (a bright theme with 'retro groove' colours)
-            - gruvbox-light (gruvbox but adjusted for lighter backgrounds)
-            - nord          (an arctic, north-bluish colour palette)
-            - nord-light    (nord but adjusted for lighter backgrounds)"
+            - default-light: default but adjusted for lighter backgrounds
+            - gruvbox: a bright theme with 'retro groove' colours
+            - gruvbox-light: gruvbox but adjusted for lighter backgrounds
+            - nord: an arctic, north-bluish colour palette
+            - nord-light: nord but adjusted for lighter backgrounds
+
+            Note that if both this argument is used and a custom theme is set in the configuration
+            file, the argument will take precedence.
+
+            In addition, you can use special values to control dark/light detection:
+            - auto: automatically pick a dark or light theme based on the terminal,
+                    controlled by '--theme-dark' and '--theme-light' respectively
+            - dark: force the dark theme set by '--theme-dark'
+            - light: force the light theme set by '--theme-light'"
         }
     )]
     pub theme: Option<String>,
+
+    #[arg(
+        long,
+        value_name = "SCHEME",
+        value_parser = [
+            "default",
+            "default-light",
+            "gruvbox",
+            "gruvbox-light",
+            "nord",
+            "nord-light",
+            "custom",
+        ],
+        help = indoc! {
+            "Specify a theme to use when the terminal has a dark background or 'theme' is set to 'dark'."
+        },
+        long_help = indoc! {
+            "Specify a theme to use when the terminal has a dark background or 'theme' is set to 'dark'
+            Defaults to using the 'default' theme. In addition, if you have a custom theme defined, you can
+            use 'custom' to set that as your preferred dark theme instead.
+            
+            Note that if both this argument is used and a theme is set in the configuration
+            file, the argument will take precedence."
+        },
+        alias = "theme-dark",
+    )]
+    pub theme_dark: Option<String>,
+
+    #[arg(
+        long,
+        value_name = "SCHEME",
+        value_parser = [
+            "default",
+            "default-light",
+            "gruvbox",
+            "gruvbox-light",
+            "nord",
+            "nord-light",
+            "custom",
+        ],
+        help = indoc! {
+            "Specify a theme to use when the terminal has a light background or 'theme' is set to 'light'."
+        },
+        long_help = indoc! {
+            "Specify a theme to use when the terminal has a light background or 'theme' is set to 'light'.
+            Defaults to using the 'default-light' theme. In addition, if you have a custom theme defined, you can
+            use 'custom' to set that as your preferred dark theme instead.
+
+            Note that if both this argument is used and a theme is set in the configuration
+            file, the argument will take precedence."
+        },
+        alias = "theme-light",
+    )]
+    pub theme_light: Option<String>,
 }
 
 /// Other arguments. This just handle options that are for help/version

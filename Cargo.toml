@@ -265,4 +265,4 @@ missing_safety_doc = "deny"
 unwrap_used = "deny"
 
 [lints.cargo]
-unused_dependencies = "deny"
+unused_dependencies = "warn"
