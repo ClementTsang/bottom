@@ -208,8 +208,8 @@ pub struct DataCollector {
     nvidia_gpu_list_cache: Option<(Vec<(String, std::path::PathBuf)>, Instant)>,
 
     #[cfg(all(feature = "gpu", not(target_os = "linux")))]
-    /// GPU list pulled from sysinfo. This is refreshed only periodically to avoid
-    /// overhead.
+    /// GPU list pulled from sysinfo. This is refreshed only periodically to
+    /// avoid overhead.
     sysinfo_gpus: Option<Gpus>,
 
     #[cfg(feature = "zfs")]
@@ -232,7 +232,8 @@ impl DataCollector {
 
         DataCollector {
             data: Data::default(),
-            // FIXME: consider whether we would want to somehow handle this more gracefully, e.g. handle piecemeal failures?
+            // FIXME: consider whether we would want to somehow handle this more
+            // gracefully, e.g. handle piecemeal failures?
             sys: SysinfoSource::new().expect("could not initialize sysinfo data source"),
             #[cfg(target_os = "linux")]
             prev_process_details: IntHashMap::default(),
@@ -400,9 +401,9 @@ impl DataCollector {
                 }
             }
 
-            // Throttle sysinfo GPU list refresh to avoid costly `Gpus::new()` calls.
-            // Only rebuild the list every 60 seconds; data (usage/memory) is
-            // refreshed every cycle via `Gpus::refresh()`.
+            // Throttle sysinfo GPU list refresh to avoid costly `Gpus::new()`
+            // calls. Only rebuild the list every 60 seconds; data
+            // (usage/memory) is refreshed every cycle via `Gpus::refresh()`.
             #[cfg(feature = "gpu")]
             if self.widgets_to_harvest.use_gpu
                 && (self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_gpu_graph)

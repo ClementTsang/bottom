@@ -43,8 +43,8 @@ pub(crate) struct DiskConfig {
 
     /// The default sort mode for string columns. One of "Lexical" or "Natural".
     ///
-    /// Lexical is typical alphanumeric order, while natural will order numbers inside
-    /// strings by their numerical value (e.g. sda10 comes after sda2).
+    /// Lexical is typical alphanumeric order, while natural will order numbers
+    /// inside strings by their numerical value (e.g. sda10 comes after sda2).
     ///
     /// Defaults to "Lexical".
     #[serde(default)]

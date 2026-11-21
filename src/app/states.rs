@@ -1,5 +1,9 @@
 use rustc_hash::FxHashMap as HashMap;
 
+#[cfg(feature = "battery")]
+use crate::widgets::BatteryWidgetState;
+#[cfg(feature = "gpu")]
+use crate::widgets::GpuGraphWidgetState;
 use crate::{
     app::layout_manager::BottomWidgetType,
     constants,
@@ -9,12 +13,6 @@ use crate::{
         ProcWidgetState, TempGraphWidgetState, TempWidgetState, query::ProcessQuery,
     },
 };
-
-#[cfg(feature = "gpu")]
-use crate::widgets::GpuGraphWidgetState;
-
-#[cfg(feature = "battery")]
-use crate::widgets::BatteryWidgetState;
 
 // TODO: Update this system.
 pub struct AppWidgetStates {

@@ -798,7 +798,8 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let use_mem = used_widget_set.contains(&Mem) || used_widget_set.contains(&BasicMem);
 
-    // FIXME: Add a separate use_gpu_mem, use_gpu_usage, and maybe even use_gpu_proc (probably just a UseGpu struct lol)
+    // FIXME: Add a separate use_gpu_mem, use_gpu_usage, and maybe even
+    // use_gpu_proc (probably just a UseGpu struct lol)
     let used_widgets = UsedWidgets {
         use_cpu: used_widget_set.contains(&Cpu) || used_widget_set.contains(&BasicCpu),
         use_mem,
@@ -1501,10 +1502,11 @@ fn get_gpu_usage_legend_position(config: &Config) -> OptionResult<Option<LegendP
 }
 
 /// A very lazy way to parse a templated application title option.
-/// Note that this is very lazy and as such doesn't really do any proper error handling
-/// if you do something like `"{{hostname}"` or `blah {`.
+/// Note that this is very lazy and as such doesn't really do any proper error
+/// handling if you do something like `"{{hostname}"` or `blah {`.
 ///
-/// Note this also only replaces the first instance... hopefully that's enough for most people...
+/// Note this also only replaces the first instance... hopefully that's enough
+/// for most people...
 fn parse_title(title: &str) -> Result<String, OptionError> {
     const HOSTNAME_TEMPLATE: &str = "{hostname}";
 
