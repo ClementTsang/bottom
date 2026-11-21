@@ -21,8 +21,7 @@ bottom has a few built-in themes:
 - [Nord](https://www.nordtheme.com/)
 - [Gruvbox](https://github.com/morhetz/gruvbox)
 
-These themes all also have light variants to support terminals using lighter colours. The light variants will be used
-automatically if your terminal is using a light background.
+These themes all also have light variants to support terminals using lighter colours.
 
 To set the theme from the command line:
 
