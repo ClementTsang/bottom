@@ -1,36 +1,55 @@
 pub mod cpu;
 pub mod disk;
+pub mod disk_io_graph;
 pub mod flags;
+#[cfg(feature = "gpu")]
+pub mod gpu_graph;
 mod ignore_list;
 pub mod layout;
-pub mod network;
+pub mod memory_graph;
+pub mod network_graph;
 pub mod process;
 pub mod style;
 pub mod temperature;
+pub mod temperature_graph;
 
+use cpu::CpuConfig;
 use disk::DiskConfig;
+use disk_io_graph::DiskIoGraphConfig;
 use flags::GeneralConfig;
-use network::NetworkConfig;
+#[cfg(feature = "gpu")]
+use gpu_graph::GpuUsageGraphConfig;
+use memory_graph::MemoryGraphConfig;
+use network_graph::NetworkGraphConfig;
+use process::ProcessesConfig;
 use serde::{Deserialize, Serialize};
 use style::StyleConfig;
 use temperature::TempConfig;
+use temperature_graph::TempGraphConfig;
 
 pub use self::ignore_list::IgnoreList;
-use self::{cpu::CpuConfig, layout::Row, process::ProcessesConfig};
+use self::layout::Row;
 
 /// Overall config for `bottom`.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
-#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
+#[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq))]
 pub struct Config {
     pub(crate) flags: Option<GeneralConfig>,
     pub(crate) styles: Option<StyleConfig>,
     pub(crate) row: Option<Vec<Row>>,
     pub(crate) processes: Option<ProcessesConfig>,
     pub(crate) disk: Option<DiskConfig>,
+    pub(crate) disk_io_graph: Option<DiskIoGraphConfig>,
     pub(crate) temperature: Option<TempConfig>,
-    pub(crate) network: Option<NetworkConfig>,
+    pub(crate) temperature_graph: Option<TempGraphConfig>,
+    #[serde(alias = "network")]
+    pub(crate) network_graph: Option<NetworkGraphConfig>,
+    #[serde(alias = "memory")]
+    pub(crate) memory_graph: Option<MemoryGraphConfig>,
     pub(crate) cpu: Option<CpuConfig>,
+    #[cfg(feature = "gpu")]
+    pub(crate) gpu_graph: Option<GpuUsageGraphConfig>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -54,11 +73,14 @@ impl From<u64> for StringOrNum {
     }
 }
 
+// I didn't do an invalid config test as a lot of them _are_ valid Config
+// when parsed, but fail other checks.
 #[cfg(test)]
 mod test {
 
-    // Test all valid configs in the integration test folder and ensure they are accepted.
-    // We need this separated as only test library code sets `serde(deny_unknown_fields)`.
+    // Test all valid configs in the integration test folder and ensure they are
+    // accepted. We need this separated as only test library code sets
+    // `serde(deny_unknown_fields)`.
     #[test]
     #[cfg(feature = "default")]
     fn test_integration_valid_configs() {
@@ -79,7 +101,4 @@ mod test {
             }
         }
     }
-
-    // I didn't do an invalid config test as a lot of them _are_ valid Config when parsed,
-    // but fail other checks.
 }

@@ -1,19 +1,30 @@
 //! CPU stats through sysinfo.
-//! Supports FreeBSD.
-
-use sysinfo::System;
 
 use super::{CpuData, CpuDataType, CpuHarvest};
-use crate::collection::error::CollectionResult;
+use crate::collection::{DataCollector, error::CollectionResult};
 
-pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResult<CpuHarvest> {
+pub fn get_cpu_data_list(collector: &DataCollector) -> CollectionResult<CpuHarvest> {
+    let sys = &collector.sys.system;
+    let show_average_cpu = collector.show_average_cpu;
+
     let mut cpus = vec![];
 
     if show_average_cpu {
-        cpus.push(CpuData {
-            data_type: CpuDataType::Avg,
-            usage: sys.global_cpu_usage(),
-        })
+        cfg_select! {
+            target_os = "linux" => {
+                cpus.push(CpuData {
+                    data_type: CpuDataType::Avg,
+                    usage: collector
+                        .cgroup_cpu_data
+                        .avg_cpu_percent
+                        .unwrap_or_else(|| sys.global_cpu_usage()),
+                });
+            }
+            _ => cpus.push(CpuData {
+                data_type: CpuDataType::Avg,
+                usage: sys.global_cpu_usage(),
+            }),
+        }
     }
 
     cpus.extend(
@@ -22,7 +33,7 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResu
             .enumerate()
             .map(|(i, cpu)| CpuData {
                 data_type: CpuDataType::Cpu(i),
-                usage: cpu.cpu_usage(),
+                usage: cpu.usage(),
             })
             .collect::<Vec<_>>(),
     );
@@ -30,11 +41,14 @@ pub fn get_cpu_data_list(sys: &System, show_average_cpu: bool) -> CollectionResu
     Ok(cpus)
 }
 
-#[cfg(target_family = "unix")]
+#[cfg(unix)]
 pub(crate) fn get_load_avg() -> crate::collection::cpu::LoadAvgHarvest {
-    // The API for sysinfo apparently wants you to call it like this, rather than
-    // using a &System.
-    let sysinfo::LoadAvg { one, five, fifteen } = sysinfo::System::load_average();
+    // The API for sysinfo apparently wants you to call it like this, rather
+    // than using a &System.
+    let (one, five, fifteen) = match sysinfo::System::load_average() {
+        Ok(avg) => (avg.one as f32, avg.five as f32, avg.fifteen as f32),
+        Err(_) => (0.0, 0.0, 0.0),
+    };
 
-    [one as f32, five as f32, fifteen as f32]
+    [one, five, fifteen]
 }

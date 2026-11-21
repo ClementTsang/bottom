@@ -1,41 +1,15 @@
 //! Tests config files that have sometimes caused issues despite being valid.
 
-use std::{io::Read, thread, time::Duration};
+use std::{io::Read, process::Stdio, thread, time::Duration};
 #[cfg(feature = "default")]
 use std::{io::Write, path::Path};
 
-use crate::util::spawn_btm_in_pty;
+use predicates::prelude::*;
 
-fn reader_to_string(mut reader: Box<dyn Read>) -> String {
-    let mut buf = String::default();
-    reader.read_to_string(&mut buf).unwrap();
+use crate::util::{btm_command, run_and_kill};
 
-    buf
-}
-
-fn run_and_kill(args: &[&str]) {
-    let (master, mut handle) = spawn_btm_in_pty(args);
-    let reader = master.try_clone_reader().unwrap();
-    let _ = master.take_writer().unwrap();
-
-    const TIMES_CHECKED: u64 = 6; // Check 6 times, once every 500ms, for 3 seconds total.
-
-    for _ in 0..TIMES_CHECKED {
-        thread::sleep(Duration::from_millis(500));
-        match handle.try_wait() {
-            Ok(Some(exit)) => {
-                println!("output: {}", reader_to_string(reader));
-                panic!("program terminated unexpectedly (exit status: {exit:?})");
-            }
-            Err(e) => {
-                println!("output: {}", reader_to_string(reader));
-                panic!("error while trying to wait: {e}")
-            }
-            _ => {}
-        }
-    }
-
-    handle.kill().unwrap();
+fn run_and_kill_cfg(path: &str) {
+    run_and_kill(&["-C", path]);
 }
 
 #[test]
@@ -52,7 +26,7 @@ fn test_bad_basic() {
 
 #[test]
 fn test_empty() {
-    run_and_kill(&["-C", "./tests/valid_configs/empty_config.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/empty_config.toml");
 }
 
 #[cfg(feature = "default")]
@@ -131,7 +105,8 @@ fn test_new_default() {
         run_and_kill(&["-C", &(actual_temp_default_path.to_string_lossy())]);
 
         // Re-take control over the temp path to ensure it gets deleted.
-        let actual_temp_default_path = TempPath::from_path(actual_temp_default_path);
+        let actual_temp_default_path =
+            TempPath::try_from_path(actual_temp_default_path).expect("temp path exists");
         test_uncommented_default_config(&actual_temp_default_path, "test_new_default");
 
         actual_temp_default_path.close().unwrap();
@@ -152,46 +127,172 @@ fn test_demo() {
 
 #[test]
 fn test_many_proc() {
-    run_and_kill(&["-C", "./tests/valid_configs/many_proc.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/many_proc.toml");
 }
 
 #[test]
 fn test_all_proc() {
-    run_and_kill(&["-C", "./tests/valid_configs/all_proc.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/all_proc.toml");
 }
 
 #[test]
 fn test_cpu_doughnut() {
-    run_and_kill(&["-C", "./tests/valid_configs/cpu_doughnut.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/cpu_doughnut.toml");
 }
 
 #[test]
 fn test_theme() {
-    run_and_kill(&["-C", "./tests/valid_configs/theme.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/theme.toml");
 }
 
 #[test]
 fn test_styling_sanity_check() {
-    run_and_kill(&["-C", "./tests/valid_configs/styling.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/styling.toml");
 }
 
 #[test]
 fn test_styling_sanity_check_2() {
-    run_and_kill(&["-C", "./tests/valid_configs/styling_2.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/all_styling.toml");
+}
+
+#[test]
+fn test_color_spelling_is_valid() {
+    run_and_kill_cfg("./tests/valid_configs/all_styling_color.toml");
 }
 
 #[test]
 fn test_filtering() {
-    run_and_kill(&["-C", "./tests/valid_configs/filtering.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/filtering.toml");
 }
 
 #[test]
 fn test_proc_columns() {
-    run_and_kill(&["-C", "./tests/valid_configs/proc_columns.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/proc_columns.toml");
 }
 
 #[cfg(target_os = "linux")]
 #[test]
 fn test_linux_only() {
-    run_and_kill(&["-C", "./tests/valid_configs/os_specific/linux.toml"]);
+    run_and_kill_cfg("./tests/valid_configs/os_specific/linux.toml");
+}
+
+#[test]
+fn test_temp_disk_sort_columns() {
+    run_and_kill_cfg("./tests/valid_configs/temp_disk_sort_columns.toml");
+}
+
+#[test]
+fn test_proc_default_sort() {
+    run_and_kill_cfg("./tests/valid_configs/proc_default_sort.toml");
+}
+
+#[test]
+fn test_newer_memory() {
+    run_and_kill_cfg("./tests/valid_configs/widget/memory.toml");
+}
+
+#[test]
+fn test_newer_cpu() {
+    run_and_kill_cfg("./tests/valid_configs/widget/cpu.toml");
+}
+
+#[test]
+fn test_newer_processes() {
+    run_and_kill_cfg("./tests/valid_configs/widget/processes.toml");
+}
+
+#[test]
+fn test_newer_network() {
+    run_and_kill_cfg("./tests/valid_configs/widget/network.toml");
+}
+
+#[test]
+fn test_network_alias() {
+    run_and_kill_cfg("./tests/valid_configs/network_alias.toml");
+}
+
+/// This uses deprecated network settings - once they are removed, this test
+/// file should be moved to invalid configs.
+#[test]
+fn test_deprecated_network() {
+    run_and_kill_cfg("./tests/valid_configs/deprecated/network.toml");
+}
+
+/// This uses deprecated process settings - once they are removed, this test
+/// file should be moved to invalid configs.
+#[test]
+fn test_deprecated_processes() {
+    run_and_kill_cfg("./tests/valid_configs/deprecated/processes.toml");
+}
+
+/// This uses deprecated CPU settings - once they are removed, this test file
+/// should be moved to invalid configs.
+#[test]
+fn test_deprecated_cpu() {
+    run_and_kill_cfg("./tests/valid_configs/deprecated/cpu.toml");
+}
+
+/// This uses deprecated memory settings - once they are removed, this test file
+/// should be moved to invalid configs.
+#[test]
+fn test_deprecated_memory() {
+    run_and_kill_cfg("./tests/valid_configs/deprecated/memory.toml");
+}
+
+#[test]
+fn test_newer_temperature() {
+    run_and_kill_cfg("./tests/valid_configs/widget/temperature.toml");
+}
+
+#[test]
+fn test_disk_io_graph() {
+    run_and_kill_cfg("./tests/valid_configs/widget/disk_io_graph.toml");
+}
+
+#[test]
+fn test_gpu_graph() {
+    run_and_kill_cfg("./tests/valid_configs/gpu_graph.toml");
+}
+
+/// This uses deprecated temperature settings - once they are removed, this test
+/// file should be moved to invalid configs.
+#[test]
+fn test_deprecated_temperature() {
+    run_and_kill_cfg("./tests/valid_configs/deprecated/temperature.toml");
+}
+
+/// Test that deprecated warnings are not shown for config options that are not
+/// actually set, even when a `[flags]` section is present.
+#[test]
+fn test_no_spurious_deprecated_warnings() {
+    let mut child = btm_command(&["-C", "./tests/valid_configs/empty_flags.toml"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    thread::sleep(Duration::from_secs(1));
+    child.kill().unwrap();
+    child.wait().unwrap();
+
+    let stderr_str = {
+        let mut stderr = child.stderr.take().unwrap();
+        let mut buf = String::new();
+
+        stderr.read_to_string(&mut buf).unwrap();
+        buf
+    };
+
+    assert!(
+        predicate::str::contains("deprecated")
+            .not()
+            .eval(&stderr_str),
+        "Expected no deprecated warnings, but got: {stderr_str}"
+    );
+}
+
+/// Tests that a custom terminal title can be set via config (https://github.com/ClementTsang/bottom/pull/2323).
+#[test]
+fn test_config_custom_title() {
+    run_and_kill_cfg("./tests/valid_configs/custom_title.toml");
 }

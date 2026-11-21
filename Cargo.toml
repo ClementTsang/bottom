@@ -1,6 +1,6 @@
 [package]
 name = "bottom"
-version = "0.11.4"
+version = "0.15.0"
 repository = "https://github.com/ClementTsang/bottom"
 license = "MIT"
 description = "A customizable cross-platform graphical process/system monitor for the terminal. Supports Linux, macOS, and Windows."
@@ -17,6 +17,7 @@ exclude = [
     ".idea/",
     ".vscode/",
     "assets/",
+    "demos/",
     "desktop/",
     "docs/",
     "flamegraphs/",
@@ -25,7 +26,6 @@ exclude = [
     "scripts/",
     "wix/",
     ".all-contributorsrc",
-    ".cirrus.yml",
     ".gitignore",
     ".markdownlint.json",
     "CHANGELOG.md",
@@ -38,9 +38,18 @@ exclude = [
     "profile.json.gz",
     "rustfmt.toml",
 ]
-edition = "2021"
+edition = "2024"
 # The oldest version I've tested that should still build - note this is not an official MSRV!
-rust-version = "1.81"
+rust-version = "1.95.0"
+
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/{ version }/bottom_{ target }.tar.gz"
+pkg-fmt = "tgz"
+
+# Windows uses .zip instead of .tar.gz
+[package.metadata.binstall.overrides.'cfg(windows)']
+pkg-url = "{ repo }/releases/download/{ version }/bottom_{ target }.zip"
+pkg-fmt = "zip"
 
 [lib]
 test = true
@@ -52,75 +61,73 @@ name = "btm"
 path = "src/bin/main.rs"
 doc = false
 
-[[bin]]
-name = "schema"
-path = "src/bin/schema.rs"
-test = false
-doctest = false
-doc = false
-required-features = ["generate_schema"]
-
 [features]
-# Used for general builds.
-battery = ["starship-battery"]
-nvidia = ["nvml-wrapper"]
-gpu = ["nvidia"]
+# Used for general release builds.
+battery = ["dep:starship-battery"]
+musl_alloc = ["dep:mimalloc"]
+nvidia = ["gpu", "dep:nvml-wrapper"]
+gpu = ["sysinfo/gpu"]
 zfs = []
-deploy = ["battery", "gpu", "zfs"]
+deploy = ["battery", "nvidia", "zfs"]
 default = ["deploy"]
 
-# Should not be included in builds.
-logging = ["fern", "log", "time"]
-generate_schema = ["schemars", "serde_json", "strum"]
+# These features should not be included in release builds.
+logging = ["fern", "log"]
+generate_schema = ["schemars", "strum"]
 
 [dependencies]
-anyhow = "1.0.100"
-backtrace = "0.3.75"
-cfg-if = "1.0.3"
-clap = { version = "4.5.48", features = ["default", "cargo", "wrap_help", "derive"] }
+anyhow = "1.0.104"
+clap = { version = "4.6.6", features = ["default", "cargo", "wrap_help", "derive"] }
 concat-string = "1.0.1"
 crossterm = "0.29.0"
-ctrlc = { version = "3.5.0", features = ["termination"] }
-dirs = "6.0.0"
-hashbrown = "0.16.0"
+ctrlc = { version = "3.5.2", features = ["termination"] }
+dirs = "7.0.0"
 humantime = "2.3.0"
-indexmap = "2.11.4"
-indoc = "2.0.6"
-itertools = "0.14.0"
-nvml-wrapper = { version = "0.11.0", optional = true, features = ["legacy-functions"] }
-regex = "1.11.2"
-serde = { version = "1.0.226", features = ["derive"] }
-starship-battery = { version = "0.10.2", optional = true }
-sysinfo = "=0.37.0"
-timeless = "0.0.14-alpha"
-toml_edit = { version = "0.23.6", features = ["serde"] }
-tui = { version = "0.30.0-beta.0", package = "ratatui", features = ["unstable-rendered-line-info", "layout-cache"] }
-unicode-ellipsis = "0.3.0"
-unicode-segmentation = "1.12.0"
-unicode-width = "0.2.0"
+indexmap = "2.14.0"
+indoc = "2.0.7"
+itertools = "0.15.0"
+nvml-wrapper = { version = "0.13.0", optional = true, features = ["legacy-functions"] }
+ratatui = { version = "0.30.2", default-features = false, features = [
+    "unstable-rendered-line-info",
+    "layout-cache",
+    "std",
+] }
+ratatui-core = "0.1.2"
+ratatui-crossterm = { version = "0.1.2", default-features = false, features = ["crossterm_0_29"] }
+regex = "1.13.1"
+rustc-hash = "2.1.3"
+serde = { version = "1.0.228", features = ["derive"] }
+starship-battery = { version = "0.12.0", optional = true }
+sysinfo = { version = "=0.40.3", default-features = false, features = ["component", "disk", "network", "system", "user"] }
+timeless = "0.1.0"
+toml_edit = { version = "0.25.12", features = ["serde"] }
+unicode-ellipsis = "0.6.0"
+unicode-segmentation = "1.13.3"
+unicode-width = "0.2.2"
 
-# Used for logging. Mostly a debugging tool.
+# Used for logging. Mostly for dev-level debugging.
 fern = { version = "0.7.1", optional = true }
-log = { version = "0.4.28", optional = true }
-time = { version = "0.3.44", features = ["local-offset", "formatting", "macros"], optional = true }
+log = { version = "0.4.33", optional = true }
 
 # These are just used for JSON schema generation.
-schemars = { version = "1.0.4", optional = true }
-serde_json = { version = "1.0.145", optional = true }
-strum = { version = "0.27.2", features = ["derive"], optional = true }
+schemars = { version = "1.2.2", optional = true }
+strum = { version = "0.28.0", features = ["derive"], optional = true }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.176"
+libc = "0.2.191"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-rustix = { version = "1.1.2", features = ["fs", "param"] }
+rustix = { version = "1.1.6", features = ["fs", "param"] }
+
+[target.'cfg(all(target_os = "linux", target_env = "musl"))'.dependencies]
+mimalloc = { version = "0.1.52", optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.10.1"
-mach2 = "0.5.0"
+mach2 = "0.7.0"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { version = "0.62.0", features = [
+windows = { version = "0.62.2", features = [
     "Win32_Foundation",
     "Win32_Security",
     "Win32_Storage_FileSystem",
@@ -132,26 +139,24 @@ windows = { version = "0.62.0", features = [
 ] }
 
 [target.'cfg(target_os = "freebsd")'.dependencies]
-serde_json = { version = "1.0.145" }
+serde_json = { version = "1.0.151" }
 sysctl = { version = "0.7.1" }
-filedescriptor = "0.8.3"
 
 [dev-dependencies]
-assert_cmd = "2.0.17"
-cargo-husky = { version = "1.5.0", default-features = false, features = ["user-hooks"] }
-predicates = "3.1.3"
-tempfile = { version = "3.23.0", default-features = false }
+assert_cmd = "2.2.2"
+predicates = "3.1.4"
+tempfile = { version = "3.27.0", default-features = false }
 
 [target.'cfg(all(target_arch = "x86_64", target_os = "linux"))'.dev-dependencies]
 portable-pty = "0.9.0"
 
 [build-dependencies]
-clap = { version = "4.5.48", features = ["default", "cargo", "wrap_help", "derive"] }
-clap_complete = "4.5.58"
-clap_complete_nushell = "4.5.8"
+clap = { version = "4.6.6", features = ["default", "cargo", "wrap_help", "derive"] }
+clap_complete = "4.6.9"
+clap_complete_nushell = "4.6.1"
 clap_complete_fig = "4.5.2"
-clap_mangen = "0.2.29"
-indoc = "2.0.6"
+clap_mangen = "0.3.2"
+indoc = "2.0.7"
 
 # Compile dependencies with optimizations enabled, even in debug mode.
 [profile.dev.package."*"]
@@ -208,11 +213,12 @@ assets = [
         "644",
     ],
     [
-        "assets/icons/bottom.svg",
-        "/usr/share/icons/hicolor/scalable/apps/bottom.svg",
+        "assets/icons/bottom-system-monitor.svg",
+        "/usr/share/icons/hicolor/scalable/apps/bottom-system-monitor.svg",
         "644",
     ],
 ]
+conflicts = "btm"
 extended-description = """
 
 By default, bottom will look for a config file in ~/.config/bottom/bottom.toml. A config file can be specified \
@@ -239,7 +245,7 @@ assets = [
     { source = "completion/btm.fish", dest = "/usr/share/fish/vendor_completions.d/btm.fish", mode = "644" },
     { source = "completion/_btm", dest = "/usr/share/zsh/vendor-completions/", mode = "644" },
     { source = "desktop/bottom.desktop", dest = "/usr/share/applications/bottom.desktop", mode = "644" },
-    { source = "assets/icons/bottom.svg", dest = "/usr/share/icons/hicolor/scalable/apps/bottom.svg", mode = "644" },
+    { source = "assets/icons/bottom-system-monitor.svg", dest = "/usr/share/icons/hicolor/scalable/apps/bottom-system-monitor.svg", mode = "644" },
 ]
 
 [lints.rust]
@@ -248,9 +254,14 @@ rust_2018_idioms = "deny"
 
 [lints.rustdoc]
 broken_intra_doc_links = "deny"
+private_intra_doc_links = "deny"
 missing_crate_level_docs = "deny"
 
 [lints.clippy]
 todo = "deny"
 unimplemented = "deny"
 missing_safety_doc = "deny"
+unwrap_used = "deny"
+
+[lints.cargo]
+unused_dependencies = "deny"

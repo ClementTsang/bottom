@@ -1,7 +1,6 @@
 use serde::Deserialize;
 
-/// The default selection of the CPU widget. If the given selection is invalid,
-/// we will fall back to all.
+/// The default selected entry of the CPU widget.
 #[derive(Clone, Copy, Debug, Default, Deserialize)]
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "lowercase")]
@@ -18,8 +17,21 @@ pub(crate) enum CpuDefault {
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct CpuConfig {
+    /// The default selected entry of the CPU widget.
     #[serde(default)]
     pub(crate) default: CpuDefault,
+
+    /// Whether to show a decimal place for CPU usage values.
+    pub(crate) show_decimal: Option<bool>,
+
+    /// Whether to hide the average CPU entry.
+    pub(crate) hide_avg_cpu: Option<bool>,
+
+    /// Whether to put the CPU chart legend on the left side.
+    pub(crate) left_legend: Option<bool>,
+
+    /// Whether to give the average CPU entry a dedicated row in basic mode.
+    pub(crate) basic_average_cpu_row: Option<bool>,
 }
 
 #[cfg(test)]

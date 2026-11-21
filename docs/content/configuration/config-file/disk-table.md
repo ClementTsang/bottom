@@ -1,4 +1,4 @@
-# Disk Table
+# Disk Table Configuration
 
 ## Columns
 
@@ -9,6 +9,61 @@ You can configure which columns are shown by the disk table widget by setting th
 # Pick which columns you want to use in any order.
 columns = ["Disk", "Mount", "Used", "Free", "Total", "Used%", "R/s", "W/s"]
 ```
+
+## Default Sort Column
+
+You can customize the default sort column (by default, it sorts by disk name in ascending order). For example, to sort by the read rate:
+
+```toml
+[disk]
+default_sort = "R/s"
+```
+
+You can use any valid [column](#columns) name here (e.g. "Disk", "Mount", etc.). Note that if you put a column name that
+is not actually used, the default sort will just be the first column shown.
+
+You can also set the sort order by changing `disk.sort_order` with `"Ascending"` or `"Descending"`. Defaults to
+`"Ascending"`:
+
+```toml
+[disk]
+sort_order = "Ascending"
+```
+
+### Sort Mode
+
+By default, string columns use lexicographic sorting (e.g. `"disk10"` comes before `"disk2"`).
+You can enable natural sort ordering to take numbers in the string into account (e.g. now `"disk10"` comes after `"disk2"`):
+
+```toml
+[disk]
+sort_mode = "Natural"
+```
+
+Can be set to either `"Lexical"` (the default) or `"Natural"`.
+
+## Using Binary Prefixes
+
+Disk space uses decimal prefixes (e.g. KB, MB, GB, TB) by default. To display using binary prefixes instead
+(e.g. KiB, MiB, GiB, TiB), enable `use_binary_prefix`:
+
+```toml
+[disk]
+use_binary_prefix = true
+```
+
+## Show Unmounted Devices (Linux only)
+
+By default, only mounted devices are shown. To also show unmounted devices on Linux, enable `include_unmounted`:
+
+```toml
+[disk]
+include_unmounted = true
+```
+
+Unmounted devices show I/O activity but have no used/free space (those require a live mount), so those
+columns appear as `N/A`. Pseudo-devices (`loop*`, `ram*`, `zram*`) are skipped, and you can hide other
+noisy devices with the [name filter](#filtering-entries).
 
 ## Filtering Entries
 
@@ -36,7 +91,7 @@ regex = true
 # Whether to be case-sensitive. Defaults to false.
 case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 whole_word = false
 ```
 

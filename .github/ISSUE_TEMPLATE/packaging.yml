@@ -1,30 +1,38 @@
 name: Packaging
 description: For issues, questions, or requests regarding packaging or distribution.
-labels: ["packaging"]
+labels: [ "packaging" ]
 body:
   - type: markdown
     attributes:
       value: >
-        If this is an issue about supporting a new package/installation method for a platform you use, please
-        consider maintaining it yourself/with others and submitting a PR or issue with a link to it - they'll be
-        very much appreciated and likely added to the README quickly. [The documentation on packaging/distribution](https://bottom.pages.dev/nightly/contribution/packaging-and-distribution/)
-        may be helpful in setting things up. If there are some issues with bottom itself causing problems with
-        packaging, feel free to open an appropriate issue.
+        If this is an issue about supporting a new package/installation method
+        for a platform you use, please consider maintaining it yourself/with
+        others and submitting a PR or issue with a link to it - they'll be very
+        much appreciated and likely added to the README quickly. [The
+        documentation on
+        packaging/distribution](https://bottom.pages.dev/nightly/contribution/packaging-and-distribution/)
+        may be helpful in setting things up. If there are some issues with
+        bottom itself causing problems with packaging, feel free to open an
+        appropriate issue.
 
 
-        If this is an issue regarding a specific existing distribution channel, feel free to report issues here if they
-        are related to the following sources:
+        If this is an issue regarding a specific existing distribution channel,
+        feel free to report issues here if they are related to the following
+        sources:
 
           * [crates.io](https://crates.io/crates/bottom)
           * [Binary releases/packages released on GitHub](https://github.com/ClementTsang/bottom/releases)
 
 
-        For any other distribution channel, please first try to contact the package maintainers where appropriate
-        to get help regarding distribution-specific issues (e.g. the package has issues installing, the package
-        is outdated, etc.) before reaching out here. While I am happy to help where possible, I do not
-        personally use many of the various ways people distribute bottom. As such, I might lack the
-        platform-specific context, knowledge, or tools to be able to help you at all regarding the
-        distribution method, and the best I can do is just point you to the package maintainer.
+        For any other distribution channel, please first try to contact the
+        package maintainers where appropriate to get help regarding
+        distribution-specific issues (e.g. the package has issues installing,
+        the package is outdated, etc.) before reaching out here. While I am
+        happy to help where possible, I do not personally use many of the
+        various ways people distribute bottom. As such, I might lack the
+        platform-specific context, knowledge, or tools to be able to help you at
+        all regarding the distribution method, and the best I can do is just
+        point you to the package maintainer.
 
   - type: checkboxes
     id: acknowledgements
@@ -34,6 +42,10 @@ body:
         - label: >
             I have read and understood the above text.
           required: true
+        - label: >
+            I've read through the [AI
+            policy](https://github.com/ClementTsang/bottom/blob/main/AI_POLICY.md)
+            and am following it when reporting this issue.
 
   - type: textarea
     id: description
@@ -45,3 +57,55 @@ body:
         What is the packaging-related issue? Please be clear and concise.
       placeholder: |
         Example: Would it be possible to add shell completion generation as a separate build artifact?
+
+  - type: input
+    id: operating_system
+    validations:
+      required: false
+    attributes:
+      label: What operating system and version are you using?
+      description: >
+        Please provide the operating system(s) and version(s) if relevant (e.g.
+        there is a packaging problem for a specific OS). Note that operating
+        systems that [are not officially
+        supported](https://github.com/ClementTsang/bottom#support) may not be
+        prioritized/resolved.
+      placeholder: Arch Linux 6.6.2
+
+  - type: dropdown
+    id: architecture
+    validations:
+      required: false
+    attributes:
+      label: What architecture are you using?
+      description: >
+        Please select the architecture(s) if relevant (e.g. there is a packaging
+        problem for a specific architecture). Note that architectures that [are
+        not officially
+        supported](https://github.com/ClementTsang/bottom#support) may not be
+        prioritized/resolved.
+      multiple: true
+      options:
+        - x86_64/AMD64
+        - arm64
+        - x86
+        - arm32
+        - Other (please specify in the Additional Information area at the end)
+
+  - type: input
+    id: version
+    validations:
+      required: false
+    attributes:
+      label: What version of bottom are you running?
+      description: >
+        Please specify which version of `bottom` you're running if relevant
+        (e.g. there's an installation issue with a specific release). You can
+        find this with `btm -V`. If you are using a nightly/non-release version,
+        please also specify that.
+
+        If you're not running the latest version, it would also be helpful to
+        see if [the latest
+        version](https://github.com/ClementTsang/bottom/releases/latest) solves
+        the issue first.
+      placeholder: 0.14.9

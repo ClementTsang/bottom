@@ -1,4 +1,4 @@
-use tui::text::Text;
+use ratatui::text::Text;
 use unicode_ellipsis::truncate_str;
 
 /// Truncates text if it is too long, and adds an ellipsis at the end if needed.

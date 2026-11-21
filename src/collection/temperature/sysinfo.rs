@@ -6,14 +6,16 @@ use super::TempSensorData;
 use crate::app::filter::Filter;
 
 pub fn get_temperature_data(
-    components: &sysinfo::Components, filter: &Option<Filter>,
+    components: &sysinfo::Components, filter: &Option<Filter>, graph_filter: &Option<Filter>,
 ) -> Result<Option<Vec<TempSensorData>>> {
     let mut temperatures: Vec<TempSensorData> = Vec::new();
 
     for component in components {
         let name = component.label().to_string();
 
-        if Filter::optional_should_keep(filter, &name) {
+        if Filter::optional_should_keep(filter, &name)
+            || Filter::optional_should_keep(graph_filter, &name)
+        {
             temperatures.push(TempSensorData {
                 name,
                 temperature: component.temperature(),

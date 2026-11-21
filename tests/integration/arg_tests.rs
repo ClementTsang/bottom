@@ -4,6 +4,8 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
+use crate::util::run_and_kill;
 use crate::util::{btm_command, no_cfg_btm_command};
 
 #[test]
@@ -142,6 +144,16 @@ fn test_missing_default_widget_type() {
 }
 
 #[test]
+fn test_invalid_default_cpu_entry() {
+    no_cfg_btm_command()
+        .arg("--default_cpu_entry")
+        .arg("invalid")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("possible values"));
+}
+
+#[test]
 #[cfg_attr(feature = "battery", ignore)]
 fn test_battery_flag() {
     no_cfg_btm_command()
@@ -177,4 +189,13 @@ fn test_version() {
 fn test_help() {
     btm_command(&["--help"]).assert().success();
     btm_command(&["-h"]).assert().success();
+}
+
+/// Tests that a custom terminal title can be set via args (https://github.com/ClementTsang/bottom/pull/2323).
+///
+/// Note this only runs on x86 Linux because the `run_and_kill` function only works there at the moment.
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
+#[test]
+fn test_arg_custom_title() {
+    run_and_kill(&["--terminal-title", "custom test title"]);
 }

@@ -1,0 +1,15 @@
+# This uses deprecated process settings - once they are removed, this test file should be moved to invalid configs.
+
+[flags]
+group_processes = true
+case_sensitive = true
+whole_word = true
+regex = true
+tree = true
+process_command = true
+disable_advanced_kill = true
+process_memory_as_value = true
+hide_k_threads = true
+tree_collapse = true
+current_usage = true
+unnormalized_cpu = true

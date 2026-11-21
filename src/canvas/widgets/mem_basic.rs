@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
 };
@@ -46,13 +46,16 @@ impl Painter {
     ) {
         let mut draw_widgets: Vec<PipeGauge<'_>> = Vec::new();
 
-        if app_state.current_widget.widget_id == widget_id {
-            f.render_widget(
-                widget_block(true, true, self.styles.border_type)
-                    .border_style(self.styles.highlighted_border_style),
-                draw_loc,
-            );
-        }
+        f.render_widget(
+            widget_block(
+                true,
+                app_state.current_widget.widget_id == widget_id,
+                self.styles.border_type,
+                self.styles.general_widget_style,
+            )
+            .border_style(self.styles.highlighted_border_style),
+            draw_loc,
+        );
 
         let data = app_state.data_store.get_data();
 
@@ -65,9 +68,9 @@ impl Painter {
             (
                 0.0,
                 if app_state.basic_mode_use_percent {
-                    "0.0B/0.0B".into()
-                } else {
                     "  0%".into()
+                } else {
+                    "0.0B/0.0B".into()
                 },
             )
         };
@@ -78,7 +81,8 @@ impl Painter {
                 .start_label("RAM")
                 .inner_label(ram_label)
                 .label_style(self.styles.ram_style)
-                .gauge_style(self.styles.ram_style),
+                .gauge_style(self.styles.ram_style)
+                .bar_type(self.styles.bar_type),
         );
 
         if let Some(swap_harvest) = &data.swap_harvest {
@@ -91,7 +95,8 @@ impl Painter {
                     .start_label("SWP")
                     .inner_label(swap_label)
                     .label_style(self.styles.swap_style)
-                    .gauge_style(self.styles.swap_style),
+                    .gauge_style(self.styles.swap_style)
+                    .bar_type(self.styles.bar_type),
             );
         }
 
@@ -108,7 +113,8 @@ impl Painter {
                         .start_label("CHE")
                         .inner_label(cache_fraction_label)
                         .label_style(self.styles.cache_style)
-                        .gauge_style(self.styles.cache_style),
+                        .gauge_style(self.styles.cache_style)
+                        .bar_type(self.styles.bar_type),
                 );
             }
         }
@@ -126,7 +132,8 @@ impl Painter {
                         .start_label("ARC")
                         .inner_label(arc_fraction_label)
                         .label_style(self.styles.arc_style)
-                        .gauge_style(self.styles.arc_style),
+                        .gauge_style(self.styles.arc_style)
+                        .bar_type(self.styles.bar_type),
                 );
             }
         }
@@ -142,7 +149,7 @@ impl Painter {
 
                 let style = {
                     if gpu_styles.is_empty() {
-                        tui::style::Style::default()
+                        ratatui::style::Style::default()
                     } else {
                         let colour = gpu_styles[colour_index % gpu_styles.len()];
                         colour_index += 1;
@@ -157,7 +164,8 @@ impl Painter {
                         .start_label("GPU")
                         .inner_label(label)
                         .label_style(style)
-                        .gauge_style(style),
+                        .gauge_style(style)
+                        .bar_type(self.styles.bar_type),
                 );
             }
         }
@@ -176,12 +184,12 @@ impl Painter {
             });
 
         // Update draw loc in widget map
-        if app_state.should_get_widget_bounds() {
-            if let Some(widget) = app_state.widget_map.get_mut(&widget_id) {
-                widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
-                widget.bottom_right_corner =
-                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
-            }
+        if app_state.should_get_widget_bounds()
+            && let Some(widget) = app_state.widget_map.get_mut(&widget_id)
+        {
+            widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+            widget.bottom_right_corner =
+                Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
         }
     }
 }

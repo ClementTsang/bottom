@@ -1,14 +1,13 @@
 //! Process data collection for macOS.  Uses sysinfo and custom bindings.
 
-mod sysctl_bindings;
+pub mod sysctl_bindings;
 
 use std::{io, process::Command};
 
-use hashbrown::HashMap;
 use itertools::Itertools;
 
 use super::UnixProcessExt;
-use crate::collection::Pid;
+use crate::{collection::Pid, utils::int_hash::IntHashMap};
 
 pub(crate) struct MacOSProcessExt;
 
@@ -18,17 +17,17 @@ impl UnixProcessExt for MacOSProcessExt {
         true
     }
 
-    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<HashMap<Pid, f32>> {
+    fn backup_proc_cpu(pids: &[Pid]) -> io::Result<IntHashMap<Pid, f32>> {
         let output = Command::new("ps")
             .args(["-o", "pid=,pcpu=", "-p"])
             .arg(
-                // Has to look like this since otherwise, it you hit a `unstable_name_collisions`
-                // warning.
+                // Has to look like this since otherwise, it you hit a
+                // `unstable_name_collisions` warning.
                 Itertools::intersperse(pids.iter().map(i32::to_string), ",".to_string())
                     .collect::<String>(),
             )
             .output()?;
-        let mut result = HashMap::new();
+        let mut result = IntHashMap::default();
         String::from_utf8_lossy(&output.stdout)
             .split_whitespace()
             .chunks(2)

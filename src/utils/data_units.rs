@@ -64,8 +64,12 @@ pub fn get_decimal_bytes(bytes: u64) -> (f64, &'static str) {
 /// Given a value in _bits_, turn a tuple containing the value and a unit.
 #[inline]
 pub fn convert_bits(bits: u64, base_two: bool) -> (f64, &'static str) {
-    let bytes = bits / 8;
+    convert_bytes(bits / 8, base_two)
+}
 
+/// Given a value in _bytes_, turn a tuple containing the value and a unit.
+#[inline]
+pub fn convert_bytes(bytes: u64, base_two: bool) -> (f64, &'static str) {
     if base_two {
         get_binary_bytes(bytes)
     } else {
@@ -73,7 +77,8 @@ pub fn convert_bits(bits: u64, base_two: bool) -> (f64, &'static str) {
     }
 }
 
-/// Return a tuple containing the value and a unit string to be used as a prefix.
+/// Return a tuple containing the value and a unit string to be used as a
+/// prefix.
 #[inline]
 pub fn get_unit_prefix(value: u64, base_two: bool) -> (f64, &'static str) {
     let float_value = value as f64;
@@ -94,5 +99,65 @@ pub fn get_unit_prefix(value: u64, base_two: bool) -> (f64, &'static str) {
             b if b < TERA_LIMIT => (float_value / GIGA_LIMIT_F64, "G"),
             _ => (float_value / TERA_LIMIT_F64, "T"),
         }
+    }
+}
+
+/// Format a float value to a string in a format showing a (hopefully)
+/// reasonable amount of decimal places.
+/// - If the value is < 100, then it will show at most two decimal places; if
+///   the decimals have trailing 0s, they will be trimmed.
+/// - Likewise, if it is < 1000, then it will show just 1 decimal place at most.
+/// - If the value is >= 1000, then it will just omit decimals.
+#[inline]
+pub fn format_byte_decimal_values(value: f64) -> String {
+    if value >= 1000.0 {
+        // Don't show decimals for values with 4 or more digits anyway.
+        format!("{value:.0}")
+    } else if value >= 100.0 {
+        // Note the trim is safe, as `value:.2` will always emit a decimal
+        // place.
+        format!("{value:.1}")
+            .trim_end_matches('0')
+            .trim_end_matches('.')
+            .to_string()
+    } else {
+        // Note the trim is safe, as `value:.2` will always emit a decimal
+        // place.
+        format!("{value:.2}")
+            .trim_end_matches('0')
+            .trim_end_matches('.')
+            .to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_bytes_value() {
+        assert_eq!(format_byte_decimal_values(0.0), "0");
+        assert_eq!(format_byte_decimal_values(5.0), "5");
+        assert_eq!(format_byte_decimal_values(100.0), "100");
+        assert_eq!(format_byte_decimal_values(101.0), "101");
+        assert_eq!(format_byte_decimal_values(111.0), "111");
+        assert_eq!(format_byte_decimal_values(111.04), "111");
+        assert_eq!(format_byte_decimal_values(111.06), "111.1");
+        assert_eq!(
+            format_byte_decimal_values(111.05),
+            "111",
+            "note that this actually rounds down due to floating point BS :/"
+        );
+        assert_eq!(format_byte_decimal_values(111.6), "111.6");
+        assert_eq!(format_byte_decimal_values(128.05), "128.1");
+        assert_eq!(format_byte_decimal_values(1234.0), "1234");
+        assert_eq!(format_byte_decimal_values(1234.05), "1234");
+        assert_eq!(format_byte_decimal_values(1.25), "1.25");
+        assert_eq!(format_byte_decimal_values(1.2), "1.2");
+        assert_eq!(format_byte_decimal_values(10.4), "10.4");
+        assert_eq!(format_byte_decimal_values(356.5), "356.5");
+        assert_eq!(format_byte_decimal_values(536.870912), "536.9");
+        assert_eq!(format_byte_decimal_values(36.870912), "36.87");
+        assert_eq!(format_byte_decimal_values(1.048576), "1.05");
     }
 }

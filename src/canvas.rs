@@ -1,17 +1,20 @@
 //! Code related to drawing.
 //!
-//! Note that eventually this should not contain any widget-specific draw code, but rather just generic code
-//! or components.
+//! Note that eventually this should not contain any widget-specific draw code,
+//! but rather just generic code or components.
 
 pub mod components;
 pub mod dialogs;
 mod drawing_utils;
 mod widgets;
 
-use tui::{
+use dialogs::command_dialog::draw_command_dialog;
+use ratatui::{
     Frame, Terminal,
     backend::Backend,
-    layout::{Constraint, Direction, Flex, Layout, Rect},
+    layout::{Constraint, Direction, Flex, Layout, Position, Rect},
+    style::Style,
+    symbols::Marker,
     text::Span,
     widgets::Paragraph,
 };
@@ -52,12 +55,20 @@ impl Painter {
     }
 
     /// Determines the border style.
-    pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> tui::style::Style {
+    pub fn get_border_style(&self, widget_id: u64, selected_widget_id: u64) -> Style {
         let is_on_widget = widget_id == selected_widget_id;
         if is_on_widget {
             self.styles.highlighted_border_style
         } else {
             self.styles.border_style
+        }
+    }
+
+    pub(crate) fn get_marker(&self, use_dot: bool) -> Marker {
+        if use_dot {
+            Marker::Dot
+        } else {
+            Marker::Braille
         }
     }
 
@@ -101,7 +112,8 @@ impl Painter {
                 self.previous_width = terminal_width;
             }
 
-            // TODO: We should probably remove this or make it done elsewhere, not the responsibility of the app.
+            // TODO: We should probably remove this or make it done elsewhere,
+            // not the responsibility of the app.
             if app_state.should_get_widget_bounds() {
                 // If we're force drawing, reset ALL mouse boundaries.
                 for widget in app_state.widget_map.values_mut() {
@@ -113,13 +125,24 @@ impl Painter {
                 app_state.process_kill_dialog.handle_redraw();
 
                 // Reset battery dialog button locations...
-                for battery_widget in app_state.states.battery_state.widget_states.values_mut() {
-                    battery_widget.tab_click_locs = None;
+                #[cfg(feature = "battery")]
+                {
+                    for battery_widget in app_state.states.battery_state.widget_states.values_mut()
+                    {
+                        battery_widget.tab_click_locs = None;
+                    }
                 }
             }
 
             // TODO: Make drawing dialog generic.
-            if app_state.help_dialog_state.is_showing_help {
+            if app_state.command_dialog.is_open() {
+                let area = f.area();
+                draw_command_dialog(f, area, &self.styles, &mut app_state.command_dialog);
+            } else if app_state.help_dialog_state.is_showing_help {
+                let area = f.area();
+                f.buffer_mut()
+                    .set_style(area, self.styles.general_widget_style);
+
                 let gen_help_len = GENERAL_HELP_TEXT.len() as u16 + 3;
                 let border_len = terminal_height.saturating_sub(gen_help_len) / 2;
                 let [_, vertical_dialog_chunk, _] = Layout::default()
@@ -161,11 +184,13 @@ impl Painter {
                         .constraints([Constraint::Percentage(100)])
                         .areas(vertical_dialog_chunk)
                 } else {
-                    // We calculate this so that the margins never have to split an odd number.
+                    // We calculate this so that the margins never have to split
+                    // an odd number.
                     let len = if (dialog_width.saturating_sub(MAX_TEXT_LENGTH)) % 2 == 0 {
                         MAX_TEXT_LENGTH
                     } else {
-                        // It can only be 1 if the difference is greater than 1, so this is fine.
+                        // It can only be 1 if the difference is greater than 1,
+                        // so this is fine.
                         MAX_TEXT_LENGTH + 1
                     };
 
@@ -178,7 +203,13 @@ impl Painter {
 
                 self.draw_help_dialog(f, app_state, middle_dialog_chunk);
             } else if app_state.process_kill_dialog.is_open() {
-                // FIXME: For width, just limit to a max size or full width. For height, not sure. Maybe pass max and let child handle?
+                let area = f.area();
+                f.buffer_mut()
+                    .set_style(area, self.styles.general_widget_style);
+
+                // FIXME: For width, just limit to a max size or full width. For
+                // height, not sure. Maybe pass max and let
+                // child handle?
                 let horizontal_padding = if terminal_width < 100 { 0 } else { 5 };
                 let vertical_padding = if terminal_height < 100 { 0 } else { 5 };
 
@@ -238,13 +269,9 @@ impl Painter {
                         rect[0],
                         app_state.current_widget.widget_id,
                     ),
-                    Net => self.draw_network_graph(
-                        f,
-                        app_state,
-                        rect[0],
-                        app_state.current_widget.widget_id,
-                        false,
-                    ),
+                    Net => {
+                        self.draw_network(f, app_state, rect[0], app_state.current_widget.widget_id)
+                    }
                     Proc | ProcSearch | ProcSort => {
                         let widget_id = app_state.current_widget.widget_id
                             - match &app_state.current_widget.widget_type {
@@ -260,6 +287,28 @@ impl Painter {
                         #[cfg(feature = "battery")]
                         self.draw_battery(f, app_state, rect[0], app_state.current_widget.widget_id)
                     }
+                    TempGraph => self.draw_temperature_graph(
+                        f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
+                    DiskIoGraph => self.draw_disk_io_graph(
+                        f,
+                        app_state,
+                        rect[0],
+                        app_state.current_widget.widget_id,
+                    ),
+                    GpuUsageGraph =>
+                    {
+                        #[cfg(feature = "gpu")]
+                        self.draw_gpu_graph(
+                            f,
+                            app_state,
+                            rect[0],
+                            app_state.current_widget.widget_id,
+                        )
+                    }
                     _ => {}
                 }
             } else if app_state.app_config_fields.use_basic_mode {
@@ -272,15 +321,15 @@ impl Painter {
                 let data = app_state.data_store.get_data();
                 let actual_cpu_data_len = data.cpu_harvest.len();
 
-                // This fixes #397, apparently if the height is 1, it can't render the CPU
-                // bars...
+                // This fixes #397, apparently if the height is 1, it can't
+                // render the CPU bars...
                 let cpu_height = {
                     let c = (actual_cpu_data_len / 4) as u16
-                        + u16::from(actual_cpu_data_len % 4 != 0)
+                        + u16::from(!actual_cpu_data_len.is_multiple_of(4))
                         + u16::from(
                             app_state.app_config_fields.show_average_cpu
                                 && app_state.app_config_fields.dedicated_average_row
-                                && actual_cpu_data_len.saturating_sub(1) % 4 != 0,
+                                && !actual_cpu_data_len.saturating_sub(1).is_multiple_of(4),
                         );
 
                     if c <= 1 { 1 } else { c }
@@ -311,8 +360,14 @@ impl Painter {
                     mem_rows += data.gpu_harvest.len() as u16; // add row(s) for gpu
                 }
 
-                if mem_rows == 1 {
-                    mem_rows += 1; // need at least 2 rows for RX and TX
+                let network_rows = if app_state.app_config_fields.network_show_packets {
+                    4 // 4 rows for RX/TX and Packet Rates (Avg sizes moved to right side)
+                } else {
+                    2 // 2 rows for RX and TX
+                };
+
+                if mem_rows < network_rows {
+                    mem_rows += network_rows - mem_rows; // min rows
                 }
 
                 let vertical_chunks = Layout::default()
@@ -368,6 +423,15 @@ impl Painter {
                                 #[cfg(feature = "battery")]
                                 self.draw_battery(f, app_state, vertical_chunks[3], widget_id)
                             }
+                            TempGraph => self.draw_temperature_graph(
+                                f,
+                                app_state,
+                                vertical_chunks[3],
+                                widget_id,
+                            ),
+                            DiskIoGraph => {
+                                self.draw_disk_io_graph(f, app_state, vertical_chunks[3], widget_id)
+                            }
                             _ => {}
                         }
                     }
@@ -382,9 +446,10 @@ impl Painter {
                     self.draw_frozen_indicator(f, frozen_draw_loc);
                 }
 
-                // A two-pass algorithm - get layouts using constraints (first pass),
-                // then pass each layout to the corresponding widget (second pass).
-                // Note that layouts are already cached in ratatui, so we don't need
+                // A two-pass algorithm - get layouts using constraints (first
+                // pass), then pass each layout to the
+                // corresponding widget (second pass). Note that
+                // layouts are already cached in ratatui, so we don't need
                 // to do it manually!
                 let base = Layout::vertical(self.layout.rows.iter().map(|r| r.constraint))
                     .split(terminal_size);
@@ -413,6 +478,12 @@ impl Painter {
                 }
             }
         })?;
+
+        // We also move it back to the origin to try rand avoid wasting CPU
+        // cycles for things like kitty's `cursor_trail` calculations.
+        let backend = terminal.backend_mut();
+        backend.set_cursor_position(Position::ORIGIN)?;
+        backend.flush()?;
 
         if let Some(updated_current_widget) = app_state
             .widget_map
@@ -445,6 +516,17 @@ impl Painter {
                     {
                         #[cfg(feature = "battery")]
                         self.draw_battery(f, app_state, *draw_loc, widget.widget_id)
+                    }
+                    TempGraph => {
+                        self.draw_temperature_graph(f, app_state, *draw_loc, widget.widget_id)
+                    }
+                    DiskIoGraph => {
+                        self.draw_disk_io_graph(f, app_state, *draw_loc, widget.widget_id)
+                    }
+                    GpuUsageGraph =>
+                    {
+                        #[cfg(feature = "gpu")]
+                        self.draw_gpu_graph(f, app_state, *draw_loc, widget.widget_id)
                     }
                     _ => {}
                 }

@@ -6,8 +6,8 @@ pub(crate) fn get_arc_usage() -> Option<(MemData, u64)> {
     use std::num::NonZeroU64;
 
     let (mem_total, mem_used, mem_min) = {
-        cfg_if::cfg_if! {
-            if #[cfg(target_os = "linux")] {
+        cfg_select! {
+            target_os = "linux" => {
                 // TODO: [OPT] is this efficient?
                 use std::fs::read_to_string;
                 if let Ok(arc_stats) = read_to_string("/proc/spl/kstat/zfs/arcstats") {
@@ -32,7 +32,8 @@ pub(crate) fn get_arc_usage() -> Option<(MemData, u64)> {
                                 // Parse the value, remember it's in bytes!
                                 if let Ok(number) = number.parse::<u64>() {
                                     *to_write = number;
-                                    // We only need a few keys, so we can bail early.
+                                    // We only need a few keys, so we can bail
+                                    // early.
                                     zfs_keys_read += 1;
                                     if zfs_keys_read == ZFS_KEYS_NEEDED {
                                         break;
@@ -45,16 +46,23 @@ pub(crate) fn get_arc_usage() -> Option<(MemData, u64)> {
                 } else {
                     (0, 0, 0)
                 }
-            } else if #[cfg(target_os = "freebsd")] {
+            }
+            target_os = "freebsd" => {
                 use sysctl::Sysctl;
                 if let (Ok(mem_arc_value), Ok(mem_sys_value), Ok(mem_min_value)) = (
                     sysctl::Ctl::new("kstat.zfs.misc.arcstats.size"),
                     sysctl::Ctl::new("kstat.zfs.misc.arcstats.c_max"),
                     sysctl::Ctl::new("kstat.zfs.misc.arcstats.c_min"),
                 ) {
-                    if let (Ok(sysctl::CtlValue::U64(arc)), Ok(sysctl::CtlValue::U64(mem)), Ok(sysctl::CtlValue::U64(min))) =
-                    (mem_arc_value.value(), mem_sys_value.value(), mem_min_value.value())
-                    {
+                    if let (
+                        Ok(sysctl::CtlValue::U64(arc)),
+                        Ok(sysctl::CtlValue::U64(mem)),
+                        Ok(sysctl::CtlValue::U64(min)),
+                    ) = (
+                        mem_arc_value.value(),
+                        mem_sys_value.value(),
+                        mem_min_value.value(),
+                    ) {
                         (mem, arc, min)
                     } else {
                         (0, 0, 0)
@@ -62,9 +70,8 @@ pub(crate) fn get_arc_usage() -> Option<(MemData, u64)> {
                 } else {
                     (0, 0, 0)
                 }
-            } else {
-                (0, 0, 0)
             }
+            _ => (0, 0, 0),
         }
     };
 

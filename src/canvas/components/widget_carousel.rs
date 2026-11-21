@@ -1,4 +1,4 @@
-use tui::{
+use ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     text::{Line, Span},
@@ -18,8 +18,8 @@ impl Painter {
             let current_table = if let BottomWidgetType::ProcSort = current_table.widget_type {
                 current_table
                     .right_neighbour
-                    .map(|id| app_state.widget_map.get(&id).unwrap())
-                    .unwrap()
+                    .and_then(|id| app_state.widget_map.get(&id))
+                    .expect("id must exist in widget mapping")
             } else {
                 current_table
             };
@@ -115,6 +115,11 @@ impl Painter {
                 .horizontal_margin(1)
                 .split(draw_loc);
 
+            // Done like this for now since it's easier to just manually paint
+            // instead of dealing with blocks.
+            f.buffer_mut()
+                .set_style(draw_loc, self.styles.general_widget_style);
+
             f.render_widget(
                 Paragraph::new(left_arrow_text).block(Block::default()),
                 margined_draw_loc[0],
@@ -128,18 +133,19 @@ impl Painter {
 
             if app_state.should_get_widget_bounds() {
                 // Some explanations for future readers:
-                // - The "height" as of writing of this entire widget is 2.  If it's 1, it
-                //   occasionally doesn't draw.
-                // - As such, the buttons are only on the lower part of this 2-high widget.
-                // - So, we want to only check at one location, the `draw_loc.y + 1`, and that's
-                //   it.
+                // - The "height" as of writing of this entire widget is 2.  If
+                //   it's 1, it occasionally doesn't draw.
+                // - As such, the buttons are only on the lower part of this
+                //   2-high widget.
+                // - So, we want to only check at one location, the `draw_loc.y
+                //   + 1`, and that's it.
                 // - But why is it "+2" then?  Well, it's because I have a REALLY ugly hack
                 //   for mouse button checking, since most button checks are of the form `(draw_loc.y + draw_loc.height)`,
                 //   and the same for the x and width.  Unfortunately, if you check using >= and <=, the outer bound is
                 //   actually too large - so, we assume all of them are one too big and check via < (see
                 //   https://github.com/ClementTsang/bottom/pull/459 for details).
-                // - So in other words, to make it simple, we keep this to a standard and
-                //   overshoot by one here.
+                // - So in other words, to make it simple, we keep this to a
+                //   standard and overshoot by one here.
                 if let Some(basic_table) = &mut app_state.states.basic_table_widget_state {
                     basic_table.left_tlc =
                         Some((margined_draw_loc[0].x, margined_draw_loc[0].y + 1));

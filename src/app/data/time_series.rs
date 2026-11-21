@@ -1,16 +1,23 @@
 //! Time series data.
 
+#[cfg(feature = "gpu")]
+use std::collections::BTreeMap;
 use std::{
     cmp::Ordering,
     time::{Duration, Instant},
     vec::Vec,
 };
 
-#[cfg(feature = "gpu")]
-use hashbrown::{HashMap, HashSet}; // TODO: Try fxhash again.
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use timeless::data::ChunkedData;
 
-use crate::collection::Data;
+#[cfg(feature = "gpu")]
+use crate::collection::GpuKey;
+use crate::{
+    app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
+    collection::Data,
+    widgets::DiskWidgetData,
+};
 
 /// Values corresponding to a time slice.
 pub type Values = ChunkedData<f64>;
@@ -18,15 +25,18 @@ pub type Values = ChunkedData<f64>;
 /// Represents time series data in a chunked, deduped manner.
 ///
 /// Properties:
-/// - Time in this manner is represented in a reverse-offset fashion from the current time.
+/// - Time in this manner is represented in a reverse-offset fashion from the
+///   current time.
 /// - All data is stored in SoA fashion.
-/// - Values are stored in a chunked format, which facilitates gaps in data collection if needed.
+/// - Values are stored in a chunked format, which facilitates gaps in data
+///   collection if needed.
 /// - Additional metadata is stored to make data pruning over time easy.
 #[derive(Clone, Debug, Default)]
 pub struct TimeSeriesData {
     /// Time values.
     ///
-    /// TODO: (points_rework_v1) Either store millisecond-level only or offsets only.
+    /// TODO: (points_rework_v1) Either store millisecond-level only or offsets
+    /// only.
     pub time: Vec<Instant>,
 
     /// Network RX data.
@@ -53,15 +63,38 @@ pub struct TimeSeriesData {
     pub arc_mem: Values,
 
     #[cfg(feature = "gpu")]
-    /// GPU memory data.
-    pub gpu_mem: HashMap<String, Values>,
+    /// GPU memory data. As it is stored in a BTreeMap, it's inherently
+    /// sorted.
+    pub gpu_mem: BTreeMap<GpuKey, Values>,
+
+    #[cfg(feature = "gpu")]
+    /// GPU utilization data as a percentage. As it is stored in a BTreeMap,
+    /// it's inherently sorted.
+    pub gpu_usage: BTreeMap<GpuKey, Values>,
+
+    /// Temperature data.
+    ///
+    /// TODO: Maybe make this use TypedTemperature?
+    pub temperature: HashMap<String, ChunkedData<f32>>,
+
+    /// Disk I/O read rate data, keyed by device name.
+    pub disk_io_read: HashMap<String, ChunkedData<f64>>,
+
+    /// Disk I/O write rate data, keyed by device name.
+    pub disk_io_write: HashMap<String, ChunkedData<f64>>,
 }
 
 impl TimeSeriesData {
     /// Add a new data point.
-    pub fn add(&mut self, data: &Data) {
+    pub fn add(
+        &mut self, data: &Data, used_widgets: &UsedWidgets, settings: &AppConfigFields,
+        filters: &DataFilters,
+    ) {
         self.time.push(data.collection_time);
 
+        // FIXME: insert_break doesn't advance the series' index, and new series
+        // start at 0, so they can be misaligned against time. May need to use
+        // `try_push(None)` instead for missing samples.
         if let Some(network) = &data.network {
             self.rx.push(network.rx as f64);
             self.tx.push(network.tx as f64);
@@ -132,24 +165,19 @@ impl TimeSeriesData {
 
         #[cfg(feature = "gpu")]
         {
-            if let Some(gpu) = &data.gpu {
-                let mut not_visited = self
-                    .gpu_mem
-                    .keys()
-                    .map(String::to_owned)
-                    .collect::<HashSet<_>>();
+            if let Some(gpu_mem_data) = &data.gpu_memory {
+                let mut not_visited = self.gpu_mem.keys().cloned().collect::<HashSet<_>>();
 
-                for (name, new_data) in gpu {
-                    not_visited.remove(name);
+                for (key, new_data) in gpu_mem_data {
+                    not_visited.remove(key);
 
-                    if !self.gpu_mem.contains_key(name) {
-                        self.gpu_mem
-                            .insert(name.to_string(), ChunkedData::default());
+                    if !self.gpu_mem.contains_key(key) {
+                        self.gpu_mem.insert(key.clone(), ChunkedData::default());
                     }
 
                     let curr = self
                         .gpu_mem
-                        .get_mut(name)
+                        .get_mut(key)
                         .expect("entry must exist as it was created above");
                     curr.push(new_data.percentage());
                 }
@@ -163,6 +191,129 @@ impl TimeSeriesData {
                 for g in self.gpu_mem.values_mut() {
                     g.insert_break();
                 }
+            }
+        }
+
+        #[cfg(feature = "gpu")]
+        if used_widgets.use_gpu_graph {
+            if let Some(gpu_usage_data) = &data.gpu_usage {
+                let mut not_visited = self.gpu_usage.keys().cloned().collect::<HashSet<_>>();
+
+                for (key, usage) in gpu_usage_data {
+                    not_visited.remove(key);
+
+                    if !self.gpu_usage.contains_key(key) {
+                        self.gpu_usage.insert(key.clone(), ChunkedData::default());
+                    }
+
+                    let curr = self
+                        .gpu_usage
+                        .get_mut(key)
+                        .expect("entry must exist as it was created above");
+                    curr.push(*usage as f64);
+                }
+
+                for nv in not_visited {
+                    if let Some(entry) = self.gpu_usage.get_mut(&nv) {
+                        entry.insert_break();
+                    }
+                }
+            } else {
+                for g in self.gpu_usage.values_mut() {
+                    g.insert_break();
+                }
+            }
+        }
+
+        if used_widgets.use_temp_graph {
+            if let Some(temperature_sensors) = &data.temperature_sensors {
+                let mut not_visited = self
+                    .temperature
+                    .keys()
+                    .map(String::to_owned)
+                    .collect::<HashSet<_>>();
+
+                for sensor_data in temperature_sensors {
+                    if !Filter::optional_should_keep(&filters.temp_graph_filter, &sensor_data.name)
+                    {
+                        continue;
+                    }
+
+                    if let Some(temperature) = sensor_data.temperature {
+                        not_visited.remove(&sensor_data.name);
+
+                        if !self.temperature.contains_key(&sensor_data.name) {
+                            self.temperature
+                                .insert(sensor_data.name.clone(), ChunkedData::default());
+                        }
+
+                        let curr = self
+                            .temperature
+                            .get_mut(&sensor_data.name)
+                            .expect("entry must exist as it was created above");
+
+                        let converted_temperature = settings
+                            .temperature_type
+                            .convert_temp_unit_float(temperature);
+                        curr.push(converted_temperature);
+                    }
+                }
+
+                for nv in not_visited {
+                    if let Some(entry) = self.temperature.get_mut(&nv) {
+                        entry.insert_break();
+                    }
+                }
+            } else {
+                for g in self.temperature.values_mut() {
+                    g.insert_break();
+                }
+            }
+        }
+    }
+
+    /// Update disk I/O time series using already-calculated rates from
+    /// [`DiskWidgetData`]. Devices not present in `disks` get a break inserted
+    /// so the legend keeps them around for the window's remaining lifetime.
+    pub fn update_disk_io(
+        &mut self, disks: &[DiskWidgetData], filter: &Option<Filter>, show_unmounted: bool,
+    ) {
+        #[cfg(not(target_os = "linux"))]
+        let _ = show_unmounted;
+
+        let mut not_visited: HashSet<String> = self.disk_io_read.keys().cloned().collect();
+
+        for disk in disks {
+            #[cfg(target_os = "linux")]
+            if !show_unmounted && disk.mount_point.is_empty() {
+                continue;
+            }
+
+            if !Filter::optional_should_keep(filter, &disk.name) {
+                continue;
+            }
+
+            not_visited.remove(&disk.name);
+
+            let read_entry = self.disk_io_read.entry(disk.name.clone()).or_default();
+            match disk.io_read_rate_bytes {
+                Some(v) => read_entry.push(v as f64),
+                None => read_entry.insert_break(),
+            }
+
+            let write_entry = self.disk_io_write.entry(disk.name.clone()).or_default();
+            match disk.io_write_rate_bytes {
+                Some(v) => write_entry.push(v as f64),
+                None => write_entry.insert_break(),
+            }
+        }
+
+        for name in not_visited {
+            if let Some(entry) = self.disk_io_read.get_mut(&name) {
+                entry.insert_break();
+            }
+            if let Some(entry) = self.disk_io_write.get_mut(&name) {
+                entry.insert_break();
             }
         }
     }
@@ -179,11 +330,13 @@ impl TimeSeriesData {
                 .time
                 .partition_point(|then| now.duration_since(*then) > max_age);
 
-            // Partition point returns the first index that does not match the predicate, so minus one.
+            // Partition point returns the first index that does not match the
+            // predicate, so minus one.
             if partition_point > 0 {
                 partition_point - 1
             } else {
-                // If the partition point was 0, then it means all values are too new to be pruned.
+                // If the partition point was 0, then it means all values are
+                // too new to be pruned.
                 // crate::info!("Skipping prune.");
                 return;
             }
@@ -213,17 +366,64 @@ impl TimeSeriesData {
 
         #[cfg(feature = "gpu")]
         {
-            self.gpu_mem.retain(|_, gpu| {
-                let _ = gpu.prune(end);
+            self.gpu_mem.retain(|_, gpu_mem| {
+                let _ = gpu_mem.prune(end);
 
-                // Remove the entry if it is empty. We can always add it again later.
-                if gpu.no_elements() {
+                // Remove the entry if it is empty. We can always add it again
+                // later.
+                if gpu_mem.no_elements() {
                     false
                 } else {
-                    gpu.shrink_to_fit();
+                    gpu_mem.shrink_to_fit();
+                    true
+                }
+            });
+
+            self.gpu_usage.retain(|_, gpu_usage| {
+                let _ = gpu_usage.prune(end);
+
+                if gpu_usage.no_elements() {
+                    false
+                } else {
+                    gpu_usage.shrink_to_fit();
                     true
                 }
             });
         }
+
+        self.temperature.retain(|_, data| {
+            let _ = data.prune(end);
+
+            // Remove the entry if it is empty. We can always add it again
+            // later.
+            if data.no_elements() {
+                false
+            } else {
+                data.shrink_to_fit();
+                true
+            }
+        });
+
+        self.disk_io_read.retain(|_, data| {
+            let _ = data.prune(end);
+
+            if data.no_elements() {
+                false
+            } else {
+                data.shrink_to_fit();
+                true
+            }
+        });
+
+        self.disk_io_write.retain(|_, data| {
+            let _ = data.prune(end);
+
+            if data.no_elements() {
+                false
+            } else {
+                data.shrink_to_fit();
+                true
+            }
+        });
     }
 }

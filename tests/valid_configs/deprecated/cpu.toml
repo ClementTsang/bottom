@@ -1,0 +1,6 @@
+# This uses deprecated CPU settings - once they are removed, this test file should be moved to invalid configs.
+
+[flags]
+hide_avg_cpu = true
+cpu_left_legend = true
+average_cpu_row = true

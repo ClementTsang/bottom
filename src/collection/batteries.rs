@@ -28,6 +28,7 @@ pub enum BatteryState {
     },
     Empty,
     Full,
+    Paused,
     Unknown,
 }
 
@@ -39,6 +40,7 @@ impl BatteryState {
             BatteryState::Discharging { .. } => "Discharging",
             BatteryState::Empty => "Empty",
             BatteryState::Full => "Full",
+            BatteryState::Paused => "Paused",
             BatteryState::Unknown => "Unknown",
         }
     }
@@ -91,6 +93,7 @@ pub fn refresh_batteries(manager: &Manager, batteries: &mut [Battery]) -> Vec<Ba
                         },
                         State::Empty => BatteryState::Empty,
                         State::Full => BatteryState::Full,
+                        State::Paused => BatteryState::Paused,
                     },
                 })
             } else {

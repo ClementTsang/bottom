@@ -6,9 +6,11 @@ on the problem at the end of the day, _issues on unsupported platforms are likel
 
 Unofficially supported platforms known to compile/work:
 
-- FreeBSD
-- Linux on ARMv7 and ARMv6 (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml))
-- Linux on PowerPC 64 LE (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml))
-- Linux on an RISC-V (tested to compile in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml), tested to run on an [Allwinner D1 Nezha](https://github.com/ClementTsang/bottom/issues/564))
+- FreeBSD on x86 (built and tested in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml))
+- Linux on ARMv7 and ARMv6 (built in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml))
+- Linux on PowerPC 64 LE (built in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml))
+- Linux on an RISC-V (built in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml), tested to run on an [Allwinner D1 Nezha](https://github.com/ClementTsang/bottom/issues/564))
+- NetBSD on x86 (built in [CI](https://github.com/ClementTsang/bottom/blob/main/.github/workflows/ci.yml))
 
-If you encounter any issues, see the [troubleshooting page](../troubleshooting.md) or open an issue/discussion on GitHub - though as mentioned, unsupported platforms may go unfixed.
+If you encounter any issues, see the [troubleshooting page](../troubleshooting.md) or open an issue/discussion on
+GitHub - though as mentioned, unsupported platforms may go unfixed.

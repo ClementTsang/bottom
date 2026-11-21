@@ -15,21 +15,33 @@ When filing a bug report, please use the [bug report template](https://github.co
 
 ### Feature requests
 
-Please use the [feature request template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=feature&template=feature_request.md&title=) and fill it out. Remember to give details about what the feature is along with why you think this suggestion will be useful.
-
-Also, please check whether an existing issue has covered your specific feature request!
+Please use the [feature request template](https://github.com/ClementTsang/bottom/issues/new?assignees=&labels=feature&template=feature_request.md&title=) and fill it out. Remember to give details about what the feature is along with why you think this suggestion will be useful first! Also, please check whether an existing issue
+already covers your specific feature request.
 
 ## Pull requests
+
+**Note**: if you want to make a change, please first open an appropriate issue and wait for a response so the
+merits of making the change can be discussed before work starts. PRs that do not do this may be closed.
 
 The expected workflow for a pull request is:
 
 1. Fork the project.
 2. Make your changes.
 3. Make any documentation changes if necessary - if you add a new feature, it'll probably need documentation changes. See [here](./documentation.md) for tips on documentation.
-4. Commit and create a pull request to merge into the `main` branch. **Please fill out the pull request template**.
+4. Commit and create a pull request to merge into the `main` branch. **Please fill out the pull request template and checklist**.
 5. Ask a maintainer to review your pull request.
    - Check if the CI workflow passes. These consist of clippy lints, rustfmt checks, and basic tests. If you are a
      first-time contributor, you may need to wait for a maintainer to let CI run.
    - If changes are suggested or any comments are made, they should probably be addressed.
-6. Once it looks good, it'll be merged! Note that _generally_, PRs are squashed to maintain repo cleanliness, though
+6. Once it looks good, it'll be merged! Note that generally, PRs are squashed to maintain repo cleanliness, though
    feel free to ask otherwise if that isn't preferable.
+
+Some other things related to making changes or pull requests:
+
+- Please review your code _yourself_ and test your changes before you create the PR and ask for a review.
+- If you are adding or changing any dependency, a justification on why this is necessary must be included.
+- Please ensure that any changes made are compatible with the license of bottom.
+
+## AI Policy
+
+Note that any contribution, whether it be opening an issue, PRs, or commenting, should follow the [AI policy](https://github.com/ClementTsang/bottom/blob/main/AI_POLICY.md). Contributions that do not follow this may be closed/hidden.

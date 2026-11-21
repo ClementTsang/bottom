@@ -9,15 +9,15 @@ use std::{
 };
 
 use concat_string::concat_string;
-use hashbrown::{HashMap, HashSet};
 use process::*;
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use sysinfo::ProcessStatus;
 
 use super::{Pid, ProcessHarvest, UserTable, process_status_str};
 use crate::collection::{DataCollector, error::CollectionResult, processes::ProcessType};
 
-/// Maximum character length of a `/proc/<PID>/stat` process name (the length is 16,
-/// but this includes a null terminator).
+/// Maximum character length of a `/proc/<PID>/stat` process name (the length is
+/// 16, but this includes a null terminator).
 ///
 /// If it's equal or greater, then we instead refer to the command for the name.
 const MAX_STAT_NAME_LEN: usize = 15;
@@ -118,7 +118,7 @@ fn get_linux_cpu_usage(
 ) -> (f32, u64) {
     // Based heavily on https://stackoverflow.com/a/23376195 and https://stackoverflow.com/a/1424556
     let new_proc_times = stat.utime + stat.stime;
-    let diff = (new_proc_times - prev_proc_times) as f64; // No try_from for u64 -> f64... oh well.
+    let diff = new_proc_times.saturating_sub(prev_proc_times) as f64; // No try_from for u64 -> f64... oh well.
 
     if cpu_usage == 0.0 {
         (0.0, new_proc_times)
@@ -142,6 +142,7 @@ fn read_proc(
         stat,
         io,
         cmdline,
+        swap_bytes,
     } = process;
 
     let ReadProcArgs {
@@ -152,11 +153,12 @@ fn read_proc(
         time_difference_in_secs,
         system_uptime,
         get_process_threads: _,
+        get_process_swap: _,
     } = args;
 
     let process_state_char = stat.state;
     let process_state = (
-        process_status_str(ProcessStatus::from(process_state_char)),
+        process_status_str(ProcessStatus::from(process_state_char as u8)),
         process_state_char,
     );
     let (cpu_usage_percent, new_process_times) = get_linux_cpu_usage(
@@ -222,18 +224,21 @@ fn read_proc(
                 (concat_string!("[", comm, "]"), comm)
             } else {
                 // If the comm fits then we'll default to whatever is set.
-                // If it doesn't, we need to do some magic to determine what it's
-                // supposed to be.
+                // If it doesn't, we need to do some magic to determine what
+                // it's supposed to be.
 
-                // TODO: We might want to re-evaluate if we want to do it like this,
-                // as it turns out I was dumb and sometimes comm != process name...
+                // TODO: We might want to re-evaluate if we want to do it like
+                // this, as it turns out I was dumb and
+                // sometimes comm != process name...
                 //
                 // What we should do is store:
-                // - basename (what we're kinda doing now, except we're gating on comm length)
+                // - basename (what we're kinda doing now, except we're gating
+                //   on comm length)
                 // - command (full thing)
                 // - comm (as a separate thing)
                 //
-                // Stuff like htop also offers the option to "highlight" basename and comm in command. Might be neat?
+                // Stuff like htop also offers the option to "highlight"
+                // basename and comm in command. Might be neat?
                 let name = if comm.len() >= MAX_STAT_NAME_LEN {
                     binary_name_from_cmdline(&cmdline)
                 } else {
@@ -248,7 +253,8 @@ fn read_proc(
     };
 
     // We have moved command processing here.
-    // SAFETY: We are only replacing a single char (NUL) with another single char (space).
+    // SAFETY: We are only replacing a single char (NUL) with another single
+    // char (space).
 
     let mut command = command;
     let buf_mut = unsafe { command.as_mut_vec() };
@@ -268,6 +274,7 @@ fn read_proc(
             mem_usage_percent,
             mem_usage,
             virtual_mem,
+            swap_bytes,
             name,
             command,
             read_per_sec,
@@ -285,35 +292,39 @@ fn read_proc(
             #[cfg(feature = "gpu")]
             gpu_util: 0,
             process_type,
+            #[cfg(unix)]
+            nice: stat.nice,
+            priority: stat.priority,
         },
         new_process_times,
     ))
 }
 
-/// We follow something similar to how htop does it to identify a valid name based on the cmdline.
-/// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268 (kinda)
+/// We follow something similar to how htop does it to identify a valid name
+/// based on the cmdline.
+/// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L268
+///   (kinda)
 /// - https://github.com/htop-dev/htop/blob/bcb18ef82269c68d54a160290e5f8b2e939674ec/Process.c#L573
 ///
 /// Also note that cmdline is (for us) separated by \0.
 fn binary_name_from_cmdline(cmdline: &str) -> String {
-    let mut start = 0;
-    let mut end = cmdline.len();
-
-    for (i, c) in cmdline.chars().enumerate() {
-        if c == '/' {
-            start = i + 1;
-        } else if c == '\0' || c == ':' {
-            end = i;
-            break;
-        }
-    }
-
-    // Bit of a hack to handle cases like "firefox -blah"
-    let partial = &cmdline[start..end];
-    partial
+    // Normally `/proc/<pid>/cmdline` separates arguments with NUL bytes. Some
+    // processes rewrite it using spaces, though, so stop at the first option in
+    // that case. In particular, do this before looking for the final slash;
+    // otherwise a path in a later argument can be mistaken for the executable.
+    let argv0 = cmdline.split_once('\0').map_or(cmdline, |(argv0, _)| argv0);
+    let executable = argv0
         .split_once(" -")
-        .map(|(name, _)| name.to_string())
-        .unwrap_or_else(|| partial.to_string())
+        .map_or(argv0, |(executable, _)| executable);
+    let executable = executable
+        .split_once(':')
+        .map_or(executable, |(executable, _)| executable);
+
+    executable
+        .rsplit('/')
+        .next()
+        .unwrap_or(executable)
+        .to_string()
 }
 
 pub(crate) struct PrevProc<'a> {
@@ -341,6 +352,7 @@ pub(crate) struct ReadProcArgs {
     pub time_difference_in_secs: u64,
     pub system_uptime: u64,
     pub get_process_threads: bool,
+    pub get_process_swap: bool,
 }
 
 pub(crate) fn linux_process_data(
@@ -356,6 +368,8 @@ pub(crate) fn linux_process_data(
         unnormalized_cpu: collector.unnormalized_cpu,
         get_process_threads: collector.get_process_threads,
     };
+    let get_swap = collector.get_process_swap;
+
     let prev_process_details = &mut collector.prev_process_details;
     let user_table = &mut collector.user_table;
 
@@ -378,18 +392,23 @@ pub(crate) fn linux_process_data(
     } = cpu_usage_calculation(prev_idle, prev_non_idle)?;
 
     if unnormalized_cpu {
-        let num_processors = collector.sys.system.cpus().len() as f64;
+        let num_processors = collector
+            .cgroup_cpu_data
+            .cpu_quota
+            .unwrap_or_else(|| collector.sys.system.cpus().len() as f64);
 
-        // Note we *divide* here because the later calculation divides `cpu_usage` - in
-        // effect, multiplying over the number of cores.
+        // Note we *divide* here because the later calculation divides
+        // `cpu_usage` - in effect, multiplying over the number of
+        // cores.
         cpu_usage /= num_processors;
     }
 
-    // TODO: Could maybe use a double buffer hashmap to avoid allocating this each time?
-    // e.g. we swap which is prev and which is new.
-    let mut seen_pids: HashSet<Pid> = HashSet::new();
+    // TODO: Could maybe use a double buffer hashmap to avoid allocating this
+    // each time? e.g. we swap which is prev and which is new.
+    let mut seen_pids: HashSet<Pid> = HashSet::default();
 
-    // Note this will only return PIDs of _processes_, not threads. You can get those from /proc/<PID>/task though.
+    // Note this will only return PIDs of _processes_, not threads. You can get
+    // those from /proc/<PID>/task though.
     let pids = fs::read_dir("/proc")?.flatten().filter_map(|dir| {
         // Need to filter out non-PID entries.
         if is_str_numeric(dir.file_name().to_string_lossy().trim()) {
@@ -405,19 +424,23 @@ pub(crate) fn linux_process_data(
         cpu_fraction,
         total_memory,
         time_difference_in_secs,
-        system_uptime: sysinfo::System::uptime(),
+        system_uptime: sysinfo::System::uptime().unwrap_or_default(),
         get_process_threads: get_threads,
+        get_process_swap: get_swap,
     };
 
     // TODO: Maybe pre-allocate these buffers in the future w/ routine cleanup.
     let mut buffer = String::new();
-    let mut process_threads_to_check = HashMap::new();
+    let mut process_threads_to_check = HashMap::default();
 
     let mut process_vector: Vec<ProcessHarvest> = pids
         .filter_map(|pid_path| {
-            if let Ok((process, threads)) =
-                Process::from_path(pid_path, &mut buffer, args.get_process_threads)
-            {
+            if let Ok((process, threads)) = Process::from_path(
+                pid_path,
+                &mut buffer,
+                args.get_process_threads,
+                args.get_process_swap,
+            ) {
                 let pid = process.pid;
                 let prev_proc_details = prev_process_details.entry(pid).or_default();
 
@@ -429,7 +452,7 @@ pub(crate) fn linux_process_data(
                     if let Some(gpus) = &collector.gpu_pids {
                         gpus.iter().for_each(|gpu| {
                             // add mem/util for all gpus to pid
-                            if let Some((mem, util)) = gpu.get(&(pid as u32)) {
+                            if let Some((mem, util)) = gpu.get(&pid) {
                                 process_harvest.gpu_mem += mem;
                                 process_harvest.gpu_util += util;
                             }
@@ -461,7 +484,9 @@ pub(crate) fn linux_process_data(
     // Get thread data.
     for (pid, tid_paths) in process_threads_to_check {
         for tid_path in tid_paths {
-            if let Ok((process, _)) = Process::from_path(tid_path, &mut buffer, false) {
+            // VmSwap is process-wide, so don't collect it for individual
+            // threads.
+            if let Ok((process, _)) = Process::from_path(tid_path, &mut buffer, false, false) {
                 let tid = process.pid;
                 let prev_proc_details = prev_process_details.entry(tid).or_default();
 
@@ -487,8 +512,8 @@ pub(crate) fn linux_process_data(
         prev_process_details.shrink_to_fit();
     }
 
-    // TODO: This might be more efficient to just separate threads into their own list, but for now this works so it
-    // fits with existing code.
+    // TODO: This might be more efficient to just separate threads into their
+    // own list, but for now this works so it fits with existing code.
     Ok(process_vector)
 }
 
@@ -554,6 +579,22 @@ mod tests {
         assert_eq!(
             binary_name_from_cmdline("firefox -contentproc -isForBrowser -prefsHandle 0"),
             "firefox"
+        );
+        assert_eq!(
+            binary_name_from_cmdline(
+                "/nix/store/discord/opt/Discord/.Discord-wrapped --type=renderer \
+                 --openh264-library-path=/home/user/libopenh264-2.5.1-linux64.7.so"
+            ),
+            ".Discord-wrapped"
+        );
+        assert_eq!(binary_name_from_cmdline("こんにちは\0"), "こんにちは");
+        assert_eq!(
+            binary_name_from_cmdline("こんにちは -こんばんは"),
+            "こんにちは"
+        );
+        assert_eq!(
+            binary_name_from_cmdline("/usr/bin/こんにちは -こんばんは\0"),
+            "こんにちは"
         );
     }
 }

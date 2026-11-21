@@ -1,13 +1,15 @@
 use std::{borrow::Cow, cmp::max, num::NonZeroU16};
 
+use serde::Deserialize;
+
 use crate::{
     app::{AppConfigFields, data::TypedTemperature},
     canvas::components::data_table::{
         ColumnHeader, DataTableColumn, DataTableProps, DataTableStyling, DataToCell, SortColumn,
-        SortDataTable, SortDataTableProps, SortOrder, SortsRow,
+        SortDataTable, SortDataTableProps, SortMode, SortsRow,
     },
     options::config::style::Styles,
-    utils::general::sort_partial_fn,
+    utils::{general::sort_partial_fn, natural_sort::natural_str_cmp},
 };
 
 #[derive(Clone, Debug)]
@@ -16,16 +18,49 @@ pub struct TempWidgetData {
     pub temperature: Option<TypedTemperature>,
 }
 
+#[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "generate_schema",
+    derive(schemars::JsonSchema, strum::VariantArray)
+)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 pub enum TempWidgetColumn {
     Sensor,
-    Temp,
+    Temperature,
+}
+
+impl<'de> Deserialize<'de> for TempWidgetColumn {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?.to_lowercase();
+        match value.as_str() {
+            "sensor" => Ok(TempWidgetColumn::Sensor),
+            "temp" | "temperature" => Ok(TempWidgetColumn::Temperature),
+            _ => Err(serde::de::Error::custom(
+                "doesn't match any temperature column name",
+            )),
+        }
+    }
+}
+
+impl TempWidgetColumn {
+    /// An ugly hack to generate the JSON schema.
+    #[cfg(feature = "generate_schema")]
+    pub fn get_schema_names(&self) -> &[&'static str] {
+        match self {
+            TempWidgetColumn::Sensor => &["Sensor"],
+            TempWidgetColumn::Temperature => &["Temp", "Temperature"],
+        }
+    }
 }
 
 impl ColumnHeader for TempWidgetColumn {
     fn text(&self) -> Cow<'static, str> {
         match self {
             TempWidgetColumn::Sensor => "Sensor(s)".into(),
-            TempWidgetColumn::Temp => "Temp(t)".into(),
+            TempWidgetColumn::Temperature => "Temp(t)".into(),
         }
     }
 }
@@ -45,7 +80,7 @@ impl DataToCell<TempWidgetColumn> for TempWidgetData {
     ) -> Option<Cow<'static, str>> {
         Some(match column {
             TempWidgetColumn::Sensor => self.sensor.clone().into(),
-            TempWidgetColumn::Temp => self.temperature(),
+            TempWidgetColumn::Temperature => self.temperature(),
         })
     }
 
@@ -69,12 +104,18 @@ impl DataToCell<TempWidgetColumn> for TempWidgetData {
 impl SortsRow for TempWidgetColumn {
     type DataType = TempWidgetData;
 
-    fn sort_data(&self, data: &mut [Self::DataType], descending: bool) {
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool, mode: SortMode) {
         match self {
             TempWidgetColumn::Sensor => {
-                data.sort_by(move |a, b| sort_partial_fn(descending)(&a.sensor, &b.sensor));
+                data.sort_by(move |a, b| match mode {
+                    SortMode::Lexical => sort_partial_fn(descending)(&a.sensor, &b.sensor),
+                    SortMode::Natural => {
+                        let ord = natural_str_cmp(&a.sensor, &b.sensor);
+                        if descending { ord.reverse() } else { ord }
+                    }
+                });
             }
-            TempWidgetColumn::Temp => {
+            TempWidgetColumn::Temperature => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.temperature, &b.temperature));
             }
         }
@@ -90,7 +131,7 @@ impl TempWidgetState {
     pub(crate) fn new(config: &AppConfigFields, palette: &Styles) -> Self {
         let columns = [
             SortColumn::soft(TempWidgetColumn::Sensor, Some(0.8)),
-            SortColumn::soft(TempWidgetColumn::Temp, None).default_descending(),
+            SortColumn::soft(TempWidgetColumn::Temperature, None).default_descending(),
         ];
 
         let props = SortDataTableProps {
@@ -100,10 +141,16 @@ impl TempWidgetState {
                 left_to_right: false,
                 is_basic: config.use_basic_mode,
                 show_table_scroll_position: config.show_table_scroll_position,
+                show_table_scroll_bar: config.show_table_scroll_bar,
                 show_current_entry_when_unfocused: false,
             },
-            sort_index: 0,
-            order: SortOrder::Ascending,
+            // This is hard-coded, but there's only two columns so it's fine.
+            sort_index: match config.default_temp_sort_column {
+                Some(TempWidgetColumn::Temperature) => 1,
+                Some(TempWidgetColumn::Sensor) | None => 0,
+            },
+            order: config.default_temp_sort_order,
+            sort_mode: config.default_temp_sort_mode,
         };
 
         let styling = DataTableStyling::from_palette(palette);
@@ -124,7 +171,7 @@ impl TempWidgetState {
     pub fn set_table_data(&mut self, data: &[TempWidgetData]) {
         let mut data = data.to_vec();
         if let Some(column) = self.table.columns.get(self.table.sort_index()) {
-            column.sort_by(&mut data, self.table.order());
+            column.sort_by(&mut data, self.table.order(), self.table.sort_mode());
         }
         self.table.set_data(data);
         self.force_update_data = false;

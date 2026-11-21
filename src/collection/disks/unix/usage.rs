@@ -2,7 +2,7 @@ pub struct Usage(libc::statvfs);
 
 // Note that x86 returns `u32` values while x86-64 returns `u64`s, so we convert
 // everything to `u64` for consistency.
-#[expect(clippy::useless_conversion)]
+#[allow(clippy::useless_conversion)]
 impl Usage {
     pub(crate) fn new(vfs: libc::statvfs) -> Self {
         Self(vfs)

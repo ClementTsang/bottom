@@ -62,6 +62,13 @@ pub(crate) struct Stat {
 
     /// Kernel thread
     pub is_kernel_thread: bool,
+
+    /// The kernel scheduling priority.
+    pub priority: i32,
+
+    /// The nice value (user-settable scheduling hint).
+    #[cfg(unix)]
+    pub nice: i32,
 }
 
 impl Stat {
@@ -69,23 +76,37 @@ impl Stat {
     /// `/proc/<PID>/stat`. For documentation, see
     /// [here](https://manpages.ubuntu.com/manpages/noble/man5/proc_pid_stat.5.html) as a reference.
     fn from_file(mut f: File, buffer: &mut String) -> anyhow::Result<Stat> {
-        // Since this is just one line, we can read it all at once. However, since it
-        // (technically) might have non-utf8 characters, we can't just use read_to_string.
+        // Since this is just one line, we can read it all at once. However,
+        // since it (technically) might have non-utf8 characters, we
+        // can't just use read_to_string.
         f.read_to_end(unsafe { buffer.as_mut_vec() })?;
 
         // TODO: Is this needed?
         let line = buffer.trim();
 
+        // Comm is represented by a string in parentheses (e.g. `(foo)`,
+        // `((bar))`). To handle that second case, we need to find the
+        // "last" closing parentheses.
         let (comm, rest) = {
             let start_paren = line
                 .find('(')
                 .ok_or_else(|| anyhow!("start paren missing"))?;
-            let end_paren = line.find(')').ok_or_else(|| anyhow!("end paren missing"))?;
 
-            (
-                line[start_paren + 1..end_paren].to_string(),
-                &line[end_paren + 2..],
-            )
+            // So, we _could_ try and be smart and only parse a limited slice of
+            // the string - however, there appears to be no ABI
+            // guarantees of comm length anymore, so we just take the hit and do
+            // an rsplit over the full string.
+            //
+            // Sources/discussion:
+            // - https://man.archlinux.org/man/proc_pid_stat.5.en
+            // - https://stackoverflow.com/questions/23534263/what-is-the-maximum-allowed-limit-on-the-length-of-a-process-name#comment138697304_23534499
+            // - https://elixir.bootlin.com/linux/v7.1.3/source/fs/proc/array.c#L100
+            // - https://github.com/ClementTsang/bottom/pull/2163#issuecomment-5017857303
+            let (comm, rest) = line[start_paren + 1..]
+                .rsplit_once(") ")
+                .ok_or_else(|| anyhow!("stat string is malformed"))?;
+
+            (comm.to_string(), rest)
         };
 
         let mut rest = rest.split(' ');
@@ -107,11 +128,20 @@ impl Stat {
         let utime: u64 = next_part(&mut rest)?.parse()?;
         let stime: u64 = next_part(&mut rest)?.parse()?;
 
-        // Skip 6 fields until starttime (cutime, cstime, priority, nice, num_threads,
-        // itrealvalue).
-        let mut rest = rest.skip(6);
-        let start_time: u64 = next_part(&mut rest)?.parse()?;
+        // cutime
+        let _ = next_part(&mut rest)?;
+        // cstime
+        let _ = next_part(&mut rest)?;
+        // priority
+        let priority: i32 = next_part(&mut rest)?.parse()?;
+        // nice
+        let nice: i32 = next_part(&mut rest)?.parse()?;
+        // num_threads
+        let _ = next_part(&mut rest)?;
+        // itrealvalue
+        let _ = next_part(&mut rest)?;
 
+        let start_time: u64 = next_part(&mut rest)?.parse()?;
         let vsize: u64 = next_part(&mut rest)?.parse()?;
         let rss: u64 = next_part(&mut rest)?.parse()?;
 
@@ -125,6 +155,8 @@ impl Stat {
             vsize,
             start_time,
             is_kernel_thread,
+            priority,
+            nice,
         })
     }
 
@@ -159,8 +191,8 @@ impl Io {
         let mut read_bytes = 0;
         let mut write_bytes = 0;
 
-        // This saves us from doing a string allocation on each iteration compared to
-        // `lines()`.
+        // This saves us from doing a string allocation on each iteration
+        // compared to `lines()`.
         while let Ok(bytes) = reader.read_line(buffer) {
             if bytes > 0 {
                 if buffer.is_empty() {
@@ -195,7 +227,8 @@ impl Io {
                     }
                 }
 
-                // Quick short circuit if we have already read all the required fields.
+                // Quick short circuit if we have already read all the required
+                // fields.
                 if read_fields == NUM_FIELDS {
                     break;
                 }
@@ -213,6 +246,33 @@ impl Io {
     }
 }
 
+/// Helper that reads the `VmSwap` line from `/proc/<PID>/status`.
+///
+/// NB: `buffer` must be empty.
+///
+/// See the [`proc_pid_status(5)`](https://man7.org/linux/man-pages/man5/proc_pid_status.5.html)
+/// documentation for details about this file and field.
+fn get_swap_bytes(f: File, buffer: &mut String) -> anyhow::Result<u64> {
+    let mut reader = BufReader::new(f);
+
+    while reader.read_line(buffer)? > 0 {
+        let mut parts = buffer.split_whitespace();
+
+        if parts.next() == Some("VmSwap:") {
+            let swap_kib: u64 = parts
+                .next()
+                .ok_or_else(|| anyhow!("VmSwap value missing"))?
+                .parse()?;
+
+            return Ok(swap_kib.saturating_mul(1024));
+        }
+
+        buffer.clear();
+    }
+
+    Err(anyhow!("VmSwap field not found"))
+}
+
 /// A wrapper around a Linux process operations in `/proc/<PID>`.
 ///
 /// Core documentation based on [proc's manpages](https://man7.org/linux/man-pages/man5/proc.5.html).
@@ -222,6 +282,7 @@ pub(crate) struct Process {
     pub stat: Stat,
     pub io: Option<Io>,
     pub cmdline: Option<String>,
+    pub swap_bytes: Option<u64>,
 }
 
 #[inline]
@@ -240,10 +301,11 @@ impl Process {
     /// that are unlikely to change, or are short-lived and
     /// will be discarded quickly.
     ///
-    /// This takes in a buffer to avoid allocs; this function will clear the buffer.
+    /// This takes in a buffer to avoid allocs; this function will clear the
+    /// buffer.
     #[inline]
     pub(crate) fn from_path(
-        pid_path: PathBuf, buffer: &mut String, get_threads: bool,
+        pid_path: PathBuf, buffer: &mut String, get_threads: bool, get_swap: bool,
     ) -> anyhow::Result<(Process, Vec<PathBuf>)> {
         buffer.clear();
 
@@ -276,8 +338,8 @@ impl Process {
 
         let mut root = pid_path;
 
-        // NB: Whenever you add a new stat, make sure to pop the root and clear the
-        // buffer!
+        // NB: Whenever you add a new stat, make sure to pop the root and clear
+        // the buffer!
 
         // Stat is pretty long, do this first to pre-allocate up-front.
         let stat =
@@ -285,7 +347,8 @@ impl Process {
         reset(&mut root, buffer);
 
         let cmdline = if cmdline(&mut root, &pid_dir, buffer).is_ok() {
-            // The clone will give a string with the capacity of the length of buffer, don't worry.
+            // The clone will give a string with the capacity of the length of
+            // buffer, don't worry.
             Some(buffer.clone())
         } else {
             None
@@ -298,6 +361,16 @@ impl Process {
 
         reset(&mut root, buffer);
 
+        let swap_bytes = if get_swap && !stat.is_kernel_thread {
+            let bytes = open_at(&mut root, "status", &pid_dir)
+                .and_then(|file| get_swap_bytes(file, buffer))
+                .ok();
+            reset(&mut root, buffer);
+            bytes
+        } else {
+            None
+        };
+
         let threads = threads(&mut root, pid, get_threads);
 
         Ok((
@@ -307,6 +380,7 @@ impl Process {
                 stat,
                 io,
                 cmdline,
+                swap_bytes,
             },
             threads,
         ))
@@ -366,4 +440,106 @@ fn threads(root: &mut PathBuf, pid: Pid, get_threads: bool) -> Vec<PathBuf> {
     }
 
     Vec::new()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::{Seek, Write};
+
+    use super::*;
+
+    fn stat_from_name(name: &str) -> anyhow::Result<Stat> {
+        // Kinda garbage data but it should be fine.
+        let stat = format!(
+            "0 ({name}) R 0 0 0 0 -1 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"
+        );
+
+        stat_file(&stat)
+    }
+
+    fn stat_file(stat: &str) -> anyhow::Result<Stat> {
+        let mut file = tempfile::tempfile().unwrap();
+        file.write_all(stat.as_bytes()).unwrap();
+        file.rewind().unwrap();
+
+        Stat::from_file(file, &mut String::new())
+    }
+
+    fn swap_file(status: &str) -> anyhow::Result<u64> {
+        let mut file = tempfile::tempfile()?;
+        file.write_all(status.as_bytes())?;
+        file.rewind()?;
+
+        get_swap_bytes(file, &mut String::new())
+    }
+
+    #[test]
+    fn parse_short_comm() {
+        let stat = stat_from_name("kworker/u16:2").unwrap();
+        assert_eq!(stat.comm, "kworker/u16:2");
+    }
+
+    #[test]
+    fn parse_long_comm() {
+        let stat = stat_from_name("kworker/u16:2-events_unbound").unwrap();
+        assert_eq!(stat.comm, "kworker/u16:2-events_unbound");
+    }
+
+    #[test]
+    fn parse_64_char_comm() {
+        let comm = "a".repeat(64);
+        let stat = stat_from_name(comm.as_str()).unwrap();
+        assert_eq!(stat.comm, comm);
+    }
+
+    #[test]
+    fn parse_double_paren_comm() {
+        let stat = stat_from_name("(sd-pam)").unwrap();
+        assert_eq!(stat.comm, "(sd-pam)");
+    }
+
+    #[test]
+    fn parse_comm_with_space() {
+        let stat = stat_from_name("a test").unwrap();
+        assert_eq!(stat.comm, "a test");
+    }
+
+    #[test]
+    fn parse_invalid_stat() {
+        assert!(stat_file("1 (blah").is_err(), "missing end paren");
+        assert!(stat_file("1 (blah)").is_err(), "too short");
+        assert!(stat_file("1 )(").is_err(), "wrong order");
+    }
+
+    #[test]
+    fn parse_swap_bytes() {
+        let status = "Name:\ttest\nVmSwap:\t4096 kB\n";
+
+        let swap_bytes = swap_file(status).unwrap();
+
+        assert_eq!(swap_bytes, 4_194_304);
+    }
+
+    #[test]
+    fn parse_zero_swap_bytes() {
+        let status = "Name:\ttest\nVmSwap:\t0 kB\n";
+
+        let swap_bytes = swap_file(status).unwrap();
+
+        assert_eq!(swap_bytes, 0);
+    }
+
+    #[test]
+    fn missing_vm_swap_is_an_error() {
+        let status = "Name:\ttest\nVmSize:\t4096 kB\n";
+
+        assert!(swap_file(status).is_err());
+    }
+
+    #[test]
+    fn invalid_vm_swap_is_an_error() {
+        let status = "Name:\ttest\nVmSwap:\tinvalid kB\n";
+
+        assert!(swap_file(status).is_err());
+    }
 }

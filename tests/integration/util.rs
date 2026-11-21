@@ -1,8 +1,10 @@
 use std::{env, ffi::OsString, path::Path, process::Command};
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
+use std::{io::Read, thread, time::Duration};
 
-use hashbrown::HashMap;
 #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
 use portable_pty::{Child, CommandBuilder, MasterPty, PtySize, native_pty_system};
+use rustc_hash::FxHashMap as HashMap;
 
 pub fn abs_path(path: &str) -> OsString {
     let path = Path::new(path);
@@ -148,4 +150,39 @@ pub fn spawn_btm_in_pty(args: &[&str]) -> (Box<dyn MasterPty>, Box<dyn Child>) {
     }
 
     (pair.master, pair.slave.spawn_command(cmd).unwrap())
+}
+
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
+fn reader_to_string(mut reader: Box<dyn Read>) -> String {
+    let mut buf = String::default();
+    reader.read_to_string(&mut buf).unwrap();
+
+    buf
+}
+
+/// Run and kill bottom.
+#[cfg(all(target_arch = "x86_64", target_os = "linux"))]
+pub fn run_and_kill(args: &[&str]) {
+    let (master, mut handle) = spawn_btm_in_pty(args);
+    let reader = master.try_clone_reader().unwrap();
+    let _ = master.take_writer().unwrap();
+
+    const TIMES_CHECKED: u64 = 6; // Check 6 times, once every 500ms, for 3 seconds total.
+
+    for _ in 0..TIMES_CHECKED {
+        thread::sleep(Duration::from_millis(500));
+        match handle.try_wait() {
+            Ok(Some(exit)) => {
+                println!("output: {}", reader_to_string(reader));
+                panic!("program terminated unexpectedly (exit status: {exit:?})");
+            }
+            Err(e) => {
+                println!("output: {}", reader_to_string(reader));
+                panic!("error while trying to wait: {e}")
+            }
+            _ => {}
+        }
+    }
+
+    handle.kill().unwrap();
 }

@@ -1,0 +1,11 @@
+//! A graph displaying data in the y-axis over time in the x-axis.
+//!
+//! A "base" version is available, based on a vendored version of
+//! ratatui's [charts](https://docs.rs/ratatui/latest/ratatui/widgets/struct.Chart.html),
+//! as are variants for common use cases.
+
+mod base;
+mod vendored;
+
+pub(crate) use base::*;
+pub(crate) use vendored::*;

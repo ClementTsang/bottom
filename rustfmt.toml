@@ -8,7 +8,11 @@ max_width = 100
 style_edition = "2024"
 
 # Unstable options, disabled by default.
+
+# I usually re-enable these periodically and run cargo +nightly fmt.
 # imports_granularity = "Crate"
 # group_imports = "StdExternalCrate"
+
+# These sometimes break things, be careful re-enabling them.
 # wrap_comments = true
 # format_code_in_doc_comments = true

@@ -2,21 +2,21 @@
 
 set -e
 
-VENV_PATH="./venv/"
+VENV_PATH="./.venv/"
 PYTHON_CMD=${1:-python}
 
 if [ ! -d $VENV_PATH ]; then
     echo "venv not found, creating one using the command '${PYTHON_CMD}'...";
-    $PYTHON_CMD -m venv venv;
-    source ./venv/bin/activate;
+    $PYTHON_CMD -m venv .venv;
+    source $VENV_PATH/bin/activate;
     pip install --upgrade pip;
     pip install -r requirements.txt;
-    ./venv/bin/mkdocs serve;
+    $VENV_PATH/bin/mkdocs serve;
 else
     echo "venv already found.";
-    source ./venv/bin/activate;
+    source $VENV_PATH/bin/activate;
     pip install --upgrade pip;
     pip install -r requirements.txt;
-    ./venv/bin/mkdocs serve;
+    $VENV_PATH/bin/mkdocs serve;
 fi;
 

@@ -1,6 +1,10 @@
 use serde::Deserialize;
 
 use super::IgnoreList;
+use crate::{
+    canvas::components::data_table::{SortMode, SortOrder},
+    widgets::TempWidgetColumn,
+};
 
 /// Temperature configuration.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -9,4 +13,43 @@ use super::IgnoreList;
 pub(crate) struct TempConfig {
     /// A filter over the sensor names.
     pub(crate) sensor_filter: Option<IgnoreList>,
+
+    /// The default sort column.
+    #[serde(default)]
+    pub(crate) default_sort: Option<TempWidgetColumn>,
+
+    /// The default sort order. Defaults to ascending.
+    #[serde(default)]
+    pub(crate) sort_order: SortOrder,
+
+    /// The default sort mode for string columns. One of "Lexical" or "Natural".
+    ///
+    /// Lexical is typical alphanumeric order, while natural will order numbers inside
+    /// strings by their numerical value (e.g. temp10 comes after temp2).
+    ///
+    /// Defaults to "Lexical".
+    #[serde(default)]
+    pub(crate) sort_mode: Option<SortMode>,
+}
+
+#[cfg(test)]
+mod tests {
+    /// Test that temp enum variants that are advertised in the schema are
+    /// valid.
+    #[cfg(feature = "generate_schema")]
+    #[test]
+    fn ensure_temp_column_schema_is_accepted() {
+        use strum::VariantArray;
+
+        use crate::options::{Config, TempWidgetColumn};
+
+        for column in TempWidgetColumn::VARIANTS {
+            for &name in column.get_schema_names() {
+                let config = format!("[temperature]\ndefault_sort= \"{name}\"\n");
+                toml_edit::de::from_str::<Config>(&config).unwrap_or_else(|e| {
+                    panic!("schema name {name:?} was rejected:\n{e}\nconfig was:\n{config}")
+                });
+            }
+        }
+    }
 }

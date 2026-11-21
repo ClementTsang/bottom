@@ -20,9 +20,9 @@ pub use config::Config;
 use config::style::Styles;
 use data::TemperatureType;
 pub(crate) use error::{OptionError, OptionResult};
-use hashbrown::{HashMap, HashSet};
 use indexmap::IndexSet;
 use regex::Regex;
+use rustc_hash::{FxHashMap, FxHashSet};
 #[cfg(feature = "battery")]
 use starship_battery::Manager;
 
@@ -32,12 +32,15 @@ use self::{
 };
 use crate::{
     app::{filter::Filter, layout_manager::*, *},
-    canvas::components::time_graph::LegendPosition,
+    canvas::components::time_series::LegendPosition,
+    components::time_series::TimeseriesConfig,
     constants::*,
     utils::data_units::DataUnit,
     widgets::*,
 };
 
+/// Macro to check whether a flag is enabled, either as an arg or in the config
+/// file.
 macro_rules! is_flag_enabled {
     ($flag_name:ident, $arg:expr, $config:expr) => {
         if $arg.$flag_name {
@@ -60,9 +63,10 @@ macro_rules! is_flag_enabled {
     };
 }
 
-/// A new version if [`is_flag_enabled`] which instead expects the user to pass in `config_section`, which is
-/// the section the flag is located, rather than defaulting to `config.flags` where `config` is passed in.
-macro_rules! is_flag_enabled_new {
+/// A version of [`is_flag_enabled`] which instead expects the user to pass
+/// in `config_section`, which is the section the flag is located, rather than
+/// defaulting to `config.flags` where `config` is passed in.
+macro_rules! is_flag_enabled_in {
     ($flag_name:ident, $arg:expr, $config_section:expr) => {
         if $arg.$flag_name {
             true
@@ -71,6 +75,71 @@ macro_rules! is_flag_enabled_new {
         } else {
             false
         }
+    };
+}
+
+/// A version of [`is_flag_enabled`] which should be used to deprecate old
+/// config flags.
+macro_rules! enabled_option_with_deprecated {
+    ($arg:expr, $config:expr, $section:ident . $field:ident, $flags:ident . $deprecated_flag:ident $(,)?) => {
+        if $arg {
+            true
+        } else if let Some(section) = &$config.$section {
+            section.$field.unwrap_or(false)
+        } else if let Some(flags) = &$config.flags {
+            flags
+                .$deprecated_flag
+                .inspect(|_| {
+                    deprecated_warning(stringify!($deprecated_flag), stringify!($section.$field))
+                })
+                .unwrap_or(false)
+        } else {
+            false
+        }
+    };
+    ($arg:expr, $config:expr, $section:ident . $field:ident, $flags:ident . $deprecated_flag:ident, $alias:literal $(,)?) => {
+        if $arg {
+            true
+        } else if let Some(section) = &$config.$section {
+            section.$field.unwrap_or(false)
+        } else if let Some(flags) = &$config.flags {
+            flags
+                .$deprecated_flag
+                .inspect(|_| {
+                    deprecated_warning_with_alias(
+                        stringify!($deprecated_flag),
+                        stringify!($section.$field),
+                        $alias,
+                    )
+                })
+                .unwrap_or(false)
+        } else {
+            false
+        }
+    };
+}
+
+/// Get the value of a field for a specific section in the config file if set.
+/// If not set, the default is used.
+macro_rules! config_or_default {
+    ($config:expr, $section:ident . $field:ident) => {
+        $config
+            .$section
+            .as_ref()
+            .map(|s| s.$field)
+            .unwrap_or_default()
+    };
+}
+
+/// Get the value of a field for a specific section in the config file if set.
+/// If not set, the provided default is used.
+macro_rules! config_or {
+    ($config:expr, $section:ident . $field:ident, $default:expr) => {
+        $config
+            .$section
+            .as_ref()
+            .and_then(|s| s.$field)
+            .unwrap_or($default)
     };
 }
 
@@ -87,8 +156,8 @@ const DEFAULT_CONFIG_FILE_LOCATION: &str = "bottom/bottom.toml";
 /// For more details on this, see [dirs](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)'
 /// documentation.
 ///
-/// XXX: For macOS, we additionally will manually check `$XDG_CONFIG_HOME` as well first
-/// before falling back to `dirs`.
+/// XXX: For macOS, we additionally will manually check `$XDG_CONFIG_HOME` as
+/// well first before falling back to `dirs`.
 fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
     if let Some(conf_loc) = override_config_path {
         return Some(conf_loc.to_path_buf());
@@ -96,13 +165,14 @@ fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
         let mut old_home_path = home_path;
         old_home_path.push(".config/");
         old_home_path.push(DEFAULT_CONFIG_FILE_LOCATION);
-        if let Ok(res) = old_home_path.try_exists() {
-            if res {
-                // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but changed it
-                // to be more correct later. However, for legacy reasons, if it already exists,
-                // use the old one.
-                return Some(old_home_path);
-            }
+        if let Ok(res) = old_home_path.try_exists()
+            && res
+        {
+            // We used to create it at `<HOME>/DEFAULT_CONFIG_FILE_PATH`, but
+            // changed it to be more correct later. However, for
+            // legacy reasons, if it already exists, use the old
+            // one.
+            return Some(old_home_path);
         }
     }
 
@@ -111,27 +181,26 @@ fn get_config_path(override_config_path: Option<&Path>) -> Option<PathBuf> {
         path
     });
 
-    if cfg!(target_os = "macos") {
-        if let Ok(xdg_config_path) = std::env::var("XDG_CONFIG_HOME") {
-            if !xdg_config_path.is_empty() {
-                // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used the Library-based path
-                // for a config and it exists, then use that instead for backwards-compatibility.
-                if let Some(old_macos_path) = &config_path {
-                    if let Ok(res) = old_macos_path.try_exists() {
-                        if res {
-                            return config_path;
-                        }
-                    }
-                }
-
-                // Otherwise, try and use the XDG_CONFIG_HOME-based path.
-                let mut cfg_path = PathBuf::new();
-                cfg_path.push(xdg_config_path);
-                cfg_path.push(DEFAULT_CONFIG_FILE_LOCATION);
-
-                return Some(cfg_path);
-            }
+    if cfg!(target_os = "macos")
+        && let Ok(xdg_config_path) = std::env::var("XDG_CONFIG_HOME")
+        && !xdg_config_path.is_empty()
+    {
+        // If XDG_CONFIG_HOME exists and is non-empty, _but_ we previously used
+        // the Library-based path for a config and it exists, then use
+        // that instead for backwards-compatibility.
+        if let Some(old_macos_path) = &config_path
+            && let Ok(res) = old_macos_path.try_exists()
+            && res
+        {
+            return config_path;
         }
+
+        // Otherwise, try and use the XDG_CONFIG_HOME-based path.
+        let mut cfg_path = PathBuf::new();
+        cfg_path.push(xdg_config_path);
+        cfg_path.push(DEFAULT_CONFIG_FILE_LOCATION);
+
+        return Some(cfg_path);
     }
 
     config_path
@@ -152,12 +221,13 @@ fn create_config_at_path(path: &Path) -> anyhow::Result<Config> {
 /// path, it will try to create a new file with the default settings, and return
 /// the default config.
 ///
-/// We're going to use the following behaviour on when we'll return an error rather
-/// than just "silently" continuing on:
-/// - If the user passed in a path explicitly, then we will be loud and error out.
+/// We're going to use the following behaviour on when we'll return an error
+/// rather than just "silently" continuing on:
+/// - If the user passed in a path explicitly, then we will be loud and error
+///   out.
 /// - If the user does NOT pass in a path explicitly, then just show a warning,
-///   but continue. This is in case they do not want to write a default config file at
-///   the XDG locations, for example.
+///   but continue. This is in case they do not want to write a default config
+///   file at the XDG locations, for example.
 pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result<Config> {
     let adjusted_config_path = get_config_path(config_path);
 
@@ -169,20 +239,19 @@ pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result
                 match create_config_at_path(path) {
                     Ok(cfg) => Ok(cfg),
                     Err(err) => {
+                        let path = path.display();
                         if config_path.is_some() {
                             Err(err.context(format!(
-                                "bottom could not create a new config file at '{}'.",
-                                path.display()
+                                "bottom could not create a new config file at '{path}'.",
                             )))
                         } else {
                             indoc::eprintdoc!(
-                                "Note: bottom couldn't create a default config file at '{}', and the \
+                                "Note: bottom couldn't create a default config file at '{path}', and the \
                                 application has fallen back to the default configuration.
-                                    
+
                                 Caused by:
                                     {err}
                                 ",
-                                path.display()
                             );
 
                             Ok(Config::default())
@@ -192,11 +261,11 @@ pub(crate) fn get_or_create_config(config_path: Option<&Path>) -> anyhow::Result
             }
         }
         None => {
-            // If we somehow don't have any config path, then just assume the default config
-            // but don't write to any file.
+            // If we somehow don't have any config path, then just assume the
+            // default config but don't write to any file.
             //
-            // TODO: For now, just print a message to stderr indicating this. In the future,
-            // probably show in-app (too).
+            // TODO: For now, just print a message to stderr indicating this. In
+            // the future, probably show in-app (too).
 
             eprintln!(
                 "Note: bottom couldn't find a location to create or read a config file, so \
@@ -230,36 +299,94 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let use_basic_mode = is_flag_enabled!(basic, args.general, config);
     let expanded = is_flag_enabled!(expanded, args.general, config);
+
     #[cfg(feature = "zfs")]
-    let free_arc = is_flag_enabled!(free_arc, args.memory, config);
+    let free_arc = enabled_option_with_deprecated!(
+        args.memory.free_arc,
+        config,
+        memory_graph.free_arc,
+        flags.free_arc,
+        "memory.free_arc",
+    );
 
     // For processes
-    let is_grouped = is_flag_enabled!(group_processes, args.process, config);
-    let is_case_sensitive = is_flag_enabled!(case_sensitive, args.process, config);
-    let is_match_whole_word = is_flag_enabled!(whole_word, args.process, config);
-    let is_use_regex = is_flag_enabled!(regex, args.process, config);
-    let is_default_tree = is_flag_enabled!(tree, args.process, config);
-    let is_default_command = is_flag_enabled!(process_command, args.process, config);
+    let is_grouped = enabled_option_with_deprecated!(
+        args.process.group_processes,
+        config,
+        processes.default_grouped,
+        flags.group_processes,
+    );
+    let is_case_sensitive = enabled_option_with_deprecated!(
+        args.process.case_sensitive,
+        config,
+        processes.case_sensitive,
+        flags.case_sensitive,
+    );
+    let is_match_whole_word = enabled_option_with_deprecated!(
+        args.process.whole_word,
+        config,
+        processes.whole_word,
+        flags.whole_word,
+    );
+    let is_use_regex =
+        enabled_option_with_deprecated!(args.process.regex, config, processes.regex, flags.regex,);
+    let is_default_tree = enabled_option_with_deprecated!(
+        args.process.tree,
+        config,
+        processes.default_tree,
+        flags.tree,
+    );
+    let is_default_command = enabled_option_with_deprecated!(
+        args.process.process_command,
+        config,
+        processes.process_command,
+        flags.process_command,
+    );
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
-    let is_advanced_kill = !(is_flag_enabled!(disable_advanced_kill, args.process, config));
+    let is_advanced_kill = !(enabled_option_with_deprecated!(
+        args.process.disable_advanced_kill,
+        config,
+        processes.disable_advanced_kill,
+        flags.disable_advanced_kill,
+    ));
     let is_read_only = is_flag_enabled!(read_only, args.process, config);
     #[cfg(target_os = "linux")]
-    let hide_k_threads = is_flag_enabled!(hide_k_threads, args.process, config);
+    let hide_k_threads = enabled_option_with_deprecated!(
+        args.process.hide_k_threads,
+        config,
+        processes.hide_k_threads,
+        flags.hide_k_threads,
+    );
 
-    let process_memory_as_value = is_flag_enabled!(process_memory_as_value, args.process, config);
-    let is_default_tree_collapsed = is_flag_enabled!(tree_collapse, args.process, config);
+    let process_memory_as_value = enabled_option_with_deprecated!(
+        args.process.process_memory_as_value,
+        config,
+        processes.default_memory_value,
+        flags.process_memory_as_value,
+    );
+    let is_default_tree_collapsed = enabled_option_with_deprecated!(
+        args.process.tree_collapse,
+        config,
+        processes.tree_collapse,
+        flags.tree_collapse,
+    );
 
     // For CPU
     let default_cpu_selection = get_default_cpu_selection(args, config);
 
-    let mut widget_map = HashMap::new();
-    let mut cpu_state_map: HashMap<u64, CpuWidgetState> = HashMap::new();
-    let mut mem_state_map: HashMap<u64, MemWidgetState> = HashMap::new();
-    let mut net_state_map: HashMap<u64, NetWidgetState> = HashMap::new();
-    let mut proc_state_map: HashMap<u64, ProcWidgetState> = HashMap::new();
-    let mut temp_state_map: HashMap<u64, TempWidgetState> = HashMap::new();
-    let mut disk_state_map: HashMap<u64, DiskTableWidget> = HashMap::new();
-    let mut battery_state_map: HashMap<u64, BatteryWidgetState> = HashMap::new();
+    let mut widget_map = FxHashMap::default();
+    let mut cpu_state_map: FxHashMap<u64, CpuWidgetState> = FxHashMap::default();
+    let mut mem_state_map: FxHashMap<u64, MemWidgetState> = FxHashMap::default();
+    let mut net_state_map: FxHashMap<u64, NetWidgetState> = FxHashMap::default();
+    let mut proc_state_map: FxHashMap<u64, ProcWidgetState> = FxHashMap::default();
+    let mut temp_state_map: FxHashMap<u64, TempWidgetState> = FxHashMap::default();
+    let mut temp_graph_state_map: FxHashMap<u64, TempGraphWidgetState> = FxHashMap::default();
+    let mut disk_state_map: FxHashMap<u64, DiskTableWidget> = FxHashMap::default();
+    let mut disk_io_graph_state_map: FxHashMap<u64, DiskIoGraphWidgetState> = FxHashMap::default();
+    #[cfg(feature = "gpu")]
+    let mut gpu_graph_state_map: FxHashMap<u64, GpuGraphWidgetState> = FxHashMap::default();
+    #[cfg(feature = "battery")]
+    let mut battery_state_map: FxHashMap<u64, BatteryWidgetState> = FxHashMap::default();
 
     let autohide_timer = if autohide_time {
         Some(Instant::now())
@@ -270,12 +397,29 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
     let mut initial_widget_id: u64 = default_widget_id;
     let mut initial_widget_type = Proc;
     let is_custom_layout = config.row.is_some();
-    let mut used_widget_set = HashSet::new();
+    let mut used_widget_set = FxHashSet::default();
 
     let network_unit_type = get_network_unit_type(args, config);
     let network_scale_type = get_network_scale_type(args, config);
-    let network_use_binary_prefix =
-        is_flag_enabled!(network_use_binary_prefix, args.network, config);
+    // Use + update this again after deprecation
+    // let network_use_binary_prefix =
+    // is_flag_enabled!(network_use_binary_prefix, args.network, config);
+    let network_use_binary_prefix = enabled_option_with_deprecated!(
+        args.network.network_use_binary_prefix,
+        config,
+        network_graph.use_binary_prefix,
+        flags.network_use_binary_prefix,
+        "network.use_binary_prefix",
+    );
+    let network_show_packets =
+        is_flag_enabled_in!(show_packets, args.network, config.network_graph);
+    let network_start_zeroed = if args.network.network_start_zeroed {
+        true
+    } else if let Some(network_graph) = &config.network_graph {
+        network_graph.start_zeroed.unwrap_or(false)
+    } else {
+        false
+    };
 
     let proc_columns: Option<IndexSet<ProcWidgetColumn>> = {
         config.processes.as_ref().and_then(|cfg| {
@@ -292,6 +436,29 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 
     let network_legend_position = get_network_legend_position(args, config)?;
     let memory_legend_position = get_memory_legend_position(args, config)?;
+    let temperature_legend_position = get_temperature_legend_position(config)?;
+    let disk_io_legend_position = get_disk_io_legend_position(config)?;
+    #[cfg(feature = "gpu")]
+    let gpu_usage_legend_position = get_gpu_usage_legend_position(config)?;
+
+    let disk_io_name_filter = match &config.disk_io_graph {
+        Some(cfg) => get_ignore_list(&cfg.name_filter)
+            .context("Update 'disk_io_graph.name_filter' in your config file")?,
+        None => None,
+    };
+    let disk_show_unmounted = config
+        .disk
+        .as_ref()
+        .and_then(|cfg| cfg.include_unmounted)
+        .unwrap_or(false);
+    let disk_io_graph_show_unmounted = config
+        .disk_io_graph
+        .as_ref()
+        .and_then(|cfg| cfg.include_unmounted)
+        .unwrap_or(false);
+
+    let enable_cache_memory = get_enable_cache_memory(args, config);
+    let enable_gpu = get_enable_gpu(args, config);
 
     // TODO: Can probably just reuse the options struct.
     let app_config_fields = AppConfigFields {
@@ -299,27 +466,48 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         temperature_type: get_temperature(args, config)
             .context("Update 'temperature_type' in your config file.")?,
         show_average_cpu: get_show_average_cpu(args, config),
+        show_cpu_decimal: config_or!(config, cpu.show_decimal, false),
         use_dot: is_flag_enabled!(dot_marker, args.general, config),
-        cpu_left_legend: is_flag_enabled!(cpu_left_legend, args.cpu, config),
-        use_current_cpu_total: is_flag_enabled!(current_usage, args.process, config),
-        unnormalized_cpu: is_flag_enabled!(unnormalized_cpu, args.process, config),
-        get_process_threads: is_flag_enabled_new!(get_threads, args.process, config.processes),
+        cpu_left_legend: enabled_option_with_deprecated!(
+            args.cpu.cpu_left_legend,
+            config,
+            cpu.left_legend,
+            flags.cpu_left_legend,
+        ),
+        use_current_cpu_total: enabled_option_with_deprecated!(
+            args.process.current_usage,
+            config,
+            processes.current_usage,
+            flags.current_usage,
+        ),
+        unnormalized_cpu: enabled_option_with_deprecated!(
+            args.process.unnormalized_cpu,
+            config,
+            processes.unnormalized_cpu,
+            flags.unnormalized_cpu,
+        ),
+        get_process_threads: is_flag_enabled_in!(get_threads, args.process, config.processes),
+        get_process_swap: proc_columns
+            .as_ref()
+            .is_some_and(|columns| columns.contains(&ProcWidgetColumn::Swap)),
         use_basic_mode,
         default_time_value,
         time_interval: get_time_interval(args, config, retention_ms)?,
         hide_time: is_flag_enabled!(hide_time, args.general, config),
         autohide_time,
         use_old_network_legend: is_flag_enabled!(use_old_network_legend, args.network, config),
-        table_gap: u16::from(!(is_flag_enabled!(hide_table_gap, args.general, config))),
+        table_gap: config_or_default!(config, flags.table_gap),
         disable_click: is_flag_enabled!(disable_click, args.general, config),
         disable_keys: is_flag_enabled!(disable_keys, args.general, config),
-        enable_gpu: get_enable_gpu(args, config),
-        enable_cache_memory: get_enable_cache_memory(args, config),
+        enable_gpu,
+        mem_short_gpu_names: get_mem_short_gpu_names(args, config),
+        enable_cache_memory,
         show_table_scroll_position: is_flag_enabled!(
             show_table_scroll_position,
             args.general,
             config
         ),
+        show_table_scroll_bar: config_or!(config, flags.show_table_scroll_bar, true),
         #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
         is_advanced_kill,
         is_read_only,
@@ -330,12 +518,80 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         network_scale_type,
         network_unit_type,
         network_use_binary_prefix,
+        network_show_packets,
+        network_start_zeroed,
         retention_ms,
-        dedicated_average_row: get_dedicated_avg_row(config),
+        dedicated_average_row: enabled_option_with_deprecated!(
+            false,
+            config,
+            cpu.basic_average_cpu_row,
+            flags.average_cpu_row,
+        ),
         default_tree_collapse: is_default_tree_collapsed,
         #[cfg(feature = "zfs")]
         free_arc,
+        default_temp_sort_column: config
+            .temperature
+            .as_ref()
+            .and_then(|cfg| cfg.default_sort.to_owned()),
+        default_temp_sort_order: config
+            .temperature
+            .as_ref()
+            .map(|cfg| cfg.sort_order)
+            .unwrap_or_default(),
+        default_temp_sort_mode: config
+            .temperature
+            .as_ref()
+            .and_then(|cfg| cfg.sort_mode)
+            .unwrap_or_default(),
+        default_disk_sort_column: config
+            .disk
+            .as_ref()
+            .and_then(|cfg| cfg.default_sort.to_owned()),
+        default_disk_sort_order: config
+            .disk
+            .as_ref()
+            .map(|cfg| cfg.sort_order)
+            .unwrap_or_default(),
+        default_disk_sort_mode: config
+            .disk
+            .as_ref()
+            .and_then(|cfg| cfg.sort_mode)
+            .unwrap_or_default(),
+        temperature_legend_position,
+        disk_io_legend_position,
+        disk_show_unmounted,
+        disk_use_binary_prefix: args.disk.disk_use_binary_prefix
+            || config
+                .disk
+                .as_ref()
+                .and_then(|cfg| cfg.use_binary_prefix)
+                .unwrap_or(false),
+        disk_io_graph_show_unmounted,
+        #[cfg(feature = "gpu")]
+        gpu_usage_legend_position,
+        #[cfg(feature = "gpu")]
+        gpu_usage_short_names: get_gpu_usage_short_names(config),
     };
+
+    let process_default_sort = match &args.process.process_default_sort {
+        Some(name) => Some(ProcColumn::parse_column_name(name).ok_or_else(|| {
+            OptionError::arg(format!(
+                "'{name}' is not a valid process column for '--process_default_sort'"
+            ))
+        })?),
+        None => config.processes.as_ref().and_then(|cfg| cfg.default_sort),
+    };
+
+    let ts_config = TimeseriesConfig {
+        time_interval: app_config_fields.time_interval,
+        retention_ms: app_config_fields.retention_ms,
+        autohide_time: app_config_fields.autohide_time,
+        default_time_value: app_config_fields.default_time_value,
+    };
+
+    let process_default_sort_order = config.processes.as_ref().and_then(|cfg| cfg.sort_order);
+    let process_default_sort_mode = config.processes.as_ref().and_then(|cfg| cfg.sort_mode);
 
     let table_config = ProcTableConfig {
         is_case_sensitive,
@@ -343,6 +599,9 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         is_use_regex,
         show_memory_as_values: process_memory_as_value,
         is_command: is_default_command,
+        default_sort: process_default_sort,
+        sort_order: process_default_sort_order,
+        sort_mode: process_default_sort_mode,
     };
 
     for row in &widget_layout.rows {
@@ -350,32 +609,32 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             for col_row in &col.children {
                 for widget in &col_row.children {
                     widget_map.insert(widget.widget_id, widget.clone());
-                    if let Some(default_widget_type) = &default_widget_type_option {
-                        if !is_custom_layout || use_basic_mode {
-                            match widget.widget_type {
-                                BasicCpu => {
-                                    if let Cpu = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
+                    if let Some(default_widget_type) = &default_widget_type_option
+                        && (!is_custom_layout || use_basic_mode)
+                    {
+                        match widget.widget_type {
+                            BasicCpu => {
+                                if let Cpu = *default_widget_type {
+                                    initial_widget_id = widget.widget_id;
+                                    initial_widget_type = Cpu;
                                 }
-                                BasicMem => {
-                                    if let Mem = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
+                            }
+                            BasicMem => {
+                                if let Mem = *default_widget_type {
+                                    initial_widget_id = widget.widget_id;
+                                    initial_widget_type = Cpu;
                                 }
-                                BasicNet => {
-                                    if let Net = *default_widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = Cpu;
-                                    }
+                            }
+                            BasicNet => {
+                                if let Net = *default_widget_type {
+                                    initial_widget_id = widget.widget_id;
+                                    initial_widget_type = Cpu;
                                 }
-                                _ => {
-                                    if *default_widget_type == widget.widget_type {
-                                        initial_widget_id = widget.widget_id;
-                                        initial_widget_type = widget.widget_type.clone();
-                                    }
+                            }
+                            _ => {
+                                if *default_widget_type == widget.widget_type {
+                                    initial_widget_id = widget.widget_id;
+                                    initial_widget_type = widget.widget_type.clone();
                                 }
                             }
                         }
@@ -390,7 +649,6 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                 CpuWidgetState::new(
                                     &app_config_fields,
                                     default_cpu_selection,
-                                    default_time_value,
                                     autohide_timer,
                                     &styling,
                                 ),
@@ -399,13 +657,13 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                         Mem => {
                             mem_state_map.insert(
                                 widget.widget_id,
-                                MemWidgetState::init(default_time_value, autohide_timer),
+                                MemWidgetState::init(ts_config, autohide_timer),
                             );
                         }
                         Net => {
                             net_state_map.insert(
                                 widget.widget_id,
-                                NetWidgetState::init(default_time_value, autohide_timer),
+                                NetWidgetState::init(ts_config, autohide_timer),
                             );
                         }
                         Proc => {
@@ -435,6 +693,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                     &app_config_fields,
                                     &styling,
                                     config.disk.as_ref().and_then(|cfg| cfg.columns.as_deref()),
+                                    disk_show_unmounted,
                                 ),
                             );
                         }
@@ -444,11 +703,70 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
                                 TempWidgetState::new(&app_config_fields, &styling),
                             );
                         }
+                        TempGraph => {
+                            let upper_limit = config
+                                .temperature_graph
+                                .as_ref()
+                                .and_then(|cfg| cfg.max_temp)
+                                .map(|v| v as f32);
+                            temp_graph_state_map.insert(
+                                widget.widget_id,
+                                TempGraphWidgetState::new(ts_config, autohide_timer, upper_limit),
+                            );
+                        }
+                        DiskIoGraph => {
+                            let show_read = config
+                                .disk_io_graph
+                                .as_ref()
+                                .and_then(|c| c.show_read)
+                                .unwrap_or(true);
+
+                            let show_write = config
+                                .disk_io_graph
+                                .as_ref()
+                                .and_then(|c| c.show_write)
+                                .unwrap_or(true);
+
+                            let legend = config
+                                .disk_io_graph
+                                .as_ref()
+                                .and_then(|c| c.legend.clone())
+                                .unwrap_or_default();
+
+                            let use_log = config
+                                .disk_io_graph
+                                .as_ref()
+                                .and_then(|c| c.use_log)
+                                .unwrap_or(false);
+
+                            disk_io_graph_state_map.insert(
+                                widget.widget_id,
+                                DiskIoGraphWidgetState::new(
+                                    ts_config,
+                                    autohide_timer,
+                                    show_read,
+                                    show_write,
+                                    legend,
+                                    use_log,
+                                ),
+                            );
+                        }
+                        GpuUsageGraph => {
+                            #[cfg(feature = "gpu")]
+                            gpu_graph_state_map.insert(
+                                widget.widget_id,
+                                GpuGraphWidgetState::init(ts_config, autohide_timer),
+                            );
+                        }
                         Battery => {
+                            #[cfg(feature = "battery")]
                             battery_state_map
                                 .insert(widget.widget_id, BatteryWidgetState::default());
                         }
-                        _ => {}
+                        // FIXME: This is kind of a hack that we have these
+                        // cases at all.
+                        Empty | BasicCpu | BasicMem | BasicNet | BasicTables | CpuLegend
+                        | ProcSort | ProcSearch => {}
                     }
                 }
             }
@@ -478,17 +796,22 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         None
     };
 
-    let use_mem = used_widget_set.get(&Mem).is_some() || used_widget_set.get(&BasicMem).is_some();
+    let use_mem = used_widget_set.contains(&Mem) || used_widget_set.contains(&BasicMem);
+
+    // FIXME: Add a separate use_gpu_mem, use_gpu_usage, and maybe even use_gpu_proc (probably just a UseGpu struct lol)
     let used_widgets = UsedWidgets {
-        use_cpu: used_widget_set.get(&Cpu).is_some() || used_widget_set.get(&BasicCpu).is_some(),
+        use_cpu: used_widget_set.contains(&Cpu) || used_widget_set.contains(&BasicCpu),
         use_mem,
-        use_cache: use_mem && get_enable_cache_memory(args, config),
-        use_gpu: get_enable_gpu(args, config),
-        use_net: used_widget_set.get(&Net).is_some() || used_widget_set.get(&BasicNet).is_some(),
-        use_proc: used_widget_set.get(&Proc).is_some(),
-        use_disk: used_widget_set.get(&Disk).is_some(),
-        use_temp: used_widget_set.get(&Temp).is_some(),
-        use_battery: used_widget_set.get(&Battery).is_some(),
+        use_cache: use_mem && enable_cache_memory,
+        use_gpu: enable_gpu,
+        use_gpu_graph: used_widget_set.contains(&GpuUsageGraph),
+        use_net: used_widget_set.contains(&Net) || used_widget_set.contains(&BasicNet),
+        use_proc: used_widget_set.contains(&Proc),
+        use_disk: used_widget_set.contains(&Disk),
+        use_temp: used_widget_set.contains(&Temp),
+        use_temp_graph: used_widget_set.contains(&TempGraph),
+        use_disk_io_graph: used_widget_set.contains(&DiskIoGraph),
+        use_battery: used_widget_set.contains(&Battery),
     };
 
     let (disk_name_filter, disk_mount_filter) = {
@@ -509,9 +832,14 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
             .context("Update 'temperature.sensor_filter' in your config file")?,
         None => None,
     };
-    let net_interface_filter = match &config.network {
+    let temp_graph_sensor_filter = match &config.temperature_graph {
+        Some(cfg) => get_ignore_list(&cfg.sensor_filter)
+            .context("Update 'temperature_graph.sensor_filter' in your config file")?,
+        None => None,
+    };
+    let net_interface_filter = match &config.network_graph {
         Some(cfg) => get_ignore_list(&cfg.interface_filter)
-            .context("Update 'network.interface_filter' in your config file")?,
+            .context("Update 'network_graph.interface_filter' in your config file")?,
         None => None,
     };
 
@@ -521,16 +849,26 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         net_state: NetState::init(net_state_map),
         proc_state: ProcState::init(proc_state_map),
         temp_state: TempState::init(temp_state_map),
+        temp_graph_state: TempGraphStates::init(temp_graph_state_map),
         disk_state: DiskState::init(disk_state_map),
+        disk_io_graph_state: DiskIoGraphStates::init(disk_io_graph_state_map),
+        #[cfg(feature = "battery")]
         battery_state: AppBatteryState::init(battery_state_map),
         basic_table_widget_state,
+        #[cfg(feature = "gpu")]
+        gpu_graph_state: GpuGraphStates::init(gpu_graph_state_map),
     };
 
-    let current_widget = widget_map.get(&initial_widget_id).unwrap().clone();
+    let current_widget = widget_map
+        .get(&initial_widget_id)
+        .expect("widget map should have the initial widget ID")
+        .clone();
     let filters = DataFilters {
         disk_filter: disk_name_filter,
         mount_filter: disk_mount_filter,
         temp_filter: temp_sensor_filter,
+        temp_graph_filter: temp_graph_sensor_filter,
+        disk_io_graph_filter: disk_io_name_filter,
         net_filter: net_interface_filter,
     };
     let is_expanded = expanded && !use_basic_mode;
@@ -553,7 +891,12 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
 fn get_widget_layout(
     args: &BottomArgs, config: &Config,
 ) -> OptionResult<(BottomLayout, u64, Option<BottomWidgetType>)> {
-    let cpu_left_legend = is_flag_enabled!(cpu_left_legend, args.cpu, config);
+    let cpu_left_legend = enabled_option_with_deprecated!(
+        args.cpu.cpu_left_legend,
+        config,
+        cpu.left_legend,
+        flags.cpu_left_legend,
+    );
 
     let (default_widget_type, mut default_widget_count) =
         get_default_widget_and_count(args, config)?;
@@ -568,14 +911,13 @@ fn get_widget_layout(
         let rows = match &config.row {
             Some(r) => r,
             None => {
-                // This cannot (like it really shouldn't) fail!
                 ref_row = toml_edit::de::from_str::<Config>(if get_use_battery(args, config) {
                     DEFAULT_BATTERY_LAYOUT
                 } else {
                     DEFAULT_LAYOUT
                 })?
                 .row
-                .unwrap();
+                .expect("This cannot (like it really shouldn't) fail!");
                 &ref_row
             }
         };
@@ -699,6 +1041,23 @@ macro_rules! parse_ms_option {
     }};
 }
 
+/// Mark a config option field as deprecated, and what to use instead.
+#[inline]
+fn deprecated_warning(deprecated_field: &str, new_field: &str) {
+    eprintln!(
+        "Warning: The config option '{deprecated_field}' is deprecated and will eventually be removed. Please use '{new_field}' instead.",
+    );
+}
+
+/// Mark a config option field as deprecated, and what to use instead with an
+/// alias.
+#[inline]
+fn deprecated_warning_with_alias(deprecated_field: &str, new_field: &str, alias: &str) {
+    eprintln!(
+        "Warning: The config option '{deprecated_field}' is deprecated and will eventually be removed. Please use '{new_field}' or '{alias}' instead.",
+    );
+}
+
 /// How quickly we update data.
 #[inline]
 fn get_update_rate(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
@@ -721,10 +1080,10 @@ fn get_temperature(args: &BottomArgs, config: &Config) -> OptionResult<Temperatu
         return Ok(TemperatureType::Kelvin);
     } else if args.temperature.celsius {
         return Ok(TemperatureType::Celsius);
-    } else if let Some(flags) = &config.flags {
-        if let Some(temp_type) = &flags.temperature_type {
-            return parse_config_value!(TemperatureType::from_str(temp_type), "temperature_type");
-        }
+    } else if let Some(flags) = &config.flags
+        && let Some(temp_type) = &flags.temperature_type
+    {
+        return parse_config_value!(TemperatureType::from_str(temp_type), "temperature_type");
     }
     Ok(TemperatureType::Celsius)
 }
@@ -733,10 +1092,13 @@ fn get_temperature(args: &BottomArgs, config: &Config) -> OptionResult<Temperatu
 fn get_show_average_cpu(args: &BottomArgs, config: &Config) -> bool {
     if args.cpu.hide_avg_cpu {
         return false;
-    } else if let Some(flags) = &config.flags {
-        if let Some(avg_cpu) = flags.hide_avg_cpu {
-            return !avg_cpu;
-        }
+    } else if let Some(cpu) = &config.cpu {
+        return !cpu.hide_avg_cpu.unwrap_or(false);
+    } else if let Some(flags) = &config.flags
+        && let Some(hide) = flags.hide_avg_cpu
+    {
+        deprecated_warning("hide_avg_cpu", "cpu.hide_avg_cpu");
+        return !hide;
     }
 
     true
@@ -751,16 +1113,6 @@ fn get_default_cpu_selection(args: &BottomArgs, config: &Config) -> config::cpu:
         },
         None => config.cpu.as_ref().map(|c| c.default).unwrap_or_default(),
     }
-}
-
-fn get_dedicated_avg_row(config: &Config) -> bool {
-    let conf = config
-        .flags
-        .as_ref()
-        .and_then(|flags| flags.average_cpu_row)
-        .unwrap_or(false);
-
-    conf
 }
 
 #[inline]
@@ -851,22 +1203,21 @@ fn get_default_widget_and_count(
 
 #[cfg(feature = "battery")]
 fn get_use_battery(args: &BottomArgs, config: &Config) -> bool {
-    // TODO: Move this so it's dynamic in the app itself and automatically hide if
-    // there are no batteries?
-    if let Ok(battery_manager) = Manager::new() {
-        if let Ok(batteries) = battery_manager.batteries() {
-            if batteries.count() == 0 {
-                return false;
-            }
-        }
+    // TODO: Move this so it's dynamic in the app itself and automatically hide
+    // if there are no batteries?
+    if let Ok(battery_manager) = Manager::new()
+        && let Ok(batteries) = battery_manager.batteries()
+        && batteries.count() == 0
+    {
+        return false;
     }
 
     if args.battery.battery {
         return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(battery) = flags.battery {
-            return battery;
-        }
+    } else if let Some(flags) = &config.flags
+        && let Some(battery) = flags.battery
+    {
+        return battery;
     }
 
     false
@@ -895,17 +1246,42 @@ fn get_enable_gpu(_: &BottomArgs, _: &Config) -> bool {
     false
 }
 
-#[cfg(not(target_os = "windows"))]
-fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
-    if args.memory.enable_cache_memory {
+#[cfg(feature = "gpu")]
+fn get_mem_short_gpu_names(args: &BottomArgs, config: &Config) -> bool {
+    if args.memory.short_gpu_names {
         return true;
-    } else if let Some(flags) = &config.flags {
-        if let Some(enable_cache_memory) = flags.enable_cache_memory {
-            return enable_cache_memory;
-        }
     }
 
+    config
+        .memory_graph
+        .as_ref()
+        .and_then(|m| m.short_gpu_names)
+        .unwrap_or(false)
+}
+
+#[cfg(not(feature = "gpu"))]
+fn get_mem_short_gpu_names(_: &BottomArgs, _: &Config) -> bool {
     false
+}
+
+#[cfg(feature = "gpu")]
+fn get_gpu_usage_short_names(config: &Config) -> bool {
+    config
+        .gpu_graph
+        .as_ref()
+        .and_then(|g| g.short_gpu_names)
+        .unwrap_or(false)
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
+    enabled_option_with_deprecated!(
+        args.memory.enable_cache_memory,
+        config,
+        memory_graph.cache_memory,
+        flags.enable_cache_memory,
+        "memory.cache_memory",
+    )
 }
 
 #[cfg(target_os = "windows")]
@@ -952,11 +1328,21 @@ fn get_ignore_list(ignore_list: &Option<IgnoreList>) -> OptionResult<Option<Filt
 fn get_network_unit_type(args: &BottomArgs, config: &Config) -> DataUnit {
     if args.network.network_use_bytes {
         return DataUnit::Byte;
-    } else if let Some(flags) = &config.flags {
-        if let Some(network_use_bytes) = flags.network_use_bytes {
-            if network_use_bytes {
-                return DataUnit::Byte;
-            }
+    } else if let Some(use_bytes) = config.network_graph.as_ref().and_then(|cfg| cfg.use_bytes) {
+        if use_bytes {
+            return DataUnit::Byte;
+        }
+    } else if let Some(flags) = &config.flags
+        && let Some(network_use_bytes) = flags.network_use_bytes
+    {
+        deprecated_warning_with_alias(
+            "network_use_bytes",
+            "network_graph.use_bytes",
+            "network.use_bytes",
+        );
+
+        if network_use_bytes {
+            return DataUnit::Byte;
         }
     }
 
@@ -966,11 +1352,21 @@ fn get_network_unit_type(args: &BottomArgs, config: &Config) -> DataUnit {
 fn get_network_scale_type(args: &BottomArgs, config: &Config) -> AxisScaling {
     if args.network.network_use_log {
         return AxisScaling::Log;
-    } else if let Some(flags) = &config.flags {
-        if let Some(network_use_log) = flags.network_use_log {
-            if network_use_log {
-                return AxisScaling::Log;
-            }
+    } else if let Some(use_log) = config.network_graph.as_ref().and_then(|cfg| cfg.use_log) {
+        if use_log {
+            return AxisScaling::Log;
+        }
+    } else if let Some(flags) = &config.flags
+        && let Some(network_use_log) = flags.network_use_log
+    {
+        deprecated_warning_with_alias(
+            "network_use_log",
+            "network_graph.use_log",
+            "network.use_log",
+        );
+
+        if network_use_log {
+            return AxisScaling::Log;
         }
     }
 
@@ -993,65 +1389,163 @@ fn get_retention(args: &BottomArgs, config: &Config) -> OptionResult<u64> {
     )
 }
 
+#[inline]
+fn parse_legend_position(
+    arg: Option<&String>, cfg: Option<&String>, deprecated_cfg: Option<(&String, &'static str)>,
+    setting: &'static str, alias: Option<&'static str>,
+) -> OptionResult<Option<LegendPosition>> {
+    #[inline]
+    fn parse_position_or_err<F: FnOnce(&'static str) -> OptionError>(
+        s: &str, setting: &'static str, err_fn: F,
+    ) -> OptionResult<Option<LegendPosition>> {
+        Ok(match s.to_ascii_lowercase().trim() {
+            "none" => None,
+            position => Some(position.parse().map_err(|_| err_fn(setting))?),
+        })
+    }
+
+    if let Some(s) = arg {
+        parse_position_or_err(s, setting, OptionError::invalid_arg_value)
+    } else if let Some(s) = cfg {
+        parse_position_or_err(s, setting, OptionError::invalid_config_value)
+    } else if let Some((s, name)) = deprecated_cfg {
+        // Remove the deprecated args/code paths and copy back to the function
+        // above later.
+        if let Some(alias) = alias {
+            deprecated_warning_with_alias(name, setting, alias);
+        } else {
+            deprecated_warning(name, setting);
+        }
+        parse_position_or_err(s, setting, OptionError::invalid_config_value)
+    } else {
+        Ok(Some(LegendPosition::default()))
+    }
+}
+
 fn get_network_legend_position(
     args: &BottomArgs, config: &Config,
 ) -> OptionResult<Option<LegendPosition>> {
-    let result = if let Some(s) = &args.network.network_legend {
-        match s.to_ascii_lowercase().trim() {
-            "none" => None,
-            position => Some(parse_arg_value!(position.parse(), "network_legend")?),
-        }
-    } else if let Some(flags) = &config.flags {
-        if let Some(s) = &flags.network_legend {
-            match s.to_ascii_lowercase().trim() {
-                "none" => None,
-                position => Some(parse_config_value!(position.parse(), "network_legend")?),
-            }
-        } else {
-            Some(LegendPosition::default())
-        }
-    } else {
-        Some(LegendPosition::default())
-    };
-
-    Ok(result)
+    parse_legend_position(
+        args.network.network_legend.as_ref(),
+        config
+            .network_graph
+            .as_ref()
+            .and_then(|cfg| cfg.legend_position.as_ref()),
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.network_legend.as_ref())
+            .map(|s| (s, "network_legend")),
+        "network_graph.legend_position",
+        Some("network.legend_position"),
+    )
 }
 
 fn get_memory_legend_position(
     args: &BottomArgs, config: &Config,
 ) -> OptionResult<Option<LegendPosition>> {
-    let result = if let Some(s) = &args.memory.memory_legend {
-        match s.to_ascii_lowercase().trim() {
-            "none" => None,
-            position => Some(parse_arg_value!(position.parse(), "memory_legend")?),
-        }
-    } else if let Some(flags) = &config.flags {
-        if let Some(s) = &flags.memory_legend {
-            match s.to_ascii_lowercase().trim() {
-                "none" => None,
-                position => Some(parse_config_value!(position.parse(), "memory_legend")?),
-            }
-        } else {
-            Some(LegendPosition::default())
-        }
-    } else {
-        Some(LegendPosition::default())
-    };
+    parse_legend_position(
+        args.memory.memory_legend.as_ref(),
+        config
+            .memory_graph
+            .as_ref()
+            .and_then(|cfg| cfg.legend_position.as_ref()),
+        config
+            .flags
+            .as_ref()
+            .and_then(|flags| flags.memory_legend.as_ref())
+            .map(|s| (s, "memory_legend")),
+        "memory_graph.legend_position",
+        Some("memory.legend_position"),
+    )
+}
 
-    Ok(result)
+fn get_temperature_legend_position(config: &Config) -> OptionResult<Option<LegendPosition>> {
+    parse_legend_position(
+        None,
+        config
+            .temperature_graph
+            .as_ref()
+            .and_then(|settings| settings.legend_position.as_ref()),
+        None,
+        "legend_position",
+        None,
+    )
+}
+
+fn get_disk_io_legend_position(config: &Config) -> OptionResult<Option<LegendPosition>> {
+    parse_legend_position(
+        None,
+        config
+            .disk_io_graph
+            .as_ref()
+            .and_then(|settings| settings.legend_position.as_ref()),
+        None,
+        "disk_io_graph.legend_position",
+        None,
+    )
+}
+
+#[cfg(feature = "gpu")]
+fn get_gpu_usage_legend_position(config: &Config) -> OptionResult<Option<LegendPosition>> {
+    parse_legend_position(
+        None,
+        config
+            .gpu_graph
+            .as_ref()
+            .and_then(|settings| settings.legend_position.as_ref()),
+        None,
+        "gpu_graph.legend_position",
+        None,
+    )
+}
+
+/// A very lazy way to parse a templated application title option.
+/// Note that this is very lazy and as such doesn't really do any proper error handling
+/// if you do something like `"{{hostname}"` or `blah {`.
+///
+/// Note this also only replaces the first instance... hopefully that's enough for most people...
+fn parse_title(title: &str) -> Result<String, OptionError> {
+    const HOSTNAME_TEMPLATE: &str = "{hostname}";
+
+    match title.find(HOSTNAME_TEMPLATE) {
+        Some(start) => {
+            let before = &title[..start];
+            let after = &title[start + HOSTNAME_TEMPLATE.len()..];
+            let hostname = sysinfo::System::host_name().map_err(|err| {
+                OptionError::Other(format!("could not get hostname - {err:?}").into())
+            })?;
+            Ok(format!("{before}{hostname}{after}"))
+        }
+        None => Ok(title.to_string()),
+    }
+}
+
+pub(crate) fn get_terminal_title<'a>(
+    args: &'a BottomArgs, config: &'a Config,
+) -> Option<Result<String, OptionError>> {
+    let title = args.general.terminal_title.as_ref().or_else(|| {
+        config
+            .flags
+            .as_ref()
+            .and_then(|f| f.terminal_title.as_ref())
+    })?;
+
+    Some(parse_title(title))
 }
 
 #[cfg(test)]
 mod test {
     use clap::Parser;
 
-    use super::{Config, get_time_interval};
+    use super::*;
     use crate::{
         app::App,
         args::BottomArgs,
+        canvas::components::time_series::LegendPosition,
         options::{
-            config::flags::GeneralConfig, get_default_time_value, get_retention, get_update_rate,
-            try_parse_ms,
+            OptionError, config::flags::GeneralConfig, get_default_time_value, get_retention,
+            get_update_rate, parse_legend_position, try_parse_ms,
         },
     };
 
@@ -1072,6 +1566,58 @@ mod test {
 
         assert!(try_parse_ms(a_bad).is_err());
         assert!(try_parse_ms(b_bad).is_err());
+    }
+
+    #[test]
+    fn verify_parse_legend_position() {
+        let setting = "network_legend";
+
+        // No arg, no config.
+        assert_eq!(
+            parse_legend_position(None, None, None, setting, None),
+            Ok(Some(LegendPosition::default()))
+        );
+
+        // Arg takes precedence and is parsed (case-insensitive, trimmed).
+        let arg = "  ToP-lEfT  ".to_string();
+        let cfg = "bottom-right".to_string();
+        assert_eq!(
+            parse_legend_position(Some(&arg), Some(&cfg), None, setting, None),
+            Ok(Some(LegendPosition::TopLeft))
+        );
+
+        // "none" disables the legend, from either source.
+        let none_arg = "None".to_string();
+        assert_eq!(
+            parse_legend_position(Some(&none_arg), None, None, setting, None),
+            Ok(None)
+        );
+        let none_cfg = "none".to_string();
+        assert_eq!(
+            parse_legend_position(None, Some(&none_cfg), None, setting, None),
+            Ok(None)
+        );
+
+        // Config value is used when no arg is provided.
+        let cfg_only = "left".to_string();
+        assert_eq!(
+            parse_legend_position(None, Some(&cfg_only), None, setting, None),
+            Ok(Some(LegendPosition::Left))
+        );
+
+        // Invalid arg value.
+        let bad_arg = "bad".to_string();
+        assert_eq!(
+            parse_legend_position(Some(&bad_arg), None, None, setting, None),
+            Err(OptionError::invalid_arg_value(setting))
+        );
+
+        // Invalid config value.
+        let bad_cfg = "bad".to_string();
+        assert_eq!(
+            parse_legend_position(None, Some(&bad_cfg), None, setting, None),
+            Err(OptionError::invalid_config_value(setting))
+        );
     }
 
     #[test]
@@ -1219,17 +1765,17 @@ mod test {
         super::init_app(args, config).unwrap().0
     }
 
-    // TODO: There's probably a better way to create clap options AND unify together
-    // to avoid the possibility of typos/mixing up. Use proc macros to unify on
-    // one struct?
+    // TODO: There's probably a better way to create clap options AND unify
+    // together to avoid the possibility of typos/mixing up. Use proc macros
+    // to unify on one struct?
     #[test]
     fn verify_cli_options_build() {
         let app = crate::args::build_cmd();
 
         let default_app = create_app(BottomArgs::parse_from(["btm"]));
 
-        // Skip battery since it's tricky to test depending on the platform/features
-        // we're testing with.
+        // Skip battery since it's tricky to test depending on the
+        // platform/features we're testing with.
         let skip = ["help", "version", "celsius", "battery", "generate_schema"];
 
         for arg in app.get_arguments().collect::<Vec<_>>() {
@@ -1263,8 +1809,9 @@ mod test {
         }
     }
 
-    /// This one has slightly more complex behaviour due to `dirs` not respecting XDG on macOS, so we manually
-    /// handle it. However, to ensure backwards-compatibility, we also have to do some special cases.
+    /// This one has slightly more complex behaviour due to `dirs` not
+    /// respecting XDG on macOS, so we manually handle it. However, to
+    /// ensure backwards-compatibility, we also have to do some special cases.
     #[cfg(target_os = "macos")]
     #[test]
     fn test_get_config_path_macos() {
@@ -1273,7 +1820,8 @@ mod test {
         use super::{DEFAULT_CONFIG_FILE_LOCATION, get_config_path};
 
         // Case three: no previous config, no XDG var.
-        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
+        // SAFETY: This is fine, this is just a test, and no other test affects
+        // env vars.
         unsafe {
             std::env::remove_var("XDG_CONFIG_HOME");
         }
@@ -1291,7 +1839,8 @@ mod test {
         }
 
         // Case two: no previous config, XDG var exists.
-        // SAFETY: This is fine, this is just a test, and no other test affects env vars.
+        // SAFETY: This is fine, this is just a test, and no other test affects
+        // env vars.
         unsafe {
             std::env::set_var("XDG_CONFIG_HOME", "/tmp");
         }
@@ -1307,5 +1856,22 @@ mod test {
         // Case one: old non-XDG exists already, XDG var exists.
         // let case_3 = case_1;
         // assert_eq!(get_config_path(None), Some(case_1));
+    }
+
+    #[test]
+    fn test_parse_title() {
+        assert_eq!(parse_title("").unwrap(), "");
+        assert_eq!(parse_title("abc").unwrap(), "abc");
+    }
+
+    #[test]
+    fn test_parse_title_hostname() {
+        let hostname = sysinfo::System::host_name().unwrap();
+
+        assert_eq!(parse_title("{hostname}").unwrap(), hostname);
+        assert_eq!(
+            parse_title("test - {hostname}").unwrap(),
+            format!("test - {hostname}")
+        );
     }
 }

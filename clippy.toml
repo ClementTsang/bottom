@@ -1,3 +1,5 @@
 cognitive-complexity-threshold = 100
 type-complexity-threshold = 500
 too-many-arguments-threshold = 8
+allow-unwrap-in-consts = true
+allow-unwrap-in-tests = true

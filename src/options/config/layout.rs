@@ -86,10 +86,10 @@ impl Row {
                             }
                         } else {
                             // Check default flag
-                            if let Some(default_widget_flag) = widget.default {
-                                if default_widget_flag {
-                                    *default_widget_id = *iter_id;
-                                }
+                            if let Some(default_widget_flag) = widget.default
+                                && default_widget_flag
+                            {
+                                *default_widget_id = *iter_id;
                             }
                         }
 
@@ -144,10 +144,10 @@ impl Row {
                                 }
                             } else {
                                 // Check default flag
-                                if let Some(default_widget_flag) = widget.default {
-                                    if default_widget_flag {
-                                        *default_widget_id = *iter_id;
-                                    }
+                                if let Some(default_widget_flag) = widget.default
+                                    && default_widget_flag
+                                {
+                                    *default_widget_id = *iter_id;
                                 }
                             }
 
@@ -353,7 +353,8 @@ mod test {
             Some(3)
         );
 
-        // Test disk -> processes, processes -> process sort, process sort -> network
+        // Test disk -> processes, processes -> process sort, process sort ->
+        // network
         assert_eq!(
             ret_bottom_layout.rows[1].children[1].children[1].children[0].down_neighbour,
             Some(7)

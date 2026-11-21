@@ -1,0 +1,15 @@
+# This uses the newer processes config location.
+
+[processes]
+default_grouped = true
+case_sensitive = true
+whole_word = true
+regex = true
+default_tree = true
+process_command = true
+disable_advanced_kill = true
+default_memory_value = true
+hide_k_threads = true
+tree_collapse = true
+current_usage = true
+unnormalized_cpu = true

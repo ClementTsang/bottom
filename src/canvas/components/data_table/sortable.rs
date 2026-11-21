@@ -2,19 +2,40 @@ use std::{borrow::Cow, marker::PhantomData, num::NonZeroU16};
 
 use concat_string::concat_string;
 use itertools::Itertools;
-use tui::widgets::Row;
+use ratatui::widgets::Row;
+use serde::Deserialize;
 
 use super::{
     ColumnHeader, ColumnWidthBounds, DataTable, DataTableColumn, DataTableProps, DataTableState,
     DataTableStyling, DataToCell,
 };
-use crate::utils::strings::truncate_to_text;
+use crate::{canvas::components::data_table::Column, utils::strings::truncate_to_text};
 
 /// Denotes the sort order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "generate_schema",
+    derive(schemars::JsonSchema, strum::VariantArray)
+)]
 pub enum SortOrder {
     Ascending,
     Descending,
+}
+
+impl<'de> Deserialize<'de> for SortOrder {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?.to_lowercase();
+        match value.as_str() {
+            "ascending" => Ok(SortOrder::Ascending),
+            "descending" => Ok(SortOrder::Descending),
+            _ => Err(serde::de::Error::custom(
+                "doesn't match any sort order variant",
+            )),
+        }
+    }
 }
 
 impl SortOrder {
@@ -38,6 +59,43 @@ impl Default for SortOrder {
     }
 }
 
+/// The string sorting type used for a widget.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "generate_schema",
+    derive(schemars::JsonSchema, strum::VariantArray)
+)]
+pub enum SortMode {
+    /// Lexicographic sort (default).
+    #[default]
+    Lexical,
+    /// Natural sort.
+    Natural,
+}
+
+impl SortMode {
+    /// A hack to get a const default.
+    pub const fn const_default() -> Self {
+        Self::Lexical
+    }
+}
+
+impl<'de> Deserialize<'de> for SortMode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?.to_lowercase();
+        match value.as_str() {
+            "lexical" => Ok(SortMode::Lexical),
+            "natural" => Ok(SortMode::Natural),
+            _ => Err(serde::de::Error::custom(
+                "doesn't match any sort mode variant",
+            )),
+        }
+    }
+}
+
 /// Denotes the [`DataTable`] is unsorted.
 pub struct Unsortable;
 
@@ -48,6 +106,9 @@ pub struct Sortable {
 
     /// The current sorting order.
     pub order: SortOrder,
+
+    /// The current sort mode.
+    pub sort_mode: SortMode,
 }
 
 /// The [`SortType`] trait is meant to be used in the typing of a [`DataTable`]
@@ -57,7 +118,8 @@ pub struct Sortable {
 /// Note that the trait is [sealed](https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed),
 /// and therefore only [`Unsortable`] and [`Sortable`] can implement it.
 pub trait SortType: private::Sealed {
-    /// Constructs the table header.
+    /// Constructs the table header. `widths` are those of the shown (not
+    /// hidden) columns, in order.
     fn build_header<H, C>(&self, columns: &[C], widths: &[NonZeroU16]) -> Row<'_>
     where
         H: ColumnHeader,
@@ -66,6 +128,7 @@ pub trait SortType: private::Sealed {
         Row::new(
             columns
                 .iter()
+                .filter(|c| !c.is_hidden())
                 .zip(widths)
                 .map(|(c, &width)| truncate_to_text(&c.header(), width.get())),
         )
@@ -95,16 +158,18 @@ impl SortType for Sortable {
         Row::new(
             columns
                 .iter()
-                .zip(widths)
                 .enumerate()
-                .map(|(index, (c, &width))| {
+                .filter(|(_, c)| !c.is_hidden())
+                .zip(widths)
+                .map(|((index, c), &width)| {
                     if index == self.sort_index {
                         let arrow = match self.order {
                             SortOrder::Ascending => UP_ARROW,
                             SortOrder::Descending => DOWN_ARROW,
                         };
-                        // TODO: I think I can get away with removing the truncate_to_text call
-                        // since I almost always bind to at least the header
+                        // TODO: I think I can get away with removing the
+                        // truncate_to_text call since I
+                        // almost always bind to at least the header
                         // size... TODO: Or should we instead truncate but
                         // ALWAYS leave the arrow at the end?
                         truncate_to_text(&concat_string!(c.header(), arrow), width.get())
@@ -120,56 +185,58 @@ pub trait SortsRow {
     type DataType;
 
     /// Sorts data.
-    fn sort_data(&self, data: &mut [Self::DataType], descending: bool);
+    fn sort_data(&self, data: &mut [Self::DataType], descending: bool, mode: SortMode);
 }
 
+/// A wrapper around [`Column`] that also has sorting capabilities.
 #[derive(Debug, Clone)]
-pub struct SortColumn<T> {
+pub struct SortColumn<H> {
     /// The inner column header.
-    inner: T,
+    column: Column<H>,
 
     /// The default sort order.
     pub default_order: SortOrder,
 
-    /// A restriction on this column's width.
-    pub bounds: ColumnWidthBounds,
-
-    /// Marks that this column is currently "hidden", and should *always* be
-    /// skipped.
-    pub is_hidden: bool,
+    /// The default sort mode.
+    pub default_mode: SortMode,
 }
 
-impl<D, T> DataTableColumn<T> for SortColumn<T>
+impl<D, H> DataTableColumn<H> for SortColumn<H>
 where
-    T: ColumnHeader + SortsRow<DataType = D>,
+    H: ColumnHeader + SortsRow<DataType = D>,
 {
     #[inline]
-    fn inner(&self) -> &T {
-        &self.inner
+    fn inner(&self) -> &H {
+        self.column.inner()
     }
 
     #[inline]
-    fn inner_mut(&mut self) -> &mut T {
-        &mut self.inner
+    fn inner_mut(&mut self) -> &mut H {
+        self.column.inner_mut()
     }
 
     #[inline]
     fn bounds(&self) -> ColumnWidthBounds {
-        self.bounds
+        self.column.bounds()
     }
 
     #[inline]
     fn bounds_mut(&mut self) -> &mut ColumnWidthBounds {
-        &mut self.bounds
+        self.column.bounds_mut()
     }
 
     #[inline]
     fn is_hidden(&self) -> bool {
-        self.is_hidden
+        self.column.is_hidden()
+    }
+
+    #[inline]
+    fn set_hidden(&mut self, hidden: bool) {
+        self.column.set_hidden(hidden);
     }
 
     fn header(&self) -> Cow<'static, str> {
-        self.inner.header()
+        self.column.header()
     }
 
     fn header_len(&self) -> usize {
@@ -186,10 +253,9 @@ where
     /// ([`SortOrder::Ascending`]).
     pub fn new(inner: T) -> Self {
         Self {
-            inner,
-            bounds: ColumnWidthBounds::FollowHeader,
-            is_hidden: false,
-            default_order: SortOrder::default(),
+            column: Column::new(inner),
+            default_order: SortOrder::const_default(),
+            default_mode: SortMode::default(),
         }
     }
 
@@ -197,10 +263,9 @@ where
     /// and sorts by default in ascending order ([`SortOrder::Ascending`]).
     pub const fn hard(inner: T, width: u16) -> Self {
         Self {
-            inner,
-            bounds: ColumnWidthBounds::Hard(width),
-            is_hidden: false,
+            column: Column::hard(inner, width),
             default_order: SortOrder::const_default(),
+            default_mode: SortMode::const_default(),
         }
     }
 
@@ -208,13 +273,9 @@ where
     /// and sorts by default in ascending order ([`SortOrder::Ascending`]).
     pub const fn soft(inner: T, max_percentage: Option<f32>) -> Self {
         Self {
-            inner,
-            bounds: ColumnWidthBounds::Soft {
-                desired: 0,
-                max_percentage,
-            },
-            is_hidden: false,
+            column: Column::soft(inner, max_percentage),
             default_order: SortOrder::const_default(),
+            default_mode: SortMode::const_default(),
         }
     }
 
@@ -226,9 +287,9 @@ where
 
     /// Given a [`SortColumn`] and the sort order, sort a mutable slice of
     /// associated data.
-    pub fn sort_by(&self, data: &mut [D], order: SortOrder) {
+    pub fn sort_by(&self, data: &mut [D], order: SortOrder, mode: SortMode) {
         let descending = matches!(order, SortOrder::Descending);
-        self.inner.sort_data(data, descending);
+        self.column.inner().sort_data(data, descending, mode);
     }
 }
 
@@ -236,6 +297,7 @@ pub struct SortDataTableProps {
     pub inner: DataTableProps,
     pub sort_index: usize,
     pub order: SortOrder,
+    pub sort_mode: SortMode,
 }
 
 /// A type alias for a sortable [`DataTable`].
@@ -257,6 +319,7 @@ where
             sort_type: Sortable {
                 sort_index: props.sort_index,
                 order: props.order,
+                sort_mode: props.sort_mode,
             },
             first_draw: true,
             first_index: None,
@@ -277,10 +340,21 @@ where
 
     /// Toggles the current sort order.
     pub fn toggle_order(&mut self) {
-        self.sort_type.order = match self.sort_type.order {
-            SortOrder::Ascending => SortOrder::Descending,
-            SortOrder::Descending => SortOrder::Ascending,
-        }
+        self.sort_type.order = self.sort_type.order.rev();
+    }
+
+    /// Gets the current sort mode.
+    #[inline]
+    pub fn sort_mode(&self) -> SortMode {
+        self.sort_type.sort_mode
+    }
+
+    /// Toggles the current sort mode between Lexical and Natural.
+    pub fn toggle_sort_mode(&mut self) {
+        self.sort_type.sort_mode = match self.sort_type.sort_mode {
+            SortMode::Lexical => SortMode::Natural,
+            SortMode::Natural => SortMode::Lexical,
+        };
     }
 
     /// Given some `x` and `y`, if possible, select the corresponding column or
@@ -290,7 +364,15 @@ where
     /// returned. If nothing happens, [`None`] is returned.
     pub fn try_select_location(&mut self, x: u16, y: u16) -> Option<usize> {
         if self.state.inner_rect.height > 1 && self.state.inner_rect.y == y {
-            if let Some(index) = self.get_range(x) {
+            // `get_range` counts shown columns only; map back to the column.
+            if let Some(index) = self.get_range(x).and_then(|shown| {
+                self.columns
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, c)| !c.is_hidden())
+                    .nth(shown)
+                    .map(|(index, _)| index)
+            }) {
                 self.set_sort_index(index);
                 Some(self.sort_type.sort_index)
             } else {
@@ -346,7 +428,10 @@ where
 
 #[cfg(test)]
 mod test {
+    use ratatui::layout::Rect;
+
     use super::*;
+    use crate::options::config::flags::TableGap;
 
     #[derive(Clone, PartialEq, Eq, Debug)]
     struct TestType {
@@ -386,7 +471,7 @@ mod test {
     impl SortsRow for ColumnType {
         type DataType = TestType;
 
-        fn sort_data(&self, data: &mut [TestType], descending: bool) {
+        fn sort_data(&self, data: &mut [TestType], descending: bool, _mode: SortMode) {
             match self {
                 ColumnType::Index => data.sort_by_key(|t| t.index),
                 ColumnType::Data => data.sort_by_key(|t| t.data),
@@ -407,10 +492,11 @@ mod test {
         let props = {
             let inner = DataTableProps {
                 title: Some("test".into()),
-                table_gap: 1,
+                table_gap: TableGap::Space,
                 left_to_right: false,
                 is_basic: false,
                 show_table_scroll_position: true,
+                show_table_scroll_bar: false,
                 show_current_entry_when_unfocused: false,
             };
 
@@ -418,6 +504,7 @@ mod test {
                 inner,
                 sort_index: 0,
                 order: SortOrder::Descending,
+                sort_mode: SortMode::Lexical,
             }
         };
 
@@ -451,7 +538,7 @@ mod test {
             .columns
             .get(table.sort_type.sort_index)
             .unwrap()
-            .sort_by(&mut data, SortOrder::Ascending);
+            .sort_by(&mut data, SortOrder::Ascending, SortMode::Lexical);
         assert_eq!(
             data,
             vec![
@@ -482,7 +569,7 @@ mod test {
             .columns
             .get(table.sort_type.sort_index)
             .unwrap()
-            .sort_by(&mut data, SortOrder::Descending);
+            .sort_by(&mut data, SortOrder::Descending, SortMode::Lexical);
         assert_eq!(
             data,
             vec![
@@ -514,7 +601,7 @@ mod test {
             .columns
             .get(table.sort_type.sort_index)
             .unwrap()
-            .sort_by(&mut data, SortOrder::Ascending);
+            .sort_by(&mut data, SortOrder::Ascending, SortMode::Lexical);
         assert_eq!(
             data,
             vec![
@@ -540,5 +627,38 @@ mod test {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn test_click_header_after_hidden_column() {
+        let columns = [
+            SortColumn::new(ColumnType::Index),
+            SortColumn::new(ColumnType::Data),
+            SortColumn::new(ColumnType::Index),
+        ];
+        let props = SortDataTableProps {
+            inner: DataTableProps {
+                title: None,
+                table_gap: TableGap::None,
+                left_to_right: true,
+                is_basic: false,
+                show_table_scroll_position: false,
+                show_table_scroll_bar: false,
+                show_current_entry_when_unfocused: false,
+            },
+            sort_index: 0,
+            order: SortOrder::Ascending,
+            sort_mode: SortMode::Lexical,
+        };
+        let mut table = DataTable::new_sortable(columns, props, DataTableStyling::default());
+        table.columns[1].set_hidden(true);
+
+        // Two shown columns, 5 cells each, with a 1-cell gap: the second shown
+        // one (column 2) starts at x = 6.
+        table.state.calculated_widths = vec![NonZeroU16::new(5).unwrap(); 2];
+        table.state.inner_rect = Rect::new(0, 0, 20, 10);
+
+        assert_eq!(table.try_select_location(7, 0), Some(2));
+        assert_eq!(table.try_select_location(1, 0), Some(0));
     }
 }

@@ -1,0 +1,6 @@
+# This uses the newer CPU config location.
+
+[cpu]
+hide_avg_cpu = true
+left_legend = true
+basic_average_cpu_row = true

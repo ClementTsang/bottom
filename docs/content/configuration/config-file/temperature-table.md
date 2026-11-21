@@ -1,4 +1,35 @@
-# Temperature Table
+# Temperature Table Configuration
+
+The temperature table widget is configured under `[temperature]`.
+
+## Default Sort Column
+
+You can customize the default sort column (by default, it sorts by temperature sensor name in ascending order). For example, to sort by temperature:
+
+```toml
+[temperature]
+default_sort = "Temp"
+```
+
+You can also set the sort order by changing `temperature.sort_order` with `"Ascending"` or `"Descending"`. Defaults to
+`"Ascending"`:
+
+```toml
+[temperature]
+sort_order = "Ascending"
+```
+
+### Sort Mode
+
+By default, string columns use lexicographic sorting (e.g. `"temp10"` comes before `"temp2"`).
+You can enable natural sort ordering to take numbers in the string into account (e.g. now `"temp10"` comes after `"temp2"`):
+
+```toml
+[temperature]
+sort_mode = "Natural"
+```
+
+Can be set to either `"Lexical"` (the default) or `"Natural"`.
 
 ## Filtering Entries
 
@@ -20,6 +51,6 @@ regex = false
 # Whether to be case-sensitive. Defaults to false.
 case_sensitive = false
 
-# Whether to be require matching the whole word. Defaults to false.
+# Whether to require matching the whole word. Defaults to false.
 whole_word = false
 ```

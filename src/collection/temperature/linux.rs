@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::Result;
-use hashbrown::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 use super::TempSensorData;
 #[cfg(feature = "gpu")]
@@ -37,9 +37,10 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
         for entry in read_dir.flatten() {
             let mut path = entry.path();
 
-            // hwmon includes many sensors, we only want ones with at least one temperature
-            // sensor Reading this file will wake the device, but we're only
-            // checking existence, so it should be fine.
+            // hwmon includes many sensors, we only want ones with at least one
+            // temperature sensor Reading this file will wake the
+            // device, but we're only checking existence, so it
+            // should be fine.
             if !path.join("temp1_input").exists() {
                 // Note we also check for a `device` subdirectory (e.g.
                 // `/sys/class/hwmon/hwmon*/device/`). This is needed for
@@ -48,7 +49,8 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
                 // - https://github.com/giampaolo/psutil/issues/971
                 // - https://github.com/giampaolo/psutil/blob/642438375e685403b4cd60b0c0e25b80dd5a813d/psutil/_pslinux.py#L1316
                 //
-                // If it does match, then add the `device/` directory to the path.
+                // If it does match, then add the `device/` directory to the
+                // path.
                 if path.join("device/temp1_input").exists() {
                     path.push("device");
                 }
@@ -62,24 +64,25 @@ fn get_hwmon_candidates() -> (HashSet<PathBuf>, usize) {
 
     if let Ok(read_dir) = Path::new("/sys/devices/platform").read_dir() {
         for entry in read_dir.flatten() {
-            if entry.file_name().to_string_lossy().starts_with("coretemp.") {
-                if let Ok(read_dir) = entry.path().join("hwmon").read_dir() {
-                    for entry in read_dir.flatten() {
-                        let path = entry.path();
+            if entry.file_name().to_string_lossy().starts_with("coretemp.")
+                && let Ok(read_dir) = entry.path().join("hwmon").read_dir()
+            {
+                for entry in read_dir.flatten() {
+                    let path = entry.path();
 
-                        if path.join("temp1_input").exists() {
-                            // It's possible that there are dupes (represented by symlinks) - the
-                            // easy way is to just substitute the parent
-                            // directory and check if the hwmon
-                            // variant exists already in a set.
-                            //
-                            // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
-                            if let Some(child) = path.file_name() {
-                                let to_check_path = Path::new("/sys/class/hwmon").join(child);
+                    if path.join("temp1_input").exists() {
+                        // It's possible that there are dupes (represented by
+                        // symlinks) - the easy way is
+                        // to just substitute the parent
+                        // directory and check if the hwmon
+                        // variant exists already in a set.
+                        //
+                        // For more info, see https://github.com/giampaolo/psutil/pull/1822/files
+                        if let Some(child) = path.file_name() {
+                            let to_check_path = Path::new("/sys/class/hwmon").join(child);
 
-                                if !dirs.contains(&to_check_path) {
-                                    dirs.insert(path);
-                                }
+                            if !dirs.contains(&to_check_path) {
+                                dirs.insert(path);
                             }
                         }
                     }
@@ -99,10 +102,10 @@ fn read_to_string_lossy<P: AsRef<Path>>(path: P) -> Option<String> {
 }
 
 #[inline]
-fn humanize_name(name: String, sensor_name: Option<&String>) -> String {
+fn humanize_name(name: &str, sensor_name: Option<&String>) -> String {
     match sensor_name {
         Some(ty) => format!("{name} ({ty})"),
-        None => name,
+        None => name.to_string(),
     }
 }
 
@@ -200,9 +203,9 @@ fn finalize_name(
 /// the device is already in ACPI D0. This has the notable issue that
 /// once this happens, the device will be *kept* on through the sensor
 /// reading, and not be able to re-enter ACPI D3cold.
-fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
+fn hwmon_temperatures(filter: &Option<Filter>, graph_filter: &Option<Filter>) -> HwmonResults {
     let mut temperatures: Vec<TempSensorData> = vec![];
-    let mut seen_names: HashMap<String, u32> = HashMap::new();
+    let mut seen_names: HashMap<String, u32> = HashMap::default();
 
     let (dirs, num_hwmon) = get_hwmon_candidates();
 
@@ -212,8 +215,8 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
     // `/sys/class/hwmon/hwmon*/device/power_state` == `D3cold` will
     // wake the device up, and will block until it initializes.
     //
-    // Reading the `hwmon*/device/power_state` or `hwmon*/temp*_label` properties
-    // will not wake the device, and thus not block,
+    // Reading the `hwmon*/device/power_state` or `hwmon*/temp*_label`
+    // properties will not wake the device, and thus not block,
     // and meaning no sensors have to be hidden depending on `power_state`
     //
     // It would probably be more ideal to use a proper async runtime; this would
@@ -247,21 +250,25 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
                 let sensor_label_path = file_path.join(name.replace("input", "label"));
                 let sensor_label = read_to_string_lossy(sensor_label_path);
 
-                // Do some messing around to get a more sensible name for sensors:
+                // Do some messing around to get a more sensible name for
+                // sensors:
                 // - For GPUs, this will use the kernel device name, ex `card0`
-                // - For nvme drives, this will also use the kernel name, ex `nvme0`. This is
-                //   found differently than for GPUs
-                // - For whatever acpitz is, on my machine this is now `thermal_zone0`.
-                // - For k10temp, this will still be k10temp, but it has to be handled special.
+                // - For nvme drives, this will also use the kernel name, ex
+                //   `nvme0`. This is found differently than for GPUs
+                // - For whatever acpitz is, on my machine this is now
+                //   `thermal_zone0`.
+                // - For k10temp, this will still be k10temp, but it has to be
+                //   handled special.
                 let hwmon_name = {
                     let device = file_path.join("device");
 
-                    // This will exist for GPUs but not others, this is how we find their kernel
-                    // name.
+                    // This will exist for GPUs but not others, this is how we
+                    // find their kernel name.
                     let drm = device.join("drm");
                     if drm.exists() {
-                        // This should never actually be empty. If it is though, we'll fall back to
-                        // the sensor name later on.
+                        // This should never actually be empty. If it is though,
+                        // we'll fall back to the sensor
+                        // name later on.
 
                         #[cfg(feature = "gpu")]
                         {
@@ -271,10 +278,7 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
                                 cards.flatten().find_map(|card| {
                                     card.file_name().to_str().and_then(|name| {
                                         name.starts_with("card").then(|| {
-                                            humanize_name(
-                                                name.trim().to_string(),
-                                                sensor_name.as_ref(),
-                                            )
+                                            humanize_name(name.trim(), sensor_name.as_ref())
                                         })
                                     })
                                 })
@@ -289,10 +293,7 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
                                 cards.flatten().find_map(|card| {
                                     card.file_name().to_str().and_then(|name| {
                                         name.starts_with("card").then(|| {
-                                            humanize_name(
-                                                name.trim().to_string(),
-                                                sensor_name.as_ref(),
-                                            )
+                                            humanize_name(name.trim(), sensor_name.as_ref())
                                         })
                                     })
                                 })
@@ -301,22 +302,23 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
                             }
                         }
                     } else {
-                        // This little mess is to account for stuff like k10temp. This is needed
+                        // This little mess is to account for stuff like
+                        // k10temp. This is needed
                         // because the `device` symlink points to `nvme*`
                         // for nvme drives, but to PCI buses for anything
-                        // else. If the first character is alphabetic, it's an actual name like
-                        // k10temp or nvme0, not a PCI bus.
+                        // else. If the first character is alphabetic, it's an
+                        // actual name like k10temp or
+                        // nvme0, not a PCI bus.
                         fs::read_link(device).ok().and_then(|link| {
-                            let link = link
-                                .file_name()
-                                .and_then(|f| f.to_str())
-                                .map(|s| s.trim().to_owned());
+                            let link = link.file_name().and_then(|f| f.to_str()).map(|s| s.trim());
 
-                            match link {
-                                Some(link) if link.as_bytes()[0].is_ascii_alphabetic() => {
-                                    Some(humanize_name(link, sensor_name.as_ref()))
-                                }
-                                _ => None,
+                            if let Some(link) = &link
+                                && let Some(first_char) = link.as_bytes().first()
+                                && first_char.is_ascii_alphabetic()
+                            {
+                                Some(humanize_name(link, sensor_name.as_ref()))
+                            } else {
+                                None
                             }
                         })
                     }
@@ -324,15 +326,17 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
 
                 let name = finalize_name(hwmon_name, sensor_label, &sensor_name, &mut seen_names);
 
-                // TODO: It's possible we may want to move the filter check further up to avoid
-                // probing hwmon if not needed?
-                if Filter::optional_should_keep(filter, &name) {
-                    if let Ok(temp_celsius) = parse_temp(&temp_path) {
-                        temperatures.push(TempSensorData {
-                            name,
-                            temperature: Some(temp_celsius),
-                        });
-                    }
+                // TODO: It's possible we may want to move the filter check
+                // further up to avoid probing hwmon if not
+                // needed?
+                if (Filter::optional_should_keep(filter, &name)
+                    || Filter::optional_should_keep(graph_filter, &name))
+                    && let Ok(temp_celsius) = parse_temp(&temp_path)
+                {
+                    temperatures.push(TempSensorData {
+                        name,
+                        temperature: Some(temp_celsius),
+                    });
                 }
             }
         }
@@ -350,13 +354,15 @@ fn hwmon_temperatures(filter: &Option<Filter>) -> HwmonResults {
 ///
 /// See [the Linux kernel documentation](https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-thermal)
 /// for more details.
-fn add_thermal_zone_temperatures(temperatures: &mut Vec<TempSensorData>, filter: &Option<Filter>) {
+fn add_thermal_zone_temperatures(
+    temperatures: &mut Vec<TempSensorData>, filter: &Option<Filter>, graph_filter: &Option<Filter>,
+) {
     let path = Path::new("/sys/class/thermal");
     let Ok(read_dir) = path.read_dir() else {
         return;
     };
 
-    let mut seen_names: HashMap<String, u32> = HashMap::new();
+    let mut seen_names: HashMap<String, u32> = HashMap::default();
 
     for entry in read_dir.flatten() {
         if entry
@@ -374,7 +380,9 @@ fn add_thermal_zone_temperatures(temperatures: &mut Vec<TempSensorData>, filter:
                     name
                 };
 
-                if Filter::optional_should_keep(filter, &name) {
+                if Filter::optional_should_keep(filter, &name)
+                    || Filter::optional_should_keep(graph_filter, &name)
+                {
                     let temp_path = file_path.join("temp");
                     if let Ok(temp_celsius) = parse_temp(&temp_path) {
                         let name = counted_name(&mut seen_names, name);
@@ -391,11 +399,13 @@ fn add_thermal_zone_temperatures(temperatures: &mut Vec<TempSensorData>, filter:
 }
 
 /// Gets temperature sensors and data.
-pub fn get_temperature_data(filter: &Option<Filter>) -> Result<Option<Vec<TempSensorData>>> {
-    let mut results = hwmon_temperatures(filter);
+pub fn get_temperature_data(
+    filter: &Option<Filter>, graph_filter: &Option<Filter>,
+) -> Result<Option<Vec<TempSensorData>>> {
+    let mut results = hwmon_temperatures(filter, graph_filter);
 
     if results.num_hwmon == 0 {
-        add_thermal_zone_temperatures(&mut results.temperatures, filter);
+        add_thermal_zone_temperatures(&mut results.temperatures, filter, graph_filter);
     }
 
     Ok(Some(results.temperatures))
@@ -403,13 +413,13 @@ pub fn get_temperature_data(filter: &Option<Filter>) -> Result<Option<Vec<TempSe
 
 #[cfg(test)]
 mod tests {
-    use hashbrown::HashMap;
+    use rustc_hash::FxHashMap as HashMap;
 
     use super::finalize_name;
 
     #[test]
     fn test_finalize_name() {
-        let mut seen_names = HashMap::new();
+        let mut seen_names = HashMap::default();
 
         assert_eq!(
             finalize_name(

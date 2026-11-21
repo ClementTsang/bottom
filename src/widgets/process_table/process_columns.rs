@@ -4,8 +4,11 @@ use serde::Deserialize;
 
 use super::{ProcWidgetColumn, ProcWidgetData};
 use crate::{
-    canvas::components::data_table::{ColumnHeader, SortsRow},
-    utils::general::sort_partial_fn,
+    canvas::components::data_table::{ColumnHeader, SortMode, SortsRow},
+    utils::{
+        general::sort_partial_fn,
+        natural_sort::{natural_str_cmp, natural_str_cmp_insensitive},
+    },
 };
 
 /// A column in the process widget.
@@ -19,6 +22,7 @@ pub enum ProcColumn {
     MemValue,
     MemPercent,
     VirtualMem,
+    Swap,
     Pid,
     Count,
     Name,
@@ -30,6 +34,9 @@ pub enum ProcColumn {
     State,
     User,
     Time,
+    #[cfg(unix)]
+    Nice,
+    Priority,
     #[cfg(feature = "gpu")]
     GpuMemValue,
     #[cfg(feature = "gpu")]
@@ -51,6 +58,7 @@ impl ProcColumn {
             // TODO: Change this
             ProcColumn::MemValue | ProcColumn::MemPercent => &["Mem", "Mem%", "Memory", "Memory%"],
             ProcColumn::VirtualMem => &["Virt", "Virtual", "VirtMem", "Virtual Memory"],
+            ProcColumn::Swap => &["Swap"],
             ProcColumn::ReadPerSecond => &["R/s", "Read", "Rps"],
             ProcColumn::WritePerSecond => &["W/s", "Write", "Wps"],
             ProcColumn::TotalRead => &["T.Read", "TRead", "Total Read"],
@@ -63,6 +71,9 @@ impl ProcColumn {
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => &["GMem", "GMem%"],
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => &["GPU%"],
+            #[cfg(unix)]
+            ProcColumn::Nice => &["Nice"],
+            ProcColumn::Priority => &["Priority"],
         }
     }
 }
@@ -74,6 +85,7 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::MemValue => "Mem",
             ProcColumn::MemPercent => "Mem%",
             ProcColumn::VirtualMem => "Virt",
+            ProcColumn::Swap => "Swap",
             ProcColumn::Pid => "PID",
             ProcColumn::Count => "Count",
             ProcColumn::Name => "Name",
@@ -85,6 +97,9 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::State => "State",
             ProcColumn::User => "User",
             ProcColumn::Time => "Time",
+            #[cfg(unix)]
+            ProcColumn::Nice => "Nice",
+            ProcColumn::Priority => "Priority",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue => "GMem",
             #[cfg(feature = "gpu")]
@@ -103,6 +118,9 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::Pid => "PID(p)".into(),
             ProcColumn::Name => "Name(n)".into(),
             ProcColumn::Command => "Command(n)".into(),
+            #[cfg(unix)]
+            ProcColumn::Nice => "Nice".into(),
+            ProcColumn::Priority => "Priority".into(),
             _ => self.text(),
         }
     }
@@ -111,7 +129,7 @@ impl ColumnHeader for ProcColumn {
 impl SortsRow for ProcColumn {
     type DataType = ProcWidgetData;
 
-    fn sort_data(&self, data: &mut [ProcWidgetData], descending: bool) {
+    fn sort_data(&self, data: &mut [ProcWidgetData], descending: bool, mode: SortMode) {
         match self {
             ProcColumn::CpuPercent => {
                 data.sort_by(|a, b| {
@@ -124,19 +142,31 @@ impl SortsRow for ProcColumn {
             ProcColumn::VirtualMem => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(&a.virtual_mem, &b.virtual_mem));
             }
+            ProcColumn::Swap => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.swap_bytes, &b.swap_bytes));
+            }
             ProcColumn::Pid => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.pid, b.pid));
             }
             ProcColumn::Count => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.num_similar, b.num_similar));
             }
-            ProcColumn::Name | ProcColumn::Command => {
-                if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.id.to_lowercase()));
-                } else {
-                    data.sort_by_cached_key(|pd| pd.id.to_lowercase());
+            ProcColumn::Name | ProcColumn::Command => match mode {
+                SortMode::Lexical => {
+                    if descending {
+                        data.sort_by_cached_key(|pd| Reverse(pd.id.to_lowercase()));
+                    } else {
+                        data.sort_by_cached_key(|pd| pd.id.to_lowercase());
+                    }
                 }
-            }
+                SortMode::Natural => {
+                    // TODO: Is there a better way to do this? Can we be more performant?
+                    data.sort_by(|a, b| {
+                        let ord = natural_str_cmp_insensitive(a.id.as_str(), b.id.as_str());
+                        if descending { ord.reverse() } else { ord }
+                    });
+                }
+            },
             ProcColumn::ReadPerSecond => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.rps, b.rps));
             }
@@ -149,23 +179,55 @@ impl SortsRow for ProcColumn {
             ProcColumn::TotalWrite => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.total_write, b.total_write));
             }
-            ProcColumn::State => {
-                if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.process_state));
-                } else {
-                    data.sort_by_cached_key(|pd| pd.process_state);
+            ProcColumn::State => match mode {
+                SortMode::Lexical => {
+                    if descending {
+                        data.sort_by_cached_key(|pd| Reverse(pd.process_state));
+                    } else {
+                        data.sort_by_cached_key(|pd| pd.process_state);
+                    }
                 }
-            }
-            ProcColumn::User => {
-                // FIXME: Is there a better way here to keep the to_lowercase? Usually it shouldn't matter but...
-                if descending {
-                    data.sort_by_cached_key(|pd| Reverse(pd.user.clone()));
-                } else {
-                    data.sort_by_cached_key(|pd| pd.user.clone());
+                SortMode::Natural => {
+                    data.sort_by(|a, b| {
+                        let ord = natural_str_cmp(a.process_state, b.process_state);
+                        if descending { ord.reverse() } else { ord }
+                    });
                 }
-            }
+            },
+            ProcColumn::User => match mode {
+                SortMode::Lexical => {
+                    // FIXME: Is there a better way here to keep the to_lowercase?
+                    // Usually it shouldn't matter but...
+                    // Also note that pd.user is `Arc` so clones are relatively cheap.
+                    if descending {
+                        data.sort_by_cached_key(|pd| Reverse(pd.user.clone()));
+                    } else {
+                        data.sort_by_cached_key(|pd| pd.user.clone());
+                    }
+                }
+                SortMode::Natural => {
+                    data.sort_by(|a, b| match (&a.user, &b.user) {
+                        (Some(a_user), Some(b_user)) => {
+                            let ord = natural_str_cmp(a_user, b_user);
+                            if descending { ord.reverse() } else { ord }
+                        }
+                        _ => {
+                            // Reverse the comparison result instead of cloning.
+                            let ord = a.user.cmp(&b.user);
+                            if descending { ord.reverse() } else { ord }
+                        }
+                    });
+                }
+            },
             ProcColumn::Time => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.time, b.time));
+            }
+            ProcColumn::Priority => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.priority, b.priority));
+            }
+            #[cfg(unix)]
+            ProcColumn::Nice => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.nice, b.nice));
             }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => {
@@ -181,37 +243,46 @@ impl SortsRow for ProcColumn {
     }
 }
 
+impl ProcColumn {
+    /// Parse a column name, case-insensitively, accepting any of the aliases
+    /// recognized in the config file.
+    pub fn parse_column_name(name: &str) -> Option<Self> {
+        match name.to_lowercase().as_str() {
+            "cpu%" => Some(ProcColumn::CpuPercent),
+            "mem" | "mem%" | "memory" | "memory%" => Some(ProcColumn::MemPercent),
+            "virt" | "virtual" | "virtmem" | "virtual memory" => Some(ProcColumn::VirtualMem),
+            "swap" => Some(ProcColumn::Swap),
+            "pid" => Some(ProcColumn::Pid),
+            "count" => Some(ProcColumn::Count),
+            "name" => Some(ProcColumn::Name),
+            "command" => Some(ProcColumn::Command),
+            "read" | "r/s" | "rps" => Some(ProcColumn::ReadPerSecond),
+            "write" | "w/s" | "wps" => Some(ProcColumn::WritePerSecond),
+            "tread" | "t.read" | "total read" => Some(ProcColumn::TotalRead),
+            "twrite" | "t.write" | "total write" => Some(ProcColumn::TotalWrite),
+            "state" => Some(ProcColumn::State),
+            "user" => Some(ProcColumn::User),
+            "time" => Some(ProcColumn::Time),
+            #[cfg(unix)]
+            "nice" => Some(ProcColumn::Nice),
+            "priority" => Some(ProcColumn::Priority),
+            #[cfg(feature = "gpu")]
+            "gmem" | "gmem%" => Some(ProcColumn::GpuMemPercent),
+            #[cfg(feature = "gpu")]
+            "gpu%" => Some(ProcColumn::GpuUtilPercent),
+            _ => None,
+        }
+    }
+}
+
 impl<'de> Deserialize<'de> for ProcColumn {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
-        let value = String::deserialize(deserializer)?.to_lowercase();
-        match value.as_str() {
-            "cpu%" => Ok(ProcColumn::CpuPercent),
-            // TODO: Maybe change this in the future.
-            "mem" | "mem%" => Ok(ProcColumn::MemPercent),
-            "virt" | "virtual" | "virtmem" | "virtual memory" => Ok(ProcColumn::VirtualMem),
-            "pid" => Ok(ProcColumn::Pid),
-            "count" => Ok(ProcColumn::Count),
-            "name" => Ok(ProcColumn::Name),
-            "command" => Ok(ProcColumn::Command),
-            "read" | "r/s" | "rps" => Ok(ProcColumn::ReadPerSecond),
-            "write" | "w/s" | "wps" => Ok(ProcColumn::WritePerSecond),
-            "tread" | "t.read" => Ok(ProcColumn::TotalRead),
-            "twrite" | "t.write" => Ok(ProcColumn::TotalWrite),
-            "state" => Ok(ProcColumn::State),
-            "user" => Ok(ProcColumn::User),
-            "time" => Ok(ProcColumn::Time),
-            #[cfg(feature = "gpu")]
-            // TODO: Maybe change this in the future.
-            "gmem" | "gmem%" => Ok(ProcColumn::GpuMemPercent),
-            #[cfg(feature = "gpu")]
-            "gpu%" => Ok(ProcColumn::GpuUtilPercent),
-            _ => Err(serde::de::Error::custom(
-                "doesn't match any process column name",
-            )),
-        }
+        let value = String::deserialize(deserializer)?;
+        ProcColumn::parse_column_name(&value)
+            .ok_or_else(|| serde::de::Error::custom("doesn't match any process column name"))
     }
 }
 
@@ -223,6 +294,7 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             ProcColumn::CpuPercent => ProcWidgetColumn::Cpu,
             ProcColumn::MemPercent | ProcColumn::MemValue => ProcWidgetColumn::Mem,
             ProcColumn::VirtualMem => ProcWidgetColumn::VirtualMem,
+            ProcColumn::Swap => ProcWidgetColumn::Swap,
             ProcColumn::ReadPerSecond => ProcWidgetColumn::ReadPerSecond,
             ProcColumn::WritePerSecond => ProcWidgetColumn::WritePerSecond,
             ProcColumn::TotalRead => ProcWidgetColumn::TotalRead,
@@ -230,6 +302,9 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             ProcColumn::State => ProcWidgetColumn::State,
             ProcColumn::User => ProcWidgetColumn::User,
             ProcColumn::Time => ProcWidgetColumn::Time,
+            ProcColumn::Priority => ProcWidgetColumn::Priority,
+            #[cfg(unix)]
+            ProcColumn::Nice => ProcWidgetColumn::Nice,
             #[cfg(feature = "gpu")]
             ProcColumn::GpuMemPercent | ProcColumn::GpuMemValue => ProcWidgetColumn::GpuMem,
             #[cfg(feature = "gpu")]

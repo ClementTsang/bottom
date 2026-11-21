@@ -1,19 +1,20 @@
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
 };
 
 use crate::{
-    app::{App, data::StoredData, layout_manager::WidgetDirection},
+    app::{App, data::InnerData, layout_manager::WidgetDirection},
     canvas::{
         Painter,
         components::{
             data_table::{DrawInfo, SelectionState},
-            time_graph::{GraphData, variants::percent::PercentTimeGraph},
+            time_series::GraphData,
         },
         drawing_utils::should_hide_x_label,
     },
     collection::cpu::CpuData,
+    components::time_series::GraphDrawCtx,
     widgets::CpuWidgetState,
 };
 
@@ -41,12 +42,12 @@ impl Painter {
             }
 
             // Update draw loc in widget map
-            if app_state.should_get_widget_bounds() {
-                if let Some(bottom_widget) = app_state.widget_map.get_mut(&widget_id) {
-                    bottom_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
-                    bottom_widget.bottom_right_corner =
-                        Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
-                }
+            if app_state.should_get_widget_bounds()
+                && let Some(bottom_widget) = app_state.widget_map.get_mut(&widget_id)
+            {
+                bottom_widget.top_left_corner = Some((draw_loc.x, draw_loc.y));
+                bottom_widget.bottom_right_corner =
+                    Some((draw_loc.x + draw_loc.width, draw_loc.y + draw_loc.height));
             }
         } else {
             let graph_width = draw_loc.width - legend_width;
@@ -117,16 +118,17 @@ impl Painter {
     }
 
     fn generate_points<'a>(
-        &self, cpu_widget_state: &'a CpuWidgetState, data: &'a StoredData, show_avg_cpu: bool,
+        &self, cpu_widget_state: &'a CpuWidgetState, data: &'a InnerData, show_avg_cpu: bool,
     ) -> Vec<GraphData<'a>> {
         let show_avg_offset = if show_avg_cpu { AVG_POSITION } else { 0 };
         let current_scroll_position = cpu_widget_state.table.state.current_index;
         let cpu_entries = &data.cpu_harvest;
-        let cpu_points = &data.timeseries_data.cpu;
-        let time = &data.timeseries_data.time;
+        let cpu_points = &data.time_series_data.cpu;
+        let time = &data.time_series_data.time;
 
         if current_scroll_position == ALL_POSITION {
-            // This case ensures the other cases cannot have the position be equal to 0.
+            // This case ensures the other cases cannot have the position be
+            // equal to 0.
 
             cpu_points
                 .iter()
@@ -144,8 +146,9 @@ impl Painter {
                 .rev()
                 .collect()
         } else if let Some(CpuData { .. }) = cpu_entries.get(current_scroll_position - 1) {
-            // We generally subtract one from current scroll position because of the all entry.
-            // TODO: Do this a bit better (e.g. we can just do if let Some(_) = cpu_points.get())
+            // We generally subtract one from current scroll position because of
+            // the all entry. TODO: Do this a bit better (e.g. we
+            // can just do if let Some(_) = cpu_points.get())
 
             let style = if show_avg_cpu && current_scroll_position == AVG_POSITION {
                 self.styles.avg_cpu_colour
@@ -176,7 +179,7 @@ impl Painter {
             let hide_x_labels = should_hide_x_label(
                 app_state.app_config_fields.hide_time,
                 app_state.app_config_fields.autohide_time,
-                &mut cpu_widget_state.autohide_timer,
+                cpu_widget_state.graph.state_mut().autohide_timer_mut(),
                 draw_loc,
             );
 
@@ -188,7 +191,7 @@ impl Painter {
 
             // TODO: Maybe hide load avg if too long? Or maybe the CPU part.
             let title = {
-                #[cfg(target_family = "unix")]
+                #[cfg(unix)]
                 {
                     let load_avg = &data.load_avg_harvest;
                     let load_avg_str = format!(
@@ -204,20 +207,28 @@ impl Painter {
                 }
             };
 
-            PercentTimeGraph {
-                display_range: cpu_widget_state.current_display_time,
-                hide_x_labels,
-                app_config_fields: &app_state.app_config_fields,
-                current_widget: app_state.current_widget.widget_id,
-                is_expanded: app_state.is_expanded,
-                title,
-                styles: &self.styles,
-                widget_id,
-                legend_position: None,
-                legend_constraints: None,
-            }
-            .build()
-            .draw(f, draw_loc, graph_data);
+            let border_style = self.get_border_style(widget_id, app_state.current_widget.widget_id);
+            let marker = self.get_marker(app_state.app_config_fields.use_dot);
+
+            cpu_widget_state.graph.draw(
+                f,
+                draw_loc,
+                GraphDrawCtx {
+                    title,
+                    border_style,
+                    title_style: self.styles.widget_title_style,
+                    graph_style: self.styles.graph_style,
+                    general_widget_style: self.styles.general_widget_style,
+                    border_type: self.styles.border_type,
+                    marker,
+                    hide_x_labels,
+                    is_selected: app_state.current_widget.widget_id == widget_id,
+                    is_expanded: app_state.is_expanded,
+                    legend_position: None,
+                    legend_constraints: None,
+                },
+                graph_data,
+            );
         }
     }
 
@@ -231,8 +242,8 @@ impl Painter {
             .widget_states
             .get_mut(&(widget_id - 1))
         {
-            // TODO: This line (and the one above, see caller) is pretty dumb but I guess
-            // needed for now. Refactor if possible!
+            // TODO: This line (and the one above, see caller) is pretty dumb
+            // but I guess needed for now. Refactor if possible!
             cpu_widget_state.is_legend_hidden = false;
 
             let is_on_widget = widget_id == app_state.current_widget.widget_id;
@@ -241,6 +252,7 @@ impl Painter {
                 loc: draw_loc,
                 force_redraw: app_state.is_force_redraw,
                 recalculate_column_widths,
+                // TODO: Bug with this, shouldn't be selected on expand!
                 selection_state: SelectionState::new(app_state.is_expanded, is_on_widget),
             };
 

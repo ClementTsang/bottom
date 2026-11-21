@@ -1,6 +1,6 @@
 use std::{borrow::Cow, num::NonZeroU16};
 
-use tui::widgets::Row;
+use ratatui::{style::Style, widgets::Row};
 
 use super::{ColumnHeader, DataTableColumn};
 use crate::canvas::Painter;
@@ -13,14 +13,16 @@ where
     /// the cell that will be displayed in the [`super::DataTable`].
     fn to_cell_text(&self, column: &H, calculated_width: NonZeroU16) -> Option<Cow<'static, str>>;
 
-    /// Given a column, how to style a cell if one needs to override the default styling.
+    /// Given a column, how to style a cell if one needs to override the default
+    /// styling.
     ///
-    /// By default this just returns [`None`], deferring to the row or table styling.
+    /// By default this just returns [`None`], deferring to the row or table
+    /// styling.
     #[expect(
         unused_variables,
         reason = "The default implementation just returns `None`."
     )]
-    fn style_cell(&self, column: &H, painter: &Painter) -> Option<tui::style::Style> {
+    fn style_cell(&self, column: &H, painter: &Painter) -> Option<Style> {
         None
     }
 

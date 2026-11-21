@@ -23,6 +23,7 @@ const TEMPLATE: &str = indoc! {
 
 const USAGE: &str = "btm [OPTIONS]";
 
+// Can't use an unwrap here at the moment since it's const.
 const VERSION: &str = match option_env!("NIGHTLY_VERSION") {
     Some(nightly_version) => nightly_version,
     None => crate_version!(),
@@ -71,6 +72,9 @@ pub struct BottomArgs {
 
     #[command(flatten)]
     pub network: NetworkArgs,
+
+    #[command(flatten)]
+    pub disk: DiskArgs,
 
     #[cfg(feature = "battery")]
     #[command(flatten)]
@@ -181,6 +185,7 @@ pub struct GeneralArgs {
         value_parser = [
             "cpu",
             "mem",
+            "memory",
             "net",
             "network",
             "proc",
@@ -188,7 +193,12 @@ pub struct GeneralArgs {
             "processes",
             "temp",
             "temperature",
+            "temp_graph",
+            "temperature_graph",
             "disk",
+            "disk_io_graph",
+            #[cfg(feature = "gpu")]
+            "gpu",
             #[cfg(feature = "battery")]
             "batt",
             #[cfg(feature = "battery")]
@@ -236,14 +246,6 @@ pub struct GeneralArgs {
     )]
     pub expanded: bool,
 
-    #[arg(
-        long,
-        action = ArgAction::SetTrue,
-        help = "Hides spacing between table headers and entries.",
-        alias = "hide-table-gap"
-    )]
-    pub hide_table_gap: bool,
-
     #[arg(long, action = ArgAction::SetTrue, help = "Hides the time scale from being shown.", alias = "hide-time")]
     pub hide_time: bool,
 
@@ -287,6 +289,15 @@ pub struct GeneralArgs {
         alias = "time-delta"
     )]
     pub time_delta: Option<String>,
+
+    #[arg(
+        long,
+        value_name = "NAME",
+        help = "Sets the terminal title.",
+        long_help = "Sets a custom string displayed in the terminal title; add \"{hostname}\" to substitute it for your hostname.",
+        alias = "terminal-title"
+    )]
+    pub terminal_title: Option<String>,
 }
 
 /// Process arguments/config options.
@@ -338,7 +349,7 @@ pub struct ProcessArgs {
     #[arg(
         long,
         action = ArgAction::SetTrue,
-        help = "Hide kernel threads by default.",
+        help = "Hide kernel threads.",
         alias = "hide-k-threads"
     )]
     pub hide_k_threads: bool,
@@ -350,6 +361,17 @@ pub struct ProcessArgs {
         alias = "get-threads",
     )]
     pub get_threads: bool,
+
+    #[arg(
+        long,
+        value_name = "COLUMN",
+        help = "Sets the default sort column for the process widget.",
+        long_help = "Sets the default sort column for the process widget. Accepts any of the \
+                     valid process column names (e.g. \"cpu%\", \"mem\", \"pid\", \"name\"). \
+                     Overrides the [processes] default_sort setting in the config file.",
+        alias = "process-default-sort"
+    )]
+    pub process_default_sort: Option<String>,
 
     #[arg(
         short = 'g',
@@ -477,7 +499,8 @@ impl ValueEnum for CpuDefault {
 #[derive(Args, Clone, Debug, Default)]
 #[command(next_help_heading = "CPU Options", rename_all = "snake_case")]
 pub struct CpuArgs {
-    // TODO: Maybe rename this or fix this? Should this apply to all "left legends"?
+    // TODO: Maybe rename this or fix this? Should this apply to all "left
+    // legends"?
     #[arg(
         short = 'l',
         long,
@@ -537,6 +560,29 @@ pub struct MemoryArgs {
         alias = "free-arc"
     )]
     pub free_arc: bool,
+
+    #[cfg(feature = "gpu")]
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Use short GPU names (e.g. 'GPU' or 'GPU0', 'GPU1') in the memory widget instead of full GPU names.",
+        alias = "short-gpu-names"
+    )]
+    pub short_gpu_names: bool,
+}
+
+/// Disk arguments/config options.
+#[derive(Args, Clone, Debug, Default)]
+#[command(next_help_heading = "Disk Options", rename_all = "snake_case")]
+pub struct DiskArgs {
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Displays the disk widget with binary prefixes.",
+        long_help = "Displays the disk widget with binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g. GB, MB).",
+        alias = "disk-use-binary-prefix"
+    )]
+    pub disk_use_binary_prefix: bool,
 }
 
 /// Network arguments/config options.
@@ -567,8 +613,7 @@ pub struct NetworkArgs {
         long,
         action = ArgAction::SetTrue,
         help = "Displays the network widget with binary prefixes.",
-        long_help = "Displays the network widget with binary prefixes (e.g. kibibits, mebibits) rather than a decimal \
-                    prefixes (e.g. kilobits, megabits). Defaults to decimal prefixes.",
+        long_help = "Displays the network widget binary prefixes (e.g. GiB, MiB) instead of decimal prefixes (e.g. GB, MB).",
         alias = "network-use-binary-prefix"
     )]
     pub network_use_binary_prefix: bool,
@@ -590,6 +635,24 @@ pub struct NetworkArgs {
         alias = "use-old-network-legend"
     )]
     pub use_old_network_legend: bool,
+
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Displays packets information (packet rate and average packet size) in the network widget.",
+        long_help = "Displays packets information including packet rate (packets per second) and average packet size in the network widget.",
+        alias = "show-packets"
+    )]
+    pub show_packets: bool,
+
+    #[arg(
+        long,
+        action = ArgAction::SetTrue,
+        help = "Show total network usage from app startup rather than on boot.",
+        long_help = "Zeroes out the total network usage (\"All\") counters so it shows the total usage since the app is started, rather than the total usage since boot.",
+        alias = "network-start-zeroed"
+    )]
+    pub network_start_zeroed: bool,
 }
 
 /// Battery arguments/config options.
@@ -634,15 +697,15 @@ pub struct StyleArgs {
         ],
         hide_possible_values = true,
         help = indoc! {
-            "Use a built-in color theme, use '--help' for info on the colors. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
+            "Use a built-in colour theme, use '--help' for info on the colours. [possible values: default, default-light, gruvbox, gruvbox-light, nord, nord-light]",
         },
         long_help = indoc! {
-            "Use a pre-defined color theme. Currently supported themes are:
+            "Use a pre-defined colour theme. Currently supported themes are:
             - default
             - default-light (default but adjusted for lighter backgrounds)
-            - gruvbox       (a bright theme with 'retro groove' colors)
+            - gruvbox       (a bright theme with 'retro groove' colours)
             - gruvbox-light (gruvbox but adjusted for lighter backgrounds)
-            - nord          (an arctic, north-bluish color palette)
+            - nord          (an arctic, north-bluish colour palette)
             - nord-light    (nord but adjusted for lighter backgrounds)"
         }
     )]
@@ -654,14 +717,15 @@ pub struct StyleArgs {
 #[derive(Args, Clone, Debug)]
 #[command(next_help_heading = "Other Options", rename_all = "snake_case")]
 pub struct OtherArgs {
-    #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use '--help'.")]
+    #[arg(short = 'h', long, action = ArgAction::Help, help = "Prints help info (for more details use '--help').")]
     help: (),
 
     #[arg(short = 'V', long, action = ArgAction::Version, help = "Prints version information.")]
     version: (),
 }
 
-/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the program.
+/// Parse arguments and return a [`BottomArgs`]. If this fails it will exit the
+/// program.
 pub fn get_args() -> BottomArgs {
     BottomArgs::parse()
 }

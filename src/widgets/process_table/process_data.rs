@@ -3,20 +3,23 @@ use std::{
     cmp::{Ordering, max},
     fmt::Display,
     num::NonZeroU16,
+    ops::Add,
     sync::Arc,
     time::Duration,
 };
 
 use concat_string::concat_string;
-use tui::widgets::Row;
+use ratatui::widgets::Row;
 
 use super::process_columns::ProcColumn;
+#[cfg(target_os = "linux")]
+use crate::collection::processes::ProcessType;
 use crate::{
     canvas::{
         Painter,
         components::data_table::{DataTableColumn, DataToCell},
     },
-    collection::processes::{Pid, ProcessHarvest},
+    collection::processes::{Bytes, Pid, ProcessHarvest},
     dec_bytes_per_second_string,
     utils::data_units::{GIBI_LIMIT, GIGA_LIMIT, get_binary_bytes, get_decimal_bytes},
 };
@@ -86,10 +89,25 @@ impl Display for Id {
     }
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Copy)]
 pub enum MemUsage {
     Percent(f32),
     Bytes(u64),
+}
+
+impl Add for MemUsage {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (MemUsage::Percent(a), MemUsage::Percent(b)) => MemUsage::Percent(a + b),
+            (MemUsage::Bytes(a), MemUsage::Bytes(b)) => MemUsage::Bytes(a + b),
+            (MemUsage::Bytes(_), MemUsage::Percent(_))
+            | (MemUsage::Percent(_), MemUsage::Bytes(_)) => {
+                unreachable!("trying to add together two different memory usage types!")
+            }
+        }
+    }
 }
 
 impl PartialOrd for MemUsage {
@@ -201,6 +219,7 @@ pub struct ProcWidgetData {
     pub cpu_usage_percent: f32,
     pub mem_usage: MemUsage,
     pub virtual_mem: u64,
+    pub swap_bytes: Option<Bytes>,
     pub rps: u64,
     pub wps: u64,
     pub total_read: u64,
@@ -215,9 +234,12 @@ pub struct ProcWidgetData {
     pub gpu_mem_usage: MemUsage,
     #[cfg(feature = "gpu")]
     pub gpu_usage: u32,
-    /// The process "type". Used to color things.
+    /// The process "type". Used to colour things.
     #[cfg(target_os = "linux")]
-    pub process_type: crate::collection::processes::ProcessType,
+    pub process_type: ProcessType,
+    #[cfg(unix)]
+    pub nice: i32,
+    pub priority: i32,
 }
 
 impl ProcWidgetData {
@@ -244,6 +266,7 @@ impl ProcWidgetData {
             cpu_usage_percent: process.cpu_usage_percent,
             mem_usage,
             virtual_mem: process.virtual_mem,
+            swap_bytes: process.swap_bytes,
             rps: process.read_per_sec,
             wps: process.write_per_sec,
             total_read: process.total_read,
@@ -264,6 +287,9 @@ impl ProcWidgetData {
             gpu_usage: process.gpu_util,
             #[cfg(target_os = "linux")]
             process_type: process.process_type,
+            #[cfg(unix)]
+            nice: process.nice,
+            priority: process.priority,
         }
     }
 
@@ -279,38 +305,36 @@ impl ProcWidgetData {
 
     pub fn add(&mut self, other: &Self) {
         self.cpu_usage_percent += other.cpu_usage_percent;
-        self.mem_usage = match (&self.mem_usage, &other.mem_usage) {
-            (MemUsage::Percent(a), MemUsage::Percent(b)) => MemUsage::Percent(a + b),
-            (MemUsage::Bytes(a), MemUsage::Bytes(b)) => MemUsage::Bytes(a + b),
-            (MemUsage::Percent(_), MemUsage::Bytes(_))
-            | (MemUsage::Bytes(_), MemUsage::Percent(_)) => {
-                unreachable!("trying to add together two different memory usage types!")
-            }
-        };
+        self.mem_usage = self.mem_usage + other.mem_usage;
         self.rps += other.rps;
         self.wps += other.wps;
         self.total_read += other.total_read;
         self.total_write += other.total_write;
         self.time = self.time.max(other.time);
+        self.swap_bytes = match (self.swap_bytes, other.swap_bytes) {
+            (Some(a), Some(b)) => Some(a + b),
+            (Some(a), None) | (None, Some(a)) => Some(a),
+            (None, None) => None,
+        };
         #[cfg(feature = "gpu")]
         {
-            self.gpu_mem_usage = match (&self.gpu_mem_usage, &other.gpu_mem_usage) {
-                (MemUsage::Percent(a), MemUsage::Percent(b)) => MemUsage::Percent(a + b),
-                (MemUsage::Bytes(a), MemUsage::Bytes(b)) => MemUsage::Bytes(a + b),
-                (MemUsage::Percent(_), MemUsage::Bytes(_))
-                | (MemUsage::Bytes(_), MemUsage::Percent(_)) => {
-                    unreachable!("trying to add together two different memory usage types!")
-                }
-            };
+            self.gpu_mem_usage = self.gpu_mem_usage + other.gpu_mem_usage;
             self.gpu_usage += other.gpu_usage;
         }
     }
 
     fn to_string(&self, column: &ProcColumn) -> String {
         match column {
+            &ProcColumn::Priority => self.priority.to_string(),
+            #[cfg(unix)]
+            ProcColumn::Nice => self.nice.to_string(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem),
+            ProcColumn::Swap => self
+                .swap_bytes
+                .map(binary_byte_string)
+                .unwrap_or_else(|| "N/A".to_string()),
             ProcColumn::Pid => self.pid.to_string(),
             ProcColumn::Count => self.num_similar.to_string(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string(),
@@ -337,15 +361,21 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
     fn to_cell_text(
         &self, column: &ProcColumn, calculated_width: NonZeroU16,
     ) -> Option<Cow<'static, str>> {
-        let calculated_width = calculated_width.get();
-
         // TODO: Optimize the string allocations here...
-        // TODO: Also maybe just pull in the to_string call but add a variable for the
-        // differences.
+        // TODO: Also maybe just pull in the to_string call but add a variable
+        // for the differences.
         Some(match column {
+            #[cfg(unix)]
+            ProcColumn::Nice => self.nice.to_string().into(),
+            &ProcColumn::Priority => self.priority.to_string().into(),
             ProcColumn::CpuPercent => format!("{:.1}%", self.cpu_usage_percent).into(),
             ProcColumn::MemValue | ProcColumn::MemPercent => self.mem_usage.to_string().into(),
             ProcColumn::VirtualMem => binary_byte_string(self.virtual_mem).into(),
+            ProcColumn::Swap => self
+                .swap_bytes
+                .map(binary_byte_string)
+                .unwrap_or_else(|| "N/A".to_string())
+                .into(),
             ProcColumn::Pid => self.pid.to_string().into(),
             ProcColumn::Count => self.num_similar.to_string().into(),
             ProcColumn::Name | ProcColumn::Command => self.id.to_prefixed_string().into(),
@@ -354,7 +384,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             ProcColumn::TotalRead => dec_bytes_string(self.total_read).into(),
             ProcColumn::TotalWrite => dec_bytes_string(self.total_write).into(),
             ProcColumn::State => {
-                if calculated_width < 8 {
+                if calculated_width.get() < 8 {
                     self.process_char.to_string().into()
                 } else {
                     self.process_state.into()
@@ -377,7 +407,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
 
     #[cfg(target_os = "linux")]
     #[inline(always)]
-    fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<tui::style::Style> {
+    fn style_cell(&self, column: &ProcColumn, painter: &Painter) -> Option<ratatui::style::Style> {
         match column {
             ProcColumn::Name | ProcColumn::Command if self.process_type.is_thread() => {
                 Some(painter.styles.thread_text_style)
@@ -472,5 +502,31 @@ mod test {
             binary_byte_string((10.36 * TEBI_LIMIT as f64) as u64),
             "10.4TiB".to_string()
         );
+    }
+
+    #[test]
+    fn test_swap_addition() {
+        let process = ProcessHarvest {
+            swap_bytes: Some(100),
+            ..Default::default()
+        };
+        let other = ProcessHarvest {
+            swap_bytes: Some(200),
+            ..Default::default()
+        };
+        let mut data = ProcWidgetData::from_data(&process, false, false);
+        let other = ProcWidgetData::from_data(&other, false, false);
+
+        data.add(&other);
+        assert_eq!(data.swap_bytes, Some(300));
+
+        let unknown = ProcWidgetData::from_data(&ProcessHarvest::default(), false, false);
+        data.add(&unknown);
+        assert_eq!(data.swap_bytes, Some(300));
+
+        let known = ProcWidgetData::from_data(&process, false, false);
+        let mut unknown = ProcWidgetData::from_data(&ProcessHarvest::default(), false, false);
+        unknown.add(&known);
+        assert_eq!(unknown.swap_bytes, Some(100));
     }
 }

@@ -1,8 +1,9 @@
 use std::cmp::min;
 
-use tui::{
+use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
+    symbols::{self, line},
     text::{Line, Span},
     widgets::{Cell, Paragraph, Row, Table, Tabs},
 };
@@ -13,6 +14,7 @@ use crate::{
     canvas::{Painter, drawing_utils::widget_block},
     collection::batteries::BatteryState,
     constants::*,
+    options::config::flags::TableGap,
 };
 
 /// Calculate how many bars are to be drawn within basic mode's components.
@@ -40,10 +42,11 @@ impl Painter {
             } else {
                 self.styles.border_style
             };
+            let table_gap_setting = app_state.app_config_fields.table_gap;
             let table_gap = if draw_loc.height < TABLE_GAP_HEIGHT_LIMIT {
                 0
             } else {
-                app_state.app_config_fields.table_gap
+                table_gap_setting.height()
             };
 
             let block = {
@@ -51,6 +54,7 @@ impl Painter {
                     app_state.app_config_fields.use_basic_mode,
                     is_selected,
                     self.styles.border_type,
+                    self.styles.general_widget_style,
                 )
                 .border_style(border_style)
                 .title_top(Line::styled(" Battery ", self.styles.widget_title_style));
@@ -89,7 +93,7 @@ impl Painter {
                             .map(|name| Line::from((*name).clone()))
                             .collect::<Vec<_>>(),
                     )
-                    .divider(tui::symbols::line::VERTICAL)
+                    .divider(symbols::line::VERTICAL)
                     .style(self.styles.text_style)
                     .highlight_style(self.styles.selected_text_style)
                     .select(battery_widget_state.currently_selected_battery_index),
@@ -106,7 +110,8 @@ impl Painter {
                         tab_click_locs
                             .push(((current_x, current_y), (current_x + width, current_y)));
 
-                        // +4 because we want to go one space, then one space past to get to the
+                        // +4 because we want to go one space, then one space
+                        // past to get to the
                         // '|', then 2 more to start at the blank space
                         // before the tab label.
                         current_x += width + 4;
@@ -207,7 +212,10 @@ impl Painter {
                     Row::default()
                 };
 
-                // Draw bar
+                let block_inner = block.inner(margined_draw_loc);
+
+                // Draw bar.
+                // TODO: Switch to pipe_gauge.
                 f.render_widget(
                     Table::new(battery_charge_rows, [Constraint::Percentage(100)])
                         .block(block.clone())
@@ -225,6 +233,35 @@ impl Painter {
                     .header(header),
                     margined_draw_loc,
                 );
+
+                if table_gap > 0 && table_gap_setting == TableGap::Line && battery_harvest.len() > 1
+                {
+                    let y = block_inner.y + 1;
+                    let buf = f.buffer_mut();
+
+                    for x in (margined_draw_loc.x + 1)
+                        ..(margined_draw_loc.x + margined_draw_loc.width - 1)
+                    {
+                        if let Some(cell) = buf.cell_mut((x, y)) {
+                            cell.set_symbol(line::NORMAL.horizontal);
+                            cell.set_style(border_style);
+                        }
+                    }
+
+                    if !is_basic || is_selected {
+                        if let Some(cell) = buf.cell_mut((margined_draw_loc.x, y)) {
+                            cell.set_symbol(line::NORMAL.vertical_right);
+                            cell.set_style(border_style);
+                        }
+
+                        if let Some(cell) =
+                            buf.cell_mut((margined_draw_loc.x + margined_draw_loc.width - 1, y))
+                        {
+                            cell.set_symbol(line::NORMAL.vertical_left);
+                            cell.set_style(border_style);
+                        }
+                    }
+                }
             } else {
                 let mut contents = vec![Line::default(); table_gap.into()];
 

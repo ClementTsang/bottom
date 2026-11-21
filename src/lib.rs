@@ -8,12 +8,16 @@
 //! *usage* of bottom, refer to [here](https://bottom.pages.dev/stable/).
 
 pub(crate) mod app;
+pub(crate) mod components;
 mod utils {
     pub(crate) mod cancellation_token;
     pub(crate) mod conversion;
     pub(crate) mod data_units;
     pub(crate) mod general;
+    pub(crate) mod input;
+    pub(crate) mod int_hash;
     pub(crate) mod logging;
+    pub(crate) mod natural_sort;
     pub(crate) mod process_killer;
     pub(crate) mod strings;
 }
@@ -26,7 +30,7 @@ pub mod widgets;
 
 use std::{
     boxed::Box,
-    io::{Write, stderr, stdout},
+    io::{Stdout, Write, stderr, stdout},
     panic::{self, PanicHookInfo},
     sync::{
         Arc,
@@ -38,34 +42,40 @@ use std::{
 
 use app::{App, AppConfigFields, DataFilters, layout_manager::UsedWidgets};
 use crossterm::{
-    cursor::{Hide, Show},
+    cursor::Show,
     event::{
         DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
         Event, KeyEventKind, MouseEventKind, poll, read,
     },
     execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    terminal::{
+        EnterAlternateScreen, LeaveAlternateScreen, SetTitle, disable_raw_mode, enable_raw_mode,
+    },
 };
 use event::{BottomEvent, CollectionThreadEvent, handle_key_event_or_break, handle_mouse_event};
 use options::{args, get_or_create_config, init_app};
-use tui::{Terminal, backend::CrosstermBackend};
+use ratatui::{Terminal, prelude::Backend};
+use ratatui_crossterm::CrosstermBackend;
 #[allow(unused_imports, reason = "this is needed if logging is enabled")]
 use utils::logging::*;
 use utils::{cancellation_token::CancellationToken, conversion::*};
 
-use crate::collection::Data;
+use crate::{app::TerminalFeatures, collection::Data, options::get_terminal_title};
 
 // Used for heap allocation debugging purposes.
 // #[global_allocator]
 // static ALLOC: dhat::Alloc = dhat::Alloc;
 
+#[cfg(all(feature = "musl_alloc", target_os = "linux", target_env = "musl"))]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 /// Try drawing. If not, clean up the terminal and return an error.
 fn try_drawing(
-    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, app: &mut App,
-    painter: &mut canvas::Painter,
+    terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App, painter: &mut canvas::Painter,
 ) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
-        cleanup_terminal(terminal)?;
+        cleanup_terminal(terminal, app.terminal_features)?;
         Err(err.into())
     } else {
         Ok(())
@@ -74,18 +84,27 @@ fn try_drawing(
 
 /// Clean up the terminal before returning it to the user.
 fn cleanup_terminal(
-    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+    terminal: &mut Terminal<CrosstermBackend<Stdout>>, terminal_features: TerminalFeatures,
 ) -> anyhow::Result<()> {
     disable_raw_mode()?;
 
-    execute!(
-        terminal.backend_mut(),
-        DisableMouseCapture,
-        DisableBracketedPaste,
-        LeaveAlternateScreen,
-        Show,
-    )?;
+    if terminal_features.mouse_capture_enabled {
+        let _ = execute!(terminal.backend_mut(), DisableMouseCapture);
+    }
+
+    if terminal_features.bracketed_paste_enabled {
+        let _ = execute!(terminal.backend_mut(), DisableBracketedPaste);
+    }
+
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
+
+    if terminal_features.custom_name_enabled {
+        // Reset terminal window title to default (blank apparently does so).
+        if let Err(err) = execute!(terminal.backend_mut(), SetTitle("")) {
+            eprintln!("Failed to reset terminal title: {err:?}");
+        }
+    }
 
     Ok(())
 }
@@ -98,8 +117,8 @@ fn check_if_terminal() {
         eprintln!(
             "Warning: bottom is not being output to a terminal. Things might not work properly."
         );
-        eprintln!("If you're stuck, press 'q' or 'Ctrl-c' to quit the program.");
-        stderr().flush().unwrap();
+        eprintln!("If you're stuck, press 'q', 'Q', or 'Ctrl-c' to quit the program.");
+        stderr().flush().expect("should succeed in flushing stderr");
         thread::sleep(Duration::from_secs(1));
     }
 }
@@ -108,13 +127,12 @@ fn check_if_terminal() {
 pub fn reset_stdout() {
     let mut stdout = stdout();
     let _ = disable_raw_mode();
-    let _ = execute!(
-        stdout,
-        DisableMouseCapture,
-        DisableBracketedPaste,
-        LeaveAlternateScreen,
-        Show,
-    );
+    let _ = execute!(stdout, DisableMouseCapture);
+    let _ = execute!(stdout, DisableBracketedPaste);
+    let _ = execute!(stdout, LeaveAlternateScreen);
+    let _ = execute!(stdout, Show);
+    // We unconditionally reset the terminal title back to the default here by doing this.
+    let _ = execute!(stdout, SetTitle(""));
 }
 
 /// A panic hook to properly restore the terminal in the case of a panic.
@@ -128,17 +146,22 @@ fn panic_hook(panic_info: &PanicHookInfo<'_>) {
         },
     };
 
-    let backtrace = format!("{:?}", backtrace::Backtrace::new());
+    let backtrace = format!("{:?}", std::backtrace::Backtrace::capture());
 
     reset_stdout();
 
-    // Print stack trace. Must be done after!
+    // Print stack trace. Must be done after! Ignore write errors, as `println!`
+    // would panic inside this hook (and abort) if the terminal is gone.
     if let Some(panic_info) = panic_info.location() {
-        println!("thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}")
+        let _ = writeln!(
+            stdout(),
+            "thread '<unnamed>' panicked at '{msg}', {panic_info}\n\r{backtrace}"
+        );
     }
 
-    // TODO: Might be cleaner in the future to use a cancellation token, but that causes some fun issues with
-    // lifetimes; for now if it panics then shut down the main program entirely ASAP.
+    // TODO: Might be cleaner in the future to use a cancellation token, but
+    // that causes some fun issues with lifetimes; for now if it panics then
+    // shut down the main program entirely ASAP.
     std::process::exit(1);
 }
 
@@ -154,63 +177,60 @@ fn create_input_thread(
 
         loop {
             // We don't block.
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
-                    break;
-                }
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated
+            {
+                break;
             }
 
-            if let Ok(poll) = poll(Duration::from_millis(20)) {
-                if poll {
-                    if let Ok(event) = read() {
-                        match event {
-                            Event::Resize(_, _) => {
-                                // TODO: Might want to debounce this in the future, or take into
-                                // account the actual resize values.
-                                // Maybe we want to keep the current implementation in case the
-                                // resize event might not fire...
-                                // not sure.
+            if let Ok(poll) = poll(Duration::from_millis(20))
+                && poll
+                && let Ok(event) = read()
+            {
+                match event {
+                    Event::Resize(_, _) => {
+                        // TODO: Might want to debounce this in the future, or
+                        // take into account the actual
+                        // resize values. Maybe we want
+                        // to keep the current implementation in case the
+                        // resize event might not fire...
+                        // not sure.
 
-                                if sender.send(BottomEvent::Resize).is_err() {
-                                    break;
-                                }
-                            }
-                            Event::Paste(paste) => {
-                                if sender.send(BottomEvent::PasteEvent(paste)).is_err() {
-                                    break;
-                                }
-                            }
-                            Event::Key(key)
-                                if !keys_disabled && key.kind == KeyEventKind::Press =>
-                            {
-                                // For now, we only care about key down events. This may change in
-                                // the future.
-                                if sender.send(BottomEvent::KeyInput(key)).is_err() {
-                                    break;
-                                }
-                            }
-                            Event::Mouse(mouse) => match mouse.kind {
-                                MouseEventKind::Moved | MouseEventKind::Drag(..) => {}
-                                MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
-                                    if Instant::now().duration_since(mouse_timer).as_millis() >= 20
-                                    {
-                                        if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                            break;
-                                        }
-                                        mouse_timer = Instant::now();
-                                    }
-                                }
-                                _ => {
-                                    if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
-                                        break;
-                                    }
-                                }
-                            },
-                            Event::Key(_) => {}
-                            Event::FocusGained => {}
-                            Event::FocusLost => {}
+                        if sender.send(BottomEvent::Resize).is_err() {
+                            break;
                         }
                     }
+                    Event::Paste(paste) => {
+                        if sender.send(BottomEvent::PasteEvent(paste)).is_err() {
+                            break;
+                        }
+                    }
+                    Event::Key(key) if !keys_disabled && key.kind == KeyEventKind::Press => {
+                        // For now, we only care about key down events. This may
+                        // change in the future.
+                        if sender.send(BottomEvent::KeyInput(key)).is_err() {
+                            break;
+                        }
+                    }
+                    Event::Mouse(mouse) => match mouse.kind {
+                        MouseEventKind::Moved | MouseEventKind::Drag(..) => {}
+                        MouseEventKind::ScrollDown | MouseEventKind::ScrollUp => {
+                            if Instant::now().duration_since(mouse_timer).as_millis() >= 20 {
+                                if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                    break;
+                                }
+                                mouse_timer = Instant::now();
+                            }
+                        }
+                        _ => {
+                            if sender.send(BottomEvent::MouseInput(mouse)).is_err() {
+                                break;
+                            }
+                        }
+                    },
+                    Event::Key(_) => {}
+                    Event::FocusGained => {}
+                    Event::FocusLost => {}
                 }
             }
         }
@@ -228,8 +248,11 @@ fn create_collection_thread(
     let show_average_cpu = app_config_fields.show_average_cpu;
     let update_sleep = app_config_fields.update_rate;
     let get_process_threads = app_config_fields.get_process_threads;
+    let get_process_swap = app_config_fields.get_process_swap;
     #[cfg(feature = "zfs")]
     let get_arc_free = app_config_fields.free_arc;
+    let include_unmounted_disks =
+        app_config_fields.disk_show_unmounted || app_config_fields.disk_io_graph_show_unmounted;
 
     thread::spawn(move || {
         let mut data_collector = collection::DataCollector::new(filters);
@@ -239,21 +262,24 @@ fn create_collection_thread(
         data_collector.set_unnormalized_cpu(unnormalized_cpu);
         data_collector.set_show_average_cpu(show_average_cpu);
         data_collector.set_get_process_threads(get_process_threads);
+        data_collector.set_get_process_swap(get_process_swap);
         #[cfg(feature = "zfs")]
         data_collector.set_free_arc_mem(get_arc_free);
+        data_collector.set_include_unmounted_disks(include_unmounted_disks);
 
         data_collector.update_data();
         data_collector.data = Data::default();
 
-        // Tiny sleep I guess? To go between the first update above and the first update in the loop.
+        // Tiny sleep I guess? To go between the first update above and the
+        // first update in the loop.
         std::thread::sleep(Duration::from_millis(5));
 
         loop {
             // Check once at the very top... don't block though.
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
-                    break;
-                }
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated
+            {
+                break;
             }
 
             if let Ok(message) = control_receiver.try_recv() {
@@ -268,10 +294,10 @@ fn create_collection_thread(
             data_collector.update_data();
 
             // Yet another check to bail if needed... do not block!
-            if let Some(is_terminated) = cancellation_token.try_check() {
-                if is_terminated {
-                    break;
-                }
+            if let Some(is_terminated) = cancellation_token.try_check()
+                && is_terminated
+            {
+                break;
             }
 
             let event = BottomEvent::Update(Box::from(data_collector.data));
@@ -293,7 +319,6 @@ fn create_collection_thread(
 #[inline]
 pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // let _profiler = dhat::Profiler::new_heap();
-
     let args = args::get_args();
 
     #[cfg(feature = "logging")]
@@ -308,6 +333,9 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
 
     // Read from config file.
     let config = get_or_create_config(args.general.config_location.as_deref())?;
+
+    // Get a possible app title. We do this here to avoid having to store it.
+    let title = get_terminal_title(&args, &config);
 
     // Create the "app" and initialize a bunch of stuff.
     let (mut app, widget_layout, styling) = init_app(args, config)?;
@@ -362,29 +390,57 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     *enable_error_hook = true;
 
     let mut stdout_val = stdout();
-    execute!(stdout_val, Hide, EnterAlternateScreen, EnableBracketedPaste)?;
-    if app.app_config_fields.disable_click {
-        execute!(stdout_val, DisableMouseCapture)?;
-    } else {
+    let mut terminal_features = TerminalFeatures::default();
+
+    match title {
+        Some(Ok(title)) => match execute!(stdout_val, SetTitle(title)) {
+            Ok(_) => {
+                terminal_features.custom_name_enabled = true;
+            }
+            Err(err) => {
+                eprintln!("Failed to set terminal title: {err:?}");
+            }
+        },
+        Some(Err(err)) => {
+            eprintln!("{err:?}");
+        }
+        None => {}
+    }
+
+    execute!(stdout_val, EnterAlternateScreen)?;
+
+    // Note that some operating systems (basically Windows 8.1 and older) don't
+    // support this, so we'll catch the error, but not outright fail.
+    // For more info, see https://github.com/ClementTsang/bottom/issues/2277 and
+    // https://github.com/helix-editor/helix/discussions/9025.
+    match execute!(stdout_val, EnableBracketedPaste) {
+        Err(err) if err.kind() == std::io::ErrorKind::Unsupported => {
+            terminal_features.bracketed_paste_enabled = false;
+        }
+        Err(err) => return Err(err.into()),
+        Ok(_) => {}
+    }
+
+    terminal_features.mouse_capture_enabled = !app.app_config_fields.disable_click;
+    if terminal_features.mouse_capture_enabled {
         execute!(stdout_val, EnableMouseCapture)?;
+    } else {
+        execute!(stdout_val, DisableMouseCapture)?;
     }
     enable_raw_mode()?;
 
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout_val))?;
-    terminal.clear()?;
+
+    // This may fail in some environments, like tests, since it may fail to get
+    // the cursor position. In that case, fall back to just manually
+    // clearing it with backend.
+    if terminal.clear().is_err() {
+        terminal.backend_mut().clear()?;
+    }
+
     terminal.hide_cursor()?;
 
-    #[cfg(target_os = "freebsd")]
-    let _stderr_fd = {
-        // A really ugly band-aid to suppress stderr warnings on FreeBSD due to sysinfo.
-        // For more information, see https://github.com/ClementTsang/bottom/issues/798.
-        use std::fs::OpenOptions;
-
-        use filedescriptor::{FileDescriptor, StdioDescriptor};
-
-        let path = OpenOptions::new().write(true).open("/dev/null")?;
-        FileDescriptor::redirect_stdio(&path, StdioDescriptor::Stderr)?
-    };
+    app.terminal_features = terminal_features;
 
     // Set panic hook
     panic::set_hook(Box::new(panic_hook));
@@ -429,8 +485,9 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
                 BottomEvent::Update(data) => {
                     app.data_store.eat_data(data, &app.app_config_fields);
 
-                    // This thing is required as otherwise, some widgets can't draw correctly w/o
-                    // some data (or they need to be re-drawn).
+                    // This thing is required as otherwise, some widgets can't
+                    // draw correctly w/o some data (or they
+                    // need to be re-drawn).
                     if first_run {
                         first_run = false;
                         app.is_force_redraw = true;
@@ -478,7 +535,7 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // I think doing it in this order is safe...
     // TODO: maybe move the cancellation token to the ctrl-c handler?
     cancellation_token.cancel();
-    cleanup_terminal(&mut terminal)?;
+    cleanup_terminal(&mut terminal, terminal_features)?;
 
     Ok(())
 }

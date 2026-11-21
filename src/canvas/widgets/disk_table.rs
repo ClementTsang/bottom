@@ -1,4 +1,4 @@
-use tui::{Frame, layout::Rect};
+use ratatui::{Frame, layout::Rect};
 
 use crate::{
     app,

@@ -61,55 +61,56 @@ Let's say you're installing [Iosevka](https://github.com/be5invis/Iosevka). The 
 
 4. Here, add a new `String value`, and set the `Name` to a bunch of 0's (e.g. `000` - make sure the name isn't already used), then set the `Data` to the font name (e.g. `Iosevka`).
 
-<figure>
-    <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
-    <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
-</figure>
+    <figure>
+        <img src="../assets/screenshots/troubleshooting/regedit_fonts.webp" alt="Regedit menu showing how to add a new font for Command Prompt/PowerShell"/>
+        <figcaption><sub>The last entry is the new entry for Iosevka</sub></figcaption>
+    </figure>
 
 5. Then, open the Command Prompt/PowerShell, and right-click on the top bar, and open "Properties":
 
-<figure>
-    <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
-</figure>
+    <figure>
+        <img src="../assets/screenshots/troubleshooting/cmd_prompt_props.webp" alt="Opening the properties menu in Command Prompt/PowerShell"/>
+    </figure>
 
 6. From here, go to "Font", and set the font to your new font (so in this example, Iosevka):
 
-<figure>
-    <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
-</figure>
+    <figure>
+        <img src="../assets/screenshots/troubleshooting/cmd_prompt_font.webp" alt="Setting a new font in Command Prompt/PowerShell"/>
+    </figure>
 
 ## Why can't I see all my temperature sensors on Windows?
 
-This is a [known limitation](./support/official.md#windows), some sensors may require admin privileges to get sensor data.
+This is a known issue, some sensors may require admin privileges to get sensor data.
 
 ## Why don't I see dual batteries on Windows reported separately? (e.g. Thinkpads)
 
-This is a [known limitation](./support/official.md#windows) which seems to be with how batteries are being detected on Windows.
+This is a known issue which seems to be with how batteries are being detected on Windows.
 
 ## Why can't I see all my temperature sensors on WSL?
 
-This is a [known limitation](./support/official.md#windows) with WSL. Due to how it works, hosts may not expose their
+This is a known limitation with WSL. Due to how it works, hosts may not expose their
 temperature sensors and therefore, temperature sensors might be missing.
 
 ## Why does WSL2 not match Task Manager?
 
-This is a [known limitation](./support/official.md#windows) with WSL2. Due to how WSL2 works, the two might not match
+This is a known limitation with WSL2. Due to how WSL2 works, the two might not match
 up in terms of reported data.
 
 ## Why can't I see all my processes/process data on macOS?
 
-This is a [known limitation](./support/official.md#macos), and you may have to run the program with elevated
-privileges to work around it - for example:
+You may have to run the program with elevated privileges to work around it - for example:
 
 ```bash
 sudo btm
 ```
 
-**Please note that you should be certain that you trust any software you grant root privileges.**
+!!! Warning
 
-There are measures taken to try to maximize the amount of information obtained without elevated privileges. For example,
-one can modify the instructions found on the [htop wiki](https://github.com/hishamhm/htop/wiki/macOS:-run-without-sudo)
-on how to run htop without sudo for bottom. However, **please** understand the potential security risks before doing so!
+    Please note that you should be certain that you trust any software you grant root privileges.
+
+    There are measures taken to try to maximize the amount of information obtained without elevated privileges. For example,
+    one can modify the instructions found on the [htop wiki](https://github.com/hishamhm/htop/wiki/macOS:-run-without-sudo)
+    on how to run htop without sudo for bottom. However, **please** understand the potential security risks before doing so!
 
 ## My configuration file isn't working
 
@@ -121,7 +122,7 @@ It may be handy to refer to the automatically generated config files or the
 [sample configuration files](https://github.com/ClementTsang/bottom/tree/main/sample_configs). The config files also
 follow the [TOML](https://toml.io/en/) format.
 
-Also make sure your config options are under the right table - for example, to set your temperature type, you must
+Also make sure your config option settings are in the right location - for example, to set your temperature type, you must
 set it under the `[flags]` table:
 
 ```toml
@@ -129,11 +130,12 @@ set it under the `[flags]` table:
 temperature_type = "f"
 ```
 
-Meanwhile, if you want to set a custom color scheme, it would be under the `[styles]` table:
+Meanwhile, if you want to set a custom colour or styling scheme, it would be under the `[styles]` table - for example:
 
 ```toml
 [styles.tables.headers]
-color="LightBlue"
+colour = "LightBlue"
+bold = true
 ```
 
 To help validate your configuration files, there is [JSON Schema](https://json-schema.org/) support if your IDE/editor

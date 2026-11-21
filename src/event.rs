@@ -57,7 +57,7 @@ pub fn handle_key_event_or_break(
 
     if event.modifiers.is_empty() {
         match event.code {
-            KeyCode::Char('q') if !app.is_in_search_widget() => return true,
+            KeyCode::Char('q') | KeyCode::Char('Q') if !app.is_in_any_search() => return true,
             KeyCode::End => app.skip_to_last(),
             KeyCode::Home => app.skip_to_first(),
             KeyCode::Up => app.on_up_key(),
@@ -103,14 +103,12 @@ pub fn handle_key_event_or_break(
                 KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
                 KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
-                KeyCode::Char('r') => {
-                    if reset_sender.send(CollectionThreadEvent::Reset).is_ok() {
-                        app.reset();
-                    }
+                KeyCode::Char('r') if reset_sender.send(CollectionThreadEvent::Reset).is_ok() => {
+                    app.reset();
                 }
                 KeyCode::Char('a') => app.skip_cursor_beginning(),
                 KeyCode::Char('e') => app.skip_cursor_end(),
-                KeyCode::Char('u') if app.is_in_search_widget() => app.clear_search(),
+                KeyCode::Char('u') if app.is_in_any_search() => app.clear_search(),
                 KeyCode::Char('w') => app.clear_previous_word(),
                 KeyCode::Char('h') => app.on_backspace(),
                 KeyCode::Char('d') => app.scroll_half_page_down(),
@@ -130,6 +128,7 @@ pub fn handle_key_event_or_break(
                 KeyCode::Right => app.move_widget_selection(&WidgetDirection::Right),
                 KeyCode::Up => app.move_widget_selection(&WidgetDirection::Up),
                 KeyCode::Down => app.move_widget_selection(&WidgetDirection::Down),
+                KeyCode::Char('Q') if !app.is_in_any_search() => return true,
                 KeyCode::Char(caught_char) => app.on_char_key(caught_char),
                 _ => {}
             }

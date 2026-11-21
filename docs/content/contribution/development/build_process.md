@@ -45,13 +45,14 @@ Some builds use [`cross`](https://github.com/cross-rs/cross) to do cross-compila
 
 ## MSI
 
-This builds a full Windows installer using [`cargo-wix`](https://github.com/volks73/cargo-wix). This requires some setup beforehand with some dependencies:
+This builds a full Windows installer using [`cargo-wix`](https://github.com/volks73/cargo-wix) and [WiX Toolset 4](https://github.com/wixtoolset/wix).
+This requires some setup beforehand with some dependencies:
 
 - Net-Framework-Core (handled by Powershell)
-- wixtoolset (handled by chocolatey)
+- WiX Toolset 4 (needs to be separately installed on GitHub runners as a .NET tool)
 - Rust toolchain
 
-After that, cache is enabled, and `cargo wix` takes care of the rest.
+After that, `cargo wix` takes care of the rest.
 
 ## `.deb`
 
