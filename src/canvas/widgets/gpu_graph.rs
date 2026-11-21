@@ -39,8 +39,7 @@ impl Painter {
             let gpu_styles = &self.styles.gpu_colours;
             let short_gpu_names = app_state.app_config_fields.gpu_usage_short_names;
             let gpu_count = data.time_series_data.gpu_usage.len();
-            let duplicate_names =
-                duplicate_gpu_names(data.time_series_data.gpu_usage.iter().map(|(key, _)| key));
+            let duplicate_names = duplicate_gpu_names(data.time_series_data.gpu_usage.keys());
 
             let mut graph_data: Vec<GraphData<'_>> = Vec::with_capacity(gpu_count);
 
