@@ -26,8 +26,8 @@ pub(crate) struct ProcessesConfig {
 
     /// The default sort mode for string columns. One of "Lexical" or "Natural".
     ///
-    /// Lexical is typical alphanumeric order, while natural will order numbers inside
-    /// strings by their numerical value (e.g. proc10 comes after proc2).
+    /// Lexical is typical alphanumeric order, while natural will order numbers
+    /// inside strings by their numerical value (e.g. proc10 comes after proc2).
     ///
     /// Defaults to "Lexical".
     #[serde(default)]
@@ -46,11 +46,6 @@ pub(crate) struct ProcessesConfig {
     /// Shows the full command name instead of the process name by default.
     pub process_command: Option<bool>,
 
-    // This does nothing on Windows, but we leave it enabled to make the config
-    // file consistent across platforms.
-    //
-    // #[cfg(any(target_os = "linux", target_os = "macos", target_os =
-    // "freebsd"))]
     /// Disable the advanced kill dialog and just show the basic one with no
     /// options.
     #[cfg_attr(

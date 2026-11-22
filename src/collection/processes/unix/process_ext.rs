@@ -225,7 +225,7 @@ pub(crate) trait UnixProcessExt {
 }
 
 fn convert_process_status_to_char(status: ProcessStatus) -> char {
-    // TODO: Based on https://github.com/GuillaumeGomez/sysinfo/blob/baa46efb46d82f21b773088603720262f4a34646/src/unix/freebsd/process.rs#L13?
+    // Based on https://github.com/GuillaumeGomez/sysinfo/blob/baa46efb46d82f21b773088603720262f4a34646/src/unix/freebsd/process.rs#L13?
     cfg_select! {
         target_os = "macos" => {
             // SAFETY: These are all const and should be valid characters.

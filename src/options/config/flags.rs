@@ -67,10 +67,9 @@ pub(crate) struct GeneralConfig {
     pub(crate) hide_k_threads: Option<bool>,
     pub(crate) tree_collapse: Option<bool>,
     pub(crate) process_command: Option<bool>,
-    // This does nothing on Windows, but we leave it enabled to make the config
-    // file consistent across platforms.
-    //
-    // #[cfg(any(target_os = "linux", target_os = "macos", target_os = "freebsd"))]
+    /// This does nothing on Windows, but we leave it enabled to make the config
+    /// file consistent across platforms. I have thought about making it only
+    /// work for Linux, macOS, and FreeBSD, but... eh.
     pub(crate) disable_advanced_kill: Option<bool>,
     pub(crate) process_memory_as_value: Option<bool>,
     pub(crate) group_processes: Option<bool>,
@@ -80,6 +79,7 @@ pub(crate) struct GeneralConfig {
     pub(crate) tree: Option<bool>,
     pub(crate) current_usage: Option<bool>,
     pub(crate) unnormalized_cpu: Option<bool>,
-    /// Sets a custom string displayed in the terminal title; add "{hostname}" to substitute it for your hostname.
+    /// Sets a custom string displayed in the terminal title; add "{hostname}"
+    /// to substitute it for your hostname.
     pub(crate) terminal_title: Option<String>,
 }
