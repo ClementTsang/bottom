@@ -16,7 +16,7 @@ Set FontSize 16
 Set Width 1280
 Set Height 720
 Set Padding 10
-Set Theme "Dracula"
+Set Theme "GruvboxDark"
 Set Framerate 30
 
 Hide
