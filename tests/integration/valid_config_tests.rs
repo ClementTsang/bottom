@@ -60,7 +60,7 @@ fn test_uncommented_default_config(original: &Path, test_name: &str) {
     let default_config = Regex::new(r"(?m)^#(\s\s+)([\[])")
         .unwrap()
         .replace_all(&default_config, "$2");
-    let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z].*=.*)")
+    let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z].*=.+)")
         .unwrap()
         .replace_all(&default_config, "$2");
 
