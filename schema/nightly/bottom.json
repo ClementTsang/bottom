@@ -307,7 +307,7 @@
           ]
         },
         "sort_mode": {
-          "description": "The default sort mode for string columns. One of \"Lexical\" or \"Natural\".\n\nLexical is typical alphanumeric order, while natural will order numbers inside\nstrings by their numerical value (e.g. sda10 comes after sda2).\n\nDefaults to \"Lexical\".",
+          "description": "The default sort mode for string columns. One of \"Lexical\" or \"Natural\".\n\nLexical is typical alphanumeric order, while natural will order numbers\ninside strings by their numerical value (e.g. sda10 comes after sda2).\n\nDefaults to \"Lexical\".",
           "anyOf": [
             {
               "$ref": "#/$defs/SortMode"
@@ -562,6 +562,7 @@
           ]
         },
         "disable_advanced_kill": {
+          "description": "This does nothing on Windows, but we leave it enabled to make the config\nfile consistent across platforms. I have thought about making it only\nwork for Linux, macOS, and FreeBSD, but... eh.",
           "type": [
             "boolean",
             "null"
@@ -736,7 +737,7 @@
           ]
         },
         "terminal_title": {
-          "description": "Sets a custom string displayed in the terminal title; add \"{hostname}\" to substitute it for your hostname.",
+          "description": "Sets a custom string displayed in the terminal title; add \"{hostname}\"\nto substitute it for your hostname.",
           "type": [
             "string",
             "null"
@@ -1232,7 +1233,7 @@
           ]
         },
         "sort_mode": {
-          "description": "The default sort mode for string columns. One of \"Lexical\" or \"Natural\".\n\nLexical is typical alphanumeric order, while natural will order numbers inside\nstrings by their numerical value (e.g. proc10 comes after proc2).\n\nDefaults to \"Lexical\".",
+          "description": "The default sort mode for string columns. One of \"Lexical\" or \"Natural\".\n\nLexical is typical alphanumeric order, while natural will order numbers\ninside strings by their numerical value (e.g. proc10 comes after proc2).\n\nDefaults to \"Lexical\".",
           "anyOf": [
             {
               "$ref": "#/$defs/SortMode"
@@ -1435,7 +1436,7 @@
           ]
         },
         "theme": {
-          "description": "A built-in theme. Currently supported themes are:\n- default\n- default-light: default but adjusted for lighter backgrounds\n- gruvbox: a bright theme with 'retro groove' colours\n- gruvbox-light: gruvbox but adjusted for lighter backgrounds\n- nord: an arctic, north-bluish colour palette\n- nord-light: nord but adjusted for lighter backgrounds\n\nAn explicitly selected built-in theme is used as-is rather than being combined with\ncomponent-level styles from the config file.\n\nIn addition, you can use special values to control dark/light detection:\n- auto: (default) automatically pick a dark or light theme based on the terminal,\n  controlled by '--theme-dark' and '--theme-light' respectively\n- dark: force the dark theme set by '--theme-dark'\n- light: force the light theme set by '--theme-light'\"\n\nComponent-level styles are applied when no built-in theme is selected, or when using the\n`custom` value for `theme_dark` or `theme_light`.",
+          "description": "A built-in theme. Currently supported themes are:\n- default\n- default-light: default but adjusted for lighter backgrounds\n- gruvbox: a bright theme with 'retro groove' colours\n- gruvbox-light: gruvbox but adjusted for lighter backgrounds\n- nord: an arctic, north-bluish colour palette\n- nord-light: nord but adjusted for lighter backgrounds\n\nAn explicitly selected built-in theme is used as-is rather than being\ncombined with component-level styles from the config file.\n\nIn addition, you can use special values to control dark/light detection:\n- auto: (default) automatically pick a dark or light theme based on the\n  terminal, controlled by '--theme-dark' and '--theme-light'\n  respectively\n- dark: force the dark theme set by '--theme-dark'\n- light: force the light theme set by '--theme-light'\"\n\nComponent-level styles are applied when no built-in theme is selected,\nor when using the `custom` value for `theme_dark` or `theme_light`.",
           "type": [
             "string",
             "null"
@@ -1520,7 +1521,7 @@
           ]
         },
         "sort_mode": {
-          "description": "The default sort mode for string columns. One of \"Lexical\" or \"Natural\".\n\nLexical is typical alphanumeric order, while natural will order numbers inside\nstrings by their numerical value (e.g. temp10 comes after temp2).\n\nDefaults to \"Lexical\".",
+          "description": "The default sort mode for string columns. One of \"Lexical\" or \"Natural\".\n\nLexical is typical alphanumeric order, while natural will order numbers\ninside strings by their numerical value (e.g. temp10 comes after temp2).\n\nDefaults to \"Lexical\".",
           "anyOf": [
             {
               "$ref": "#/$defs/SortMode"
