@@ -1,0 +1,4 @@
+[styles]
+theme = "auto"
+theme_dark = "nord"
+theme_light = "gruvbox-light"

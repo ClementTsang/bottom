@@ -4,14 +4,11 @@ Various parts of the bottom can be styled, using either built-in themes or custo
 
 ## Precedence
 
-As there are a few ways styles can be applied to bottom, the order of which styles are prioritized are, in order of
-highest precedence to lowest precedence:
+An explicitly selected built-in theme is used as-is rather than being combined with component-level styles from the config.
+This applies to built-in themes selected via command-line args and to `theme`, `theme_dark`, or `theme_light` in the config.
 
-1. Built-in themes set via command-line args (e.g. `btm --theme gruvbox`)
-2. Custom themes set via config file
-3. Built-in themes set via config file
-
-If nothing is set, it will fall back to the default theme.
+Component-level styles from the config are applied when using the detected default theme, or when `theme_dark` or
+`theme_light` is set to `"custom"`. If no theme is set, bottom uses the detected default theme.
 
 ## Built-in styles
 
@@ -34,6 +31,37 @@ To set the theme using the config file:
 ```toml
 [styles]
 theme = "gruvbox"
+```
+
+### Automatic dark/light theme switching
+
+bottom can automatically detect your terminal's background colour (dark or light) and switch to the appropriate theme at startup. This is enabled by default, as if the config
+was set like:
+
+```toml
+[styles]
+theme = "auto"
+theme_dark = "default"
+theme_light = "default-light"
+```
+
+You can also use the special value `"custom"` for either `theme_dark` or `theme_light` to use your custom colour
+palette from the config file for that mode.
+
+If you only want to force a specific mode (e.g. always dark regardless of terminal background), set `theme` to
+`"dark"` or `"light"`:
+
+```toml
+[styles]
+theme = "dark"
+theme_dark = "nord"
+```
+
+Alternatively, you can just directly set the theme like so:
+
+```toml
+[styles]
+theme = "nord"
 ```
 
 ## Custom styling
@@ -114,6 +142,16 @@ selected_text = "#fff"
 ```
 
 ### Configuration
+
+#### Theme
+
+These can be set under `[styles]`:
+
+| Config field    | Details                                                                                      | Examples                      |
+| --------------- | -------------------------------------------------------------------------------------------- | ----------------------------- |
+| `theme`         | A built-in theme name, or `"auto"`, `"dark"`, `"light"` for dark/light detection             | `theme = "auto"`              |
+| `theme_dark`    | Theme to use for dark backgrounds or when `theme = "dark"`; use `"custom"` for custom palette | `theme_dark = "nord"`         |
+| `theme_light`   | Theme to use for light backgrounds or when `theme = "light"`; use `"custom"` for custom palette | `theme_light = "default-light"` |
 
 #### CPU
 

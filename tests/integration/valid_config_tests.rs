@@ -49,11 +49,18 @@ fn test_uncommented_default_config(original: &Path, test_name: &str) {
         }
     };
 
+    // Trim off the starting comment if it's a "#" directly following an
+    // alphabetical character or '['.
     let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
         .unwrap()
         .replace_all(&default_config, "$1");
 
-    let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z\[])")
+    // Then, trim off anything that has more than 2 spaces + alphabetical
+    // character if there's an '=', or '[' following a "#".
+    let default_config = Regex::new(r"(?m)^#(\s\s+)([\[])")
+        .unwrap()
+        .replace_all(&default_config, "$2");
+    let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z].*=.+)")
         .unwrap()
         .replace_all(&default_config, "$2");
 
@@ -259,6 +266,12 @@ fn test_gpu_graph() {
 #[test]
 fn test_deprecated_temperature() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/temperature.toml");
+}
+
+/// This tests the theme, theme_light, and theme_dark settings in a config file.
+#[test]
+fn test_dark_light_styling() {
+    run_and_kill_cfg("./tests/valid_configs/theme_dark_light.toml");
 }
 
 /// Test that deprecated warnings are not shown for config options that are not

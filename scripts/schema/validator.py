@@ -49,7 +49,10 @@ def main():
             read_file = f.read().decode("utf-8")
             read_file = re.sub(r"^#([a-zA-Z\[])", r"\1", read_file, flags=re.MULTILINE)
             read_file = re.sub(
-                r"^#(\s\s+)([a-zA-Z\[])", r"\2", read_file, flags=re.MULTILINE
+                r"^#(\s\s+)([\[])", r"\2", read_file, flags=re.MULTILINE
+            )
+            read_file = re.sub(
+                r"^#(\s\s+)([a-zA-Z].*=.+)", r"\2", read_file, flags=re.MULTILINE
             )
             print(f"uncommented file: \n{read_file}\n=====\n")
 

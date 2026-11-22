@@ -417,7 +417,8 @@
 # Whether to display packet rate and average packet size info. Defaults to false.
 #show_packets = false
 
-# Zeroes out the total network usage ("All") counters so it shows the total usage\nsince the app is started, rather than the total usage since boot.
+# Zeroes out the total network usage ("All") counters so it shows the total usage
+# since the app is started, rather than the total usage since boot.
 #start_zeroed = false
 
 # By default, there are no network interface filters enabled. An example use case is provided below.
@@ -440,17 +441,45 @@
 # These are all the components that support custom theming.  Note that colour support
 # will depend on terminal support.
 #[styles] # Uncomment if you want to use custom styling
-# Built-in themes. Valid values are:
+# A built-in theme. Currently supported themes are:
 # - "default"
-# - "default-light"
-# - "gruvbox"
-# - "gruvbox-light"
-# - "nord"
-# - "nord-light".
+# - "default-light": default but adjusted for lighter backgrounds
+# - "gruvbox": a bright theme with 'retro groove' colours
+# - "gruvbox-light": gruvbox but adjusted for lighter backgrounds
+# - "nord": an arctic, north-bluish colour palette
+# - "nord-light": nord but adjusted for lighter backgrounds
 #
-# This will have the lowest precedence if a custom colour palette is set,
-# or overridden if the command-line flag for a built-in theme is set.
-#theme = "default"
+# In addition, you can use special values to control dark/light detection:
+# - "auto": (default) automatically pick a dark or light theme based on the terminal,
+#   controlled by 'theme_dark' and 'theme_light' respectively
+# - "dark": force the dark theme set by 'theme_dark'
+# - "light": force the light theme set by 'theme_light'
+#
+# If both this and a custom colour scheme are set in the config file,
+# the custom colour scheme will be prioritized first. If a theme is
+# set via the command-line flag, however, it will always be
+# prioritized first.
+#theme = "auto"
+
+# Specify a theme to use when the terminal has a dark background
+# or 'theme' is set to 'dark'. Defaults to using the 'default'
+# theme. You can also use 'custom' to use your custom colour
+# palette from this config file as your dark theme.
+#
+# Note that if the '--theme/--theme_dark' args are used while this
+# option is set in the configuration file, the arguments will take
+# precedence.
+#theme_dark = "default"
+
+# Specify a theme to use when the terminal has a light background
+# or 'theme' is set to 'light'. Defaults to using the 'default-light'
+# theme. You can also use 'custom' to use your custom colour
+# palette from this config file as your light theme.
+#
+# Note that if the '--theme/--theme_light' args are used while this
+# option is set in the configuration file, the arguments will take
+# precedence.
+#theme_light = "default-light"
 
 # Styling options. You can control things like colour choices, text styling (bold, italic, etc), and more.
 # Note that any setting that uses the word "colour" can be substituted for "color" and it will still work fine.

@@ -26,6 +26,7 @@ use ratatui::{style::Style, widgets::BorderType};
 use serde::{Deserialize, Serialize};
 use tables::TableStyle;
 use temp_graph::TempGraphStyle;
+use terminal_colorsaurus::ThemeMode;
 use utils::{opt, set_colour, set_colour_list, set_style};
 use widgets::WidgetStyle;
 
@@ -71,13 +72,44 @@ pub(crate) enum TextStyleConfig {
 #[cfg_attr(feature = "generate_schema", derive(schemars::JsonSchema))]
 #[cfg_attr(test, serde(deny_unknown_fields), derive(PartialEq, Eq))]
 pub(crate) struct StyleConfig {
-    /// A built-in theme.
+    /// A built-in theme. Currently supported themes are:
+    /// - default
+    /// - default-light: default but adjusted for lighter backgrounds
+    /// - gruvbox: a bright theme with 'retro groove' colours
+    /// - gruvbox-light: gruvbox but adjusted for lighter backgrounds
+    /// - nord: an arctic, north-bluish colour palette
+    /// - nord-light: nord but adjusted for lighter backgrounds
     ///
-    /// If this is and a custom colour are both set, in the config file,
-    /// the custom colour scheme will be prioritized first. If a theme
-    /// is set in the command-line args, however, it will always be
-    /// prioritized first.
+    /// An explicitly selected built-in theme is used as-is rather than being combined with
+    /// component-level styles from the config file.
+    ///
+    /// In addition, you can use special values to control dark/light detection:
+    /// - auto: (default) automatically pick a dark or light theme based on the terminal,
+    ///   controlled by '--theme-dark' and '--theme-light' respectively
+    /// - dark: force the dark theme set by '--theme-dark'
+    /// - light: force the light theme set by '--theme-light'"
+    ///
+    /// Component-level styles are applied when no built-in theme is selected, or when using the
+    /// `custom` value for `theme_dark` or `theme_light`.
     pub(crate) theme: Option<Cow<'static, str>>,
+
+    /// Specify a theme to use when the terminal has a dark background
+    /// or 'theme' is set to 'dark'. Defaults to using the 'default'
+    /// theme.
+    ///
+    /// Note that if the '--theme/--theme_dark' args are used while this
+    /// option is set in the configuration file, the arguments will take
+    /// precedence.
+    pub(crate) theme_dark: Option<Cow<'static, str>>,
+
+    /// Specify a theme to use when the terminal has a light background
+    /// or 'theme' is set to 'light'. Defaults to using the 'default-light'
+    /// theme.
+    ///
+    /// Note that if the '--theme/--theme_light' args are used while this
+    /// option is set in the configuration file, the arguments will take
+    /// precedence.
+    pub(crate) theme_light: Option<Cow<'static, str>>,
 
     /// Styling for the CPU widget.
     pub(crate) cpu: Option<CpuStyle>,
@@ -105,6 +137,26 @@ pub(crate) struct StyleConfig {
 
     /// Styling for general widgets.
     pub(crate) widgets: Option<WidgetStyle>,
+}
+
+enum StyleMode {
+    Auto,
+    Dark,
+    Light,
+}
+
+impl StyleMode {
+    fn is_dark(style_mode: Self) -> bool {
+        match style_mode {
+            StyleMode::Auto => {
+                terminal_colorsaurus::theme_mode(terminal_colorsaurus::QueryOptions::default())
+                    .map(|mode| mode == ThemeMode::Dark)
+                    .unwrap_or(true)
+            }
+            StyleMode::Dark => true,
+            StyleMode::Light => false,
+        }
+    }
 }
 
 /// The actual internal representation of the configured styles.
@@ -155,16 +207,145 @@ impl Default for Styles {
 }
 
 impl Styles {
+    /// Resolve the correct styling to use throughout the application.
+    /// This must take into account light/dark modes if configured.
+    ///
+    /// In terms of priority:
+    /// - If `--theme` is set via arguments, then we will use that to determine which theme to apply.
+    /// - We then check if `--theme_dark` or `--theme_light` are set, depending on what `--theme`
+    ///   was set to. If it was not set, then this is skipped.
+    /// - If not, then either keep trying with the argument value of `--theme` or check if the
+    ///   config has it set. If neither is set, defaults to `auto`.
+    /// - Then try resolving the config's `theme_dark` or `theme_light` as appropriate.
+    /// - If they weren't set, they will default to `default` or `default-light` respectively,
+    ///   and then the custom palette from the config will be applied on top if available.
+    ///
+    /// Note this is possibly subject to change! I may make it so you can define custom light and dark palettes instead, for example.
     pub fn new(args: &BottomArgs, config: &Config) -> anyhow::Result<Self> {
-        let mut palette = match &args.style.theme {
-            Some(theme) => Self::from_theme(theme)?,
-            None => match config.styles.as_ref().and_then(|s| s.theme.as_ref()) {
-                Some(theme) => Self::from_theme(theme)?,
-                None => Self::default(),
-            },
+        // First, check if the theme is set via args.
+        let arg_is_dark = {
+            let arg_style_mode = if let Some(theme) = &args.style.theme {
+                if let Ok(style) = Self::from_built_in_theme(theme) {
+                    return Ok(style);
+                } else {
+                    Some(match theme.to_lowercase().as_str() {
+                        "dark" => StyleMode::Dark,
+                        "light" => StyleMode::Light,
+                        "auto" => StyleMode::Auto,
+                        _ => {
+                            return Err(OptionError::other(format!(
+                                "'{theme}' is an invalid argument."
+                            )))?;
+                        }
+                    })
+                }
+            } else {
+                None
+            };
+
+            arg_style_mode.map(StyleMode::is_dark)
         };
 
-        // Apply theme from config on top.
+        // If the theme_dark/theme_light args or config options are set, resolve them here.
+        if let Some(is_dark) = arg_is_dark {
+            let (arg_theme, config_theme) = if is_dark {
+                (
+                    args.style.theme_dark.as_deref(),
+                    config.styles.as_ref().and_then(|s| s.theme_dark.as_deref()),
+                )
+            } else {
+                (
+                    args.style.theme_light.as_deref(),
+                    config
+                        .styles
+                        .as_ref()
+                        .and_then(|s| s.theme_light.as_deref()),
+                )
+            };
+
+            if let Some(theme) = arg_theme {
+                return Self::resolve_selected_theme(theme, config, is_dark);
+            } else if let Some(theme) = config_theme {
+                return Self::resolve_selected_theme(theme, config, is_dark);
+            }
+        }
+
+        // At this point, if we still haven't set a theme, that must me we did not set any theme via args,
+        // or we couldn't resolve a theme via theme_light/theme_dark. If it wasn't set via arg, let's next check
+        // if it was set via config.
+        //
+        // Note that if the theme is not explicitly set, we'll assume it's "auto".
+        let config_is_dark = match arg_is_dark {
+            Some(is_dark) => is_dark,
+            None => {
+                let config_style_mode =
+                    if let Some(theme) = config.styles.as_ref().and_then(|s| s.theme.as_ref()) {
+                        if let Ok(style) = Self::from_built_in_theme(theme) {
+                            return Ok(style);
+                        } else {
+                            match theme.to_lowercase().as_str() {
+                                "dark" => StyleMode::Dark,
+                                "light" => StyleMode::Light,
+                                "auto" => StyleMode::Auto,
+                                _ => {
+                                    return Err(OptionError::other(format!(
+                                        "'{theme}' is an invalid argument."
+                                    )))?;
+                                }
+                            }
+                        }
+                    } else {
+                        StyleMode::Auto
+                    };
+
+                StyleMode::is_dark(config_style_mode)
+            }
+        };
+
+        let (arg_theme, config_theme) = if config_is_dark {
+            (
+                args.style.theme_dark.as_deref(),
+                config.styles.as_ref().and_then(|s| s.theme_dark.as_deref()),
+            )
+        } else {
+            (
+                args.style.theme_light.as_deref(),
+                config
+                    .styles
+                    .as_ref()
+                    .and_then(|s| s.theme_light.as_deref()),
+            )
+        };
+
+        if let Some(theme) = arg_theme {
+            Self::resolve_selected_theme(theme, config, config_is_dark)
+        } else if let Some(theme) = config_theme {
+            Self::resolve_selected_theme(theme, config, config_is_dark)
+        } else {
+            // If we somehow did not resolve the theme still, then automatically the base via the default theme
+            // and finish resolving with any custom colour palette.
+            Self::resolve_theme_from_config(config, config_is_dark)
+        }
+    }
+
+    fn resolve_theme_from_config(config: &Config, is_dark: bool) -> anyhow::Result<Self> {
+        let palette = if is_dark {
+            Self::default_palette()
+        } else {
+            Self::default_light_palette()
+        };
+
+        Self::apply_config_styles(palette, config)
+    }
+
+    fn resolve_selected_theme(theme: &str, config: &Config, is_dark: bool) -> anyhow::Result<Self> {
+        match theme {
+            "custom" => Self::resolve_theme_from_config(config, is_dark),
+            _ => Self::from_built_in_theme(theme),
+        }
+    }
+
+    fn apply_config_styles(mut palette: Self, config: &Config) -> anyhow::Result<Self> {
         if let Some(config_style) = &config.styles {
             palette.set_styles_from_config(config_style)?;
         }
@@ -172,7 +353,7 @@ impl Styles {
         Ok(palette)
     }
 
-    fn from_theme(theme: &str) -> anyhow::Result<Self> {
+    fn from_built_in_theme(theme: &str) -> anyhow::Result<Self> {
         let lower_case = theme.to_lowercase();
         match lower_case.as_str() {
             "default" => Ok(Self::default_palette()),
@@ -281,10 +462,12 @@ impl Styles {
 #[cfg(test)]
 mod test {
 
+    use clap::Parser;
     use ratatui::style::{Color, Style};
 
-    use super::Styles;
-    use crate::options::config::{Config, style::utils::str_to_colour};
+    use crate::options::config::style::utils::str_to_colour;
+
+    use super::*;
 
     #[test]
     fn color_spelling_aliases_work() {
@@ -357,12 +540,66 @@ mod test {
     }
 
     #[test]
+    fn auto_theme_defaults() {
+        let config = toml_edit::de::from_str::<Config>(
+            r#"[styles]
+            theme = "auto"
+            "#,
+        )
+        .expect("auto theme config should parse");
+
+        let dark = Styles::resolve_theme_from_config(&config, true).unwrap();
+        let light = Styles::resolve_theme_from_config(&config, false).unwrap();
+
+        assert_eq!(dark.ram_style, Styles::default_palette().ram_style);
+        assert_eq!(light.ram_style, Styles::default_light_palette().ram_style);
+    }
+
+    #[test]
+    fn auto_theme_with_custom() {
+        let args = BottomArgs::try_parse_from(["btm"]).expect("default arguments should parse");
+        let config = toml_edit::de::from_str::<Config>(
+            r#"[styles]
+            theme = "auto"
+
+            [styles.cpu]
+            avg_entry_colour = "red"
+            "#,
+        )
+        .expect("auto theme config should parse");
+
+        let styles = Styles::new(&args, &config).expect("auto theme should resolve");
+
+        assert_eq!(styles.avg_cpu_colour.fg, Some(Color::Red));
+    }
+
+    /// Ensures that built-in themes are _not_ merged with custom styles if defined
+    /// using `theme`.
+    #[test]
+    fn built_in_theme_merging() {
+        let args = BottomArgs::try_parse_from(["btm"]).expect("default arguments should parse");
+        let config = toml_edit::de::from_str::<Config>(
+            r#"[styles]
+            theme = "nord"
+
+            [styles.cpu]
+            avg_entry_colour = "red"
+            "#,
+        )
+        .expect("theme config should parse");
+
+        let styles = Styles::new(&args, &config).expect("configured theme should resolve");
+
+        assert_eq!(styles.avg_cpu_colour, Styles::nord_palette().avg_cpu_colour);
+    }
+
+    #[test]
     fn built_in_colour_schemes_work() {
-        Styles::from_theme("default").unwrap();
-        Styles::from_theme("default-light").unwrap();
-        Styles::from_theme("gruvbox").unwrap();
-        Styles::from_theme("gruvbox-light").unwrap();
-        Styles::from_theme("nord").unwrap();
-        Styles::from_theme("nord-light").unwrap();
+        Styles::from_built_in_theme("default").unwrap();
+        Styles::from_built_in_theme("default-light").unwrap();
+        Styles::from_built_in_theme("gruvbox").unwrap();
+        Styles::from_built_in_theme("gruvbox-light").unwrap();
+        Styles::from_built_in_theme("nord").unwrap();
+        Styles::from_built_in_theme("nord-light").unwrap();
     }
 }
