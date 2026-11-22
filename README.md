@@ -616,6 +616,9 @@ Thanks to all contributors:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/meop"><img src="https://avatars.githubusercontent.com/u/2015670?v=4&size=100" width="100px" height="100px" alt="Marshall Porter"/><br /><sub><b>Marshall Porter</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=meop" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/max-coplan-136a9a6b/"><img src="https://avatars.githubusercontent.com/u/5297725?v=4&size=100" width="100px" height="100px" alt="Max Coplan"/><br /><sub><b>Max Coplan</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=vegerot" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="http://rashil2000.me"><img src="https://avatars.githubusercontent.com/u/46838874?v=4&size=100" width="100px" height="100px" alt="Rashil Gandhi"/><br /><sub><b>Rashil Gandhi</b></sub></a><br /><a href="https://github.com/ClementTsang/bottom/commits?author=rashil2000" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
