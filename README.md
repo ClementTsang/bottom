@@ -17,7 +17,7 @@
   <img src="demos/demo.gif" alt="Quick demo recording showing off bottom's searching, expanding, and process killing."/>
   <p>
     <sub>
-      Demo using the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme (<code>--theme gruvbox</code>), along with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a> and <a href="https://sw.kovidgoyal.net/kitty/">Kitty</a>
+      Demo using the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme (<code>--theme gruvbox</code>), along with <a href="https://www.ibm.com/plex/">IBM Plex Mono</a>
     </sub>
   </p>
 </div>
