@@ -68,8 +68,8 @@ pub(crate) struct GeneralConfig {
     pub(crate) tree_collapse: Option<bool>,
     pub(crate) process_command: Option<bool>,
     /// This does nothing on Windows, but we leave it enabled to make the config
-    /// file consistent across platforms. I have thought about making it only work
-    /// for Linux, macOS, and FreeBSD, but... eh.
+    /// file consistent across platforms. I have thought about making it only
+    /// work for Linux, macOS, and FreeBSD, but... eh.
     pub(crate) disable_advanced_kill: Option<bool>,
     pub(crate) process_memory_as_value: Option<bool>,
     pub(crate) group_processes: Option<bool>,
