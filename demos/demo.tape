@@ -5,7 +5,8 @@
 #   3. Run in the project directory `vhs demos/demo.tape`.
 #   4. Wait for it to finish, this will take a few minutes.
 #   5. Check the output gif in `demos/demo.gif`.
-#   6. Optimize the gif size. What seems to work is resize to 960x540, then optimize. Tools like Ezgif are great, and aim for 2-3 MB.
+#   6. Optimize the gif size. What seems to work is resize to 960x540 (or 640x360 if you're desperate), then optimize.
+#      Tools like Ezgif are great, and aim for 2-3 MB. Compress ~10-15% ideally.
 
 # Output configuration
 Output demos/demo.gif

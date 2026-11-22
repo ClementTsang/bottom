@@ -25,8 +25,10 @@ columns = ["PID", "Name", "CPU%", "Mem%", "Rps", "Wps", "TRead", "TWrite", "Stat
 [[row]]
  ratio=30
  [[row.child]]
+ ratio=60
  type="cpu"
  [[row.child]]
+ ratio=40
  type="gpu"
 [[row]]
    ratio=40
