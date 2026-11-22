@@ -15,7 +15,7 @@ runs:
   using: composite
   steps:
     - name: FreeBSD Test (Attempt 1)
-      uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
+      uses: vmactions/freebsd-vm@c6d9b096aedae82f7bf19a48050512479ebc0bad # v1.6.0
       if: ${{ inputs.target == 'x86_64-unknown-freebsd' }}
       with:
         release: "${{ inputs.os-version }}"
@@ -30,7 +30,7 @@ runs:
       continue-on-error: true
 
     - name: FreeBSD Test (Attempt 2)
-      uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
+      uses: vmactions/freebsd-vm@c6d9b096aedae82f7bf19a48050512479ebc0bad # v1.6.0
       if: ${{ inputs.target == 'x86_64-unknown-freebsd' &&
         steps.freebsd_attempt_1.outcome == 'failure' }}
       with:
@@ -46,7 +46,7 @@ runs:
       continue-on-error: true
 
     - name: FreeBSD Test (Attempt 3)
-      uses: vmactions/freebsd-vm@c9f815bc7aa0d34c9fdd0619b034a32d6ca7b57e # v1.4.2
+      uses: vmactions/freebsd-vm@c6d9b096aedae82f7bf19a48050512479ebc0bad # v1.6.0
       if: ${{ inputs.target == 'x86_64-unknown-freebsd' &&
         steps.freebsd_attempt_2.outcome == 'failure' }}
       with:
