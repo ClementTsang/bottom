@@ -1672,6 +1672,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Built-in styles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automatic-darklight-theme-switching" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automatic dark/light theme switching
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1719,6 +1736,17 @@
   
     <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#theme" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Theme
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#cpu" class="md-nav__link">
@@ -2266,14 +2294,10 @@
 <h1 id="styling"><a class="toclink" href="#styling">Styling</a></h1>
 <p>Various parts of the bottom can be styled, using either built-in themes or custom theming.</p>
 <h2 id="precedence"><a class="toclink" href="#precedence">Precedence</a></h2>
-<p>As there are a few ways styles can be applied to bottom, the order of which styles are prioritized are, in order of
-highest precedence to lowest precedence:</p>
-<ol>
-<li>Built-in themes set via command-line args (e.g. <code>btm --theme gruvbox</code>)</li>
-<li>Custom themes set via config file</li>
-<li>Built-in themes set via config file</li>
-</ol>
-<p>If nothing is set, it will fall back to the default theme.</p>
+<p>An explicitly selected built-in theme is used as-is rather than being combined with component-level styles from the config.
+This applies to built-in themes selected via command-line args and to <code>theme</code>, <code>theme_dark</code>, or <code>theme_light</code> in the config.</p>
+<p>Component-level styles from the config are applied when using the detected default theme, or when <code>theme_dark</code> or
+<code>theme_light</code> is set to <code>"custom"</code>. If no theme is set, bottom uses the detected default theme.</p>
 <h2 id="built-in-styles"><a class="toclink" href="#built-in-styles">Built-in styles</a></h2>
 <p>bottom has a few built-in themes:</p>
 <ul>
@@ -2288,6 +2312,26 @@ highest precedence to lowest precedence:</p>
 <p>To set the theme using the config file:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[styles]</span>
 <span class="n">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"gruvbox"</span>
+</code></pre></div>
+<h3 id="automatic-darklight-theme-switching"><a class="toclink" href="#automatic-darklight-theme-switching">Automatic dark/light theme switching</a></h3>
+<p>bottom can automatically detect your terminal's background colour (dark or light) and switch to the appropriate theme at startup. This is enabled by default, as if the config
+was set like:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[styles]</span>
+<span class="n">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"auto"</span>
+<span class="n">theme_dark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"default"</span>
+<span class="n">theme_light</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"default-light"</span>
+</code></pre></div>
+<p>You can also use the special value <code>"custom"</code> for either <code>theme_dark</code> or <code>theme_light</code> to use your custom colour
+palette from the config file for that mode.</p>
+<p>If you only want to force a specific mode (e.g. always dark regardless of terminal background), set <code>theme</code> to
+<code>"dark"</code> or <code>"light"</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[styles]</span>
+<span class="n">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"dark"</span>
+<span class="n">theme_dark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"nord"</span>
+</code></pre></div>
+<p>Alternatively, you can just directly set the theme like so:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[styles]</span>
+<span class="n">theme</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"nord"</span>
 </code></pre></div>
 <h2 id="custom-styling"><a class="toclink" href="#custom-styling">Custom styling</a></h2>
 <p>bottom's components can also be individually styled by the user to control the colour of the text style.</p>
@@ -2354,6 +2398,34 @@ to be the colour itself. For example:</p>
 <span class="n">selected_text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"#fff"</span>
 </code></pre></div>
 <h3 id="configuration"><a class="toclink" href="#configuration">Configuration</a></h3>
+<h4 id="theme"><a class="toclink" href="#theme">Theme</a></h4>
+<p>These can be set under <code>[styles]</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Config field</th>
+<th>Details</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>theme</code></td>
+<td>A built-in theme name, or <code>"auto"</code>, <code>"dark"</code>, <code>"light"</code> for dark/light detection</td>
+<td><code>theme = "auto"</code></td>
+</tr>
+<tr>
+<td><code>theme_dark</code></td>
+<td>Theme to use for dark backgrounds or when <code>theme = "dark"</code>; use <code>"custom"</code> for custom palette</td>
+<td><code>theme_dark = "nord"</code></td>
+</tr>
+<tr>
+<td><code>theme_light</code></td>
+<td>Theme to use for light backgrounds or when <code>theme = "light"</code>; use <code>"custom"</code> for custom palette</td>
+<td><code>theme_light = "default-light"</code></td>
+</tr>
+</tbody>
+</table>
 <h4 id="cpu"><a class="toclink" href="#cpu">CPU</a></h4>
 <p>These can be set under <code>[styles.cpu]</code>:</p>
 <table>
@@ -2618,7 +2690,7 @@ to be the colour itself. For example:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 12, 2026 20:28:29">September 12, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 22, 2026 04:12:43">November 22, 2026</span>
   </span>
 
     
