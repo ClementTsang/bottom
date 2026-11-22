@@ -4,14 +4,11 @@ Various parts of the bottom can be styled, using either built-in themes or custo
 
 ## Precedence
 
-As there are a few ways styles can be applied to bottom, the order of which styles are prioritized are, in order of
-highest precedence to lowest precedence:
+An explicitly selected built-in theme is used as-is rather than being combined with component-level styles from the config.
+This applies to built-in themes selected via command-line args and to `theme`, `theme_dark`, or `theme_light` in the config.
 
-1. Built-in themes set via command-line args (e.g. `btm --theme gruvbox`)
-2. Custom themes set via config file
-3. Built-in themes set via config file
-
-If nothing is set, it will fall back to the default theme.
+Component-level styles from the config are applied when using the detected default theme, or when `theme_dark` or
+`theme_light` is set to `"custom"`. If no theme is set, bottom uses the detected default theme.
 
 ## Built-in styles
 

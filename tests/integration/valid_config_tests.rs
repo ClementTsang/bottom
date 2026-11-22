@@ -268,6 +268,12 @@ fn test_deprecated_temperature() {
     run_and_kill_cfg("./tests/valid_configs/deprecated/temperature.toml");
 }
 
+/// This tests the theme, theme_light, and theme_dark settings in a config file.
+#[test]
+fn test_dark_light_styling() {
+    run_and_kill_cfg("./tests/valid_configs/theme_dark_light.toml");
+}
+
 /// Test that deprecated warnings are not shown for config options that are not
 /// actually set, even when a `[flags]` section is present.
 #[test]
