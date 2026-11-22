@@ -709,7 +709,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # the custom colour scheme will be prioritized first. If a theme is
 # set via the command-line flag, however, it will always be
 # prioritized first.
-#theme = "default"
+#theme = "auto"
 
 # Specify a theme to use when the terminal has a dark background
 # or 'theme' is set to 'dark'. Defaults to using the 'default'
@@ -855,10 +855,15 @@ mod test {
             .replace_all(CONFIG_TEXT, "$1");
 
         // Then, trim off anything that has more than 2 spaces + alphabetical
-        // character or '[' following a "#".
-        let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z\[])")
+        // character if there's an '=', or '[' following a "#".
+        let default_config = Regex::new(r"(?m)^#(\s\s+)([\[])")
             .unwrap()
             .replace_all(&default_config, "$2");
+        let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z].*=.*)")
+            .unwrap()
+            .replace_all(&default_config, "$2");
+
+        println!("{}", default_config);
 
         let _config: Config =
             toml_edit::de::from_str(&default_config).expect("can parse default config");

@@ -459,7 +459,7 @@
 # the custom colour scheme will be prioritized first. If a theme is
 # set via the command-line flag, however, it will always be
 # prioritized first.
-#theme = "default"
+#theme = "auto"
 
 # Specify a theme to use when the terminal has a dark background
 # or 'theme' is set to 'dark'. Defaults to using the 'default'

@@ -49,11 +49,18 @@ fn test_uncommented_default_config(original: &Path, test_name: &str) {
         }
     };
 
+    // Trim off the starting comment if it's a "#" directly following an
+    // alphabetical character or '['.
     let default_config = Regex::new(r"(?m)^#([a-zA-Z\[])")
         .unwrap()
         .replace_all(&default_config, "$1");
 
-    let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z\[])")
+    // Then, trim off anything that has more than 2 spaces + alphabetical
+    // character if there's an '=', or '[' following a "#".
+    let default_config = Regex::new(r"(?m)^#(\s\s+)([\[])")
+        .unwrap()
+        .replace_all(&default_config, "$2");
+    let default_config = Regex::new(r"(?m)^#(\s\s+)([a-zA-Z].*=.*)")
         .unwrap()
         .replace_all(&default_config, "$2");
 
