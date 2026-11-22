@@ -32,6 +32,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2326](https://github.com/ClementTsang/bottom/pull/2326): Add basic GPU support for non-Linux operating systems using sysinfo's new GPU API.
 - [#2328](https://github.com/ClementTsang/bottom/pull/2328): Add natural sorting options for the process, disk, and temperature widgets.
 - [#2329](https://github.com/ClementTsang/bottom/pull/2329): Add a GPU usage graph widget.
+- [#1843](https://github.com/ClementTsang/bottom/pull/1843): Automatically switch between light and dark themes based on terminal background colour.
 
 ### Changes
 
