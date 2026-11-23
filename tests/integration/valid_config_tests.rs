@@ -122,6 +122,7 @@ fn test_new_default() {
     }
 }
 
+#[cfg(feature = "default")]
 #[test]
 fn test_demo() {
     let path: &str = "./sample_configs/demo_config.toml";

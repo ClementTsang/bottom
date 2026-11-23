@@ -5,7 +5,6 @@ avg_cpu = true
 temperature_type = "c"
 
 rate = 1000
-cpu_left_legend = false
 current_usage = false
 group_processes = false
 case_sensitive = false
@@ -17,6 +16,35 @@ default_widget_count = 1
 [styles]
 theme = "gruvbox"
 
+[cpu]
+left_legend = false
+
 [processes]
 columns = ["PID", "Name", "CPU%", "Mem%", "Rps", "Wps", "TRead", "TWrite", "State", "Time", "Virt"]
 
+[[row]]
+ ratio=30
+ [[row.child]]
+ ratio=60
+ type="cpu"
+ [[row.child]]
+ ratio=40
+ type="gpu"
+[[row]]
+   ratio=40
+   [[row.child]]
+     ratio=4
+     type="mem"
+   [[row.child]]
+     ratio=3
+     [[row.child.child]]
+       type="temp"
+     [[row.child.child]]
+       type="disk"
+[[row]]
+ ratio=30
+ [[row.child]]
+   type="net"
+ [[row.child]]
+   type="proc"
+   default=true
