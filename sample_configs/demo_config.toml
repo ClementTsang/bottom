@@ -19,6 +19,9 @@ theme = "gruvbox"
 [cpu]
 left_legend = false
 
+[memory]
+zram = true
+
 [processes]
 columns = ["PID", "Name", "CPU%", "Mem%", "Rps", "Wps", "TRead", "TWrite", "State", "Time", "Virt"]
 
