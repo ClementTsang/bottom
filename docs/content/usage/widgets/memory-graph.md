@@ -13,7 +13,11 @@ If the total RAM or swap available is 0, then it is automatically hidden from th
 
 One can also adjust the displayed time range through either the keyboard or mouse, with a range of 30s to 600s.
 
-This widget can also be configured to display Nvidia and AMD GPU memory usage (`--disable_gpu` on Linux/Windows to disable) or cache memory usage (`--enable_cache_memory`).
+This widget can also be configured to things like:
+
+- Display Nvidia and AMD GPU memory usage (enabled by default, `--disable_gpu` or `disable_gpu = true` to disable)
+- Show cache memory on non-Windows systems (`--enable_cache_memory` or set `cache_memory = true` to enable)
+- Show zram usage on Linux (`zram = true` to enable)
 
 ## Key bindings
 
@@ -46,6 +50,6 @@ You can find more info on `/proc/meminfo` and its fields [here](https://access.r
 ### Windows
 
 In Windows, we calculate swap by querying `Get-Counter "\Paging File(*)\% Usage"`. This
-is also what some libraries like [psutil](https://github.com/giampaolo/psutil/blob/master/psutil/arch/windows/mem.c) use. However, note there are also a few other valid methods of
-representing "swap" in Windows (e.g. using `GetPerformanceInfo`), which all slightly don't
-match.
+is also what some libraries like [psutil](https://github.com/giampaolo/psutil/blob/master/psutil/arch/windows/mem.c) use.
+However, note there are also a few other valid methods of representing "swap" in Windows (e.g. using `GetPerformanceInfo`),
+which all slightly don't match.

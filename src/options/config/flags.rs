@@ -47,7 +47,7 @@ pub(crate) struct GeneralConfig {
     pub(crate) show_table_scroll_position: Option<bool>,
     pub(crate) show_table_scroll_bar: Option<bool>,
     pub(crate) read_only: Option<bool>,
-    pub(crate) disable_gpu: Option<bool>,
+    pub(crate) disable_gpu: Option<bool>, // TODO: make this more granular maybe?
     pub(crate) retention: Option<StringOrNum>,
     pub(crate) temperature_type: Option<String>,
 
