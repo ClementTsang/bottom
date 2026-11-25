@@ -1,6 +1,8 @@
 //! Basic zram data collection on Linux.
 
-use std::{fs, ops::AddAssign, path::Path};
+use std::{fs, num::NonZeroU64, ops::AddAssign, path::Path};
+
+use super::MemData;
 
 /// zram-related data.
 ///
@@ -8,13 +10,23 @@ use std::{fs, ops::AddAssign, path::Path};
 #[derive(Debug, Clone, Default)]
 pub struct ZramHarvest {
     /// Total uncompressed capacity, from `disksize`. In bytes.
-    pub capacity_bytes: u64,
+    pub(crate) capacity_bytes: u64,
     /// Uncompressed size of the stored data. In bytes.
-    pub orig_data_bytes: u64,
+    pub(crate) orig_data_bytes: u64,
     /// Compressed size of the stored data. In bytes.
-    pub compressed_data_bytes: u64,
+    pub(crate) compressed_data_bytes: u64,
     /// Actual RAM used, including allocator overhead. In bytes.
-    pub mem_used_bytes: u64,
+    pub(crate) mem_used_bytes: u64,
+}
+
+impl ZramHarvest {
+    /// Return zram usage in terms of used and total bytes.
+    pub fn as_mem_data(&self) -> Option<MemData> {
+        NonZeroU64::new(self.capacity_bytes).map(|total_bytes| MemData {
+            used_bytes: self.orig_data_bytes,
+            total_bytes,
+        })
+    }
 }
 
 impl AddAssign for ZramHarvest {

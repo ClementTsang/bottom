@@ -666,7 +666,7 @@ impl DataCollector {
             self.data.swap = memory::get_swap_usage(self);
 
             #[cfg(target_os = "linux")]
-            {
+            if self.widgets_to_harvest.use_zram {
                 self.data.zram = memory::zram::get_zram_usage();
             }
         }

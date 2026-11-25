@@ -46,6 +46,8 @@ impl Styles {
             #[cfg(not(target_os = "windows"))]
             cache_style: colour!(FIFTH_COLOUR),
             swap_style: colour!(SECOND_COLOUR),
+            #[cfg(target_os = "linux")]
+            zram_style: colour!(FOURTH_COLOUR),
             #[cfg(feature = "zfs")]
             arc_style: colour!(THIRD_COLOUR),
             #[cfg(feature = "gpu")]
@@ -107,6 +109,8 @@ impl Styles {
             #[cfg(not(target_os = "windows"))]
             cache_style: colour!(Color::LightRed),
             swap_style: colour!(Color::Red),
+            #[cfg(target_os = "linux")]
+            zram_style: colour!(Color::Green),
             #[cfg(feature = "zfs")]
             arc_style: colour!(Color::LightBlue),
             #[cfg(feature = "gpu")]

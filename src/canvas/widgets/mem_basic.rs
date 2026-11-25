@@ -100,6 +100,24 @@ impl Painter {
             );
         }
 
+        #[cfg(target_os = "linux")]
+        {
+            if let Some(zram_harvest) = &data.zram_harvest {
+                let zram_percentage = zram_harvest.percentage();
+                let zram_label = memory_label(zram_harvest, app_state.basic_mode_use_percent);
+
+                draw_widgets.push(
+                    PipeGauge::default()
+                        .ratio(zram_percentage / 100.0)
+                        .start_label("ZRM")
+                        .inner_label(zram_label)
+                        .label_style(self.styles.zram_style)
+                        .gauge_style(self.styles.zram_style)
+                        .bar_type(self.styles.bar_type),
+                );
+            }
+        }
+
         #[cfg(not(target_os = "windows"))]
         {
             if let Some(cache_harvest) = &data.cache_harvest {

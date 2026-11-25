@@ -18,6 +18,10 @@ pub struct MemoryGraphConfig {
     #[cfg_attr(target_os = "windows", allow(dead_code))]
     pub(crate) cache_memory: Option<bool>,
 
+    /// Whether to collect and display zram usage. Only available on Linux.
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    pub(crate) zram: Option<bool>,
+
     /// Whether to subtract ARC that can be freed from memory usage.
     #[cfg_attr(not(feature = "zfs"), allow(dead_code))]
     pub(crate) free_arc: Option<bool>,

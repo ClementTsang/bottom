@@ -89,6 +89,8 @@ pub struct InnerData {
     pub(crate) cache_harvest: Option<MemData>,
     #[cfg(feature = "zfs")]
     pub(crate) arc_harvest: Option<MemData>,
+    #[cfg(target_os = "linux")]
+    pub(crate) zram_harvest: Option<MemData>,
     #[cfg(feature = "gpu")]
     /// GPU data. In sorted order by PCI address.
     pub(crate) gpu_harvest: Vec<(GpuKey, MemData)>,
@@ -129,6 +131,8 @@ impl Default for InnerData {
             battery_harvest: Vec::default(),
             #[cfg(feature = "zfs")]
             arc_harvest: None,
+            #[cfg(target_os = "linux")]
+            zram_harvest: None,
             #[cfg(feature = "gpu")]
             gpu_harvest: Vec::default(),
             #[cfg(feature = "gpu")]
@@ -190,6 +194,11 @@ impl InnerData {
         #[cfg(feature = "zfs")]
         {
             self.arc_harvest = data.arc;
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            self.zram_harvest = data.zram.as_ref().and_then(|zram| zram.as_mem_data());
         }
 
         #[cfg(feature = "gpu")]

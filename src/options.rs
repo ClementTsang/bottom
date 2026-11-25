@@ -458,6 +458,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         .unwrap_or(false);
 
     let enable_cache_memory = get_enable_cache_memory(args, config);
+    let enable_zram = get_enable_zram(config);
     let enable_gpu = get_enable_gpu(args, config);
 
     // TODO: Can probably just reuse the options struct.
@@ -804,6 +805,7 @@ pub(crate) fn init_app(args: BottomArgs, config: Config) -> Result<(App, BottomL
         use_cpu: used_widget_set.contains(&Cpu) || used_widget_set.contains(&BasicCpu),
         use_mem,
         use_cache: use_mem && enable_cache_memory,
+        use_zram: use_mem && enable_zram,
         use_gpu: enable_gpu,
         use_gpu_graph: used_widget_set.contains(&GpuUsageGraph),
         use_net: used_widget_set.contains(&Net) || used_widget_set.contains(&BasicNet),
@@ -1287,6 +1289,20 @@ fn get_enable_cache_memory(args: &BottomArgs, config: &Config) -> bool {
 
 #[cfg(target_os = "windows")]
 fn get_enable_cache_memory(_args: &BottomArgs, _config: &Config) -> bool {
+    false
+}
+
+#[cfg(target_os = "linux")]
+fn get_enable_zram(config: &Config) -> bool {
+    config
+        .memory_graph
+        .as_ref()
+        .and_then(|m| m.zram)
+        .unwrap_or(false)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn get_enable_zram(_config: &Config) -> bool {
     false
 }
 

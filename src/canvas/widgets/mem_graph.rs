@@ -79,6 +79,12 @@ impl Painter {
                 if data.swap_harvest.is_some() {
                     size += 1; // add capacity for SWAP
                 }
+                #[cfg(target_os = "linux")]
+                {
+                    if data.zram_harvest.is_some() {
+                        size += 1; // add capacity for ZRAM
+                    }
+                }
                 #[cfg(feature = "zfs")]
                 {
                     if data.arc_harvest.is_some() {
@@ -113,6 +119,18 @@ impl Painter {
                     &time_series.swap,
                     self.styles.swap_style,
                 );
+
+                #[cfg(target_os = "linux")]
+                {
+                    graph_data(
+                        &mut points,
+                        "ZRM", // TODO: Maybe make this "ZRAM" once we figure up lining things better
+                        data.zram_harvest.as_ref(),
+                        time,
+                        &time_series.zram_mem,
+                        self.styles.zram_style,
+                    );
+                }
 
                 #[cfg(not(target_os = "windows"))]
                 {

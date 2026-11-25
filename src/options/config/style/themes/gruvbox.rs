@@ -49,6 +49,8 @@ impl Styles {
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#b16286"),
             swap_style: hex!("#fabd2f"),
+            #[cfg(target_os = "linux")]
+            zram_style: hex!("#fe8019"),
             #[cfg(feature = "zfs")]
             arc_style: hex!("#689d6a"),
             #[cfg(feature = "gpu")]
@@ -113,6 +115,8 @@ impl Styles {
             #[cfg(not(target_os = "windows"))]
             cache_style: hex!("#d79921"),
             swap_style: hex!("#cc241d"),
+            #[cfg(target_os = "linux")]
+            zram_style: hex!("#af3a03"),
             #[cfg(feature = "zfs")]
             arc_style: hex!("#689d6a"),
             #[cfg(feature = "gpu")]
