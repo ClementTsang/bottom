@@ -124,7 +124,7 @@ impl Painter {
                 {
                     graph_data(
                         &mut points,
-                        "ZRM", // TODO: Maybe make this "ZRAM" once we figure up lining things better
+                        "ZRM", // TODO: Maybe make this "ZRAM" once we figure out lining up things better
                         data.zram_harvest.as_ref(),
                         time,
                         &time_series.zram_mem,
