@@ -13,9 +13,9 @@ pub struct ZramHarvest {
     pub(crate) capacity_bytes: u64,
     /// Uncompressed size of the stored data, including same-filled pages. In
     /// bytes.
-    pub(crate) orig_data_bytes: u64,
+    pub(crate) original_size_bytes: u64,
     /// Compressed size of the stored data. In bytes.
-    pub(crate) compressed_data_bytes: u64,
+    pub(crate) compressed_size_bytes: u64,
     /// Actual RAM used, including allocator overhead. In bytes.
     pub(crate) mem_used_bytes: u64,
 }
@@ -24,7 +24,7 @@ impl ZramHarvest {
     /// Return zram usage in terms of used and total bytes.
     pub fn as_mem_data(&self) -> Option<MemData> {
         NonZeroU64::new(self.capacity_bytes).map(|total_bytes| MemData {
-            used_bytes: self.orig_data_bytes,
+            used_bytes: self.original_size_bytes,
             total_bytes,
         })
     }
@@ -33,8 +33,8 @@ impl ZramHarvest {
 impl AddAssign for ZramHarvest {
     fn add_assign(&mut self, rhs: Self) {
         self.capacity_bytes += rhs.capacity_bytes;
-        self.orig_data_bytes += rhs.orig_data_bytes;
-        self.compressed_data_bytes += rhs.compressed_data_bytes;
+        self.original_size_bytes += rhs.original_size_bytes;
+        self.compressed_size_bytes += rhs.compressed_size_bytes;
         self.mem_used_bytes += rhs.mem_used_bytes;
     }
 }
@@ -85,8 +85,8 @@ fn read_device(dev: &Path) -> Option<ZramHarvest> {
 
     Some(ZramHarvest {
         capacity_bytes: disk_size,
-        orig_data_bytes: mm_stat.orig_data_bytes,
-        compressed_data_bytes: mm_stat.compressed_data_bytes,
+        original_size_bytes: mm_stat.orig_data_bytes,
+        compressed_size_bytes: mm_stat.compressed_data_bytes,
         mem_used_bytes: mm_stat.mem_used_bytes,
     })
 }
