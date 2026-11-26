@@ -147,7 +147,7 @@ impl Painter {
                     let duplicate_names = duplicate_gpu_names(time_series.gpu_mem.keys());
 
                     for (gpu_index, (key, gpu_data)) in time_series.gpu_mem.iter().enumerate() {
-                        if !gpu_data.no_elements() {
+                        if gpu_data.no_elements() {
                             continue;
                         }
 
