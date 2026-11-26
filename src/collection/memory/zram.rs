@@ -1,4 +1,4 @@
-//! Basic zram data collection on Linux.
+//! Basic [zram](https://docs.kernel.org/admin-guide/blockdev/zram.html) data collection on Linux.
 
 use std::{fs, num::NonZeroU64, ops::AddAssign, path::Path};
 
@@ -11,7 +11,8 @@ use super::MemData;
 pub struct ZramHarvest {
     /// Total uncompressed capacity, from `disksize`. In bytes.
     pub(crate) capacity_bytes: u64,
-    /// Uncompressed size of the stored data. In bytes.
+    /// Uncompressed size of the stored data, including same-filled pages. In
+    /// bytes.
     pub(crate) orig_data_bytes: u64,
     /// Compressed size of the stored data. In bytes.
     pub(crate) compressed_data_bytes: u64,
@@ -38,17 +39,33 @@ impl AddAssign for ZramHarvest {
     }
 }
 
-/// Read the first three fields of `mm_stat` and return them as bytes:
+/// The fields we get from `mm_stat`.
+#[derive(Debug, PartialEq, Eq)]
+struct MmStat {
+    orig_data_bytes: u64,
+    compressed_data_bytes: u64,
+    mem_used_bytes: u64,
+}
+
+/// Read the first three fields of `mm_stat`, which are all in bytes:
 ///
 /// ```none
 /// orig_data_size compr_data_size mem_used_total ...
 /// ```
-fn parse_mm_stat(contents: &str) -> Option<(u64, u64, u64)> {
+fn parse_mm_stat(contents: &str) -> Option<MmStat> {
     let mut fields = contents
         .split_ascii_whitespace()
         .map(|f| f.parse::<u64>().ok());
 
-    Some((fields.next()??, fields.next()??, fields.next()??))
+    let orig_data_bytes = fields.next()??;
+    let compressed_data_bytes = fields.next()??;
+    let mem_used_bytes = fields.next()??;
+
+    Some(MmStat {
+        orig_data_bytes,
+        compressed_data_bytes,
+        mem_used_bytes,
+    })
 }
 
 /// Reads a given path representing a zram device, returning a partial [`ZramHarvest`].
@@ -59,19 +76,18 @@ fn read_device(dev: &Path) -> Option<ZramHarvest> {
         .parse()
         .ok()?;
 
-    // An uninitialized device has a disksize of 0.
+    // An uninitialized device has a `disksize` of 0.
     if disk_size == 0 {
         return None;
     }
 
-    let (orig_data_bytes, compressed_data_bytes, mem_used_bytes) =
-        parse_mm_stat(&fs::read_to_string(dev.join("mm_stat")).ok()?)?;
+    let mm_stat = parse_mm_stat(&fs::read_to_string(dev.join("mm_stat")).ok()?)?;
 
     Some(ZramHarvest {
         capacity_bytes: disk_size,
-        orig_data_bytes,
-        compressed_data_bytes,
-        mem_used_bytes,
+        orig_data_bytes: mm_stat.orig_data_bytes,
+        compressed_data_bytes: mm_stat.compressed_data_bytes,
+        mem_used_bytes: mm_stat.mem_used_bytes,
     })
 }
 
@@ -102,6 +118,13 @@ mod tests {
     #[test]
     fn parses_mm_stat() {
         let s = "  4567890   1345678   1234567        0   1234567      321        0        0        0\n";
-        assert_eq!(parse_mm_stat(s), Some((4567890, 1345678, 1234567)));
+        assert_eq!(
+            parse_mm_stat(s),
+            Some(MmStat {
+                orig_data_bytes: 4567890,
+                compressed_data_bytes: 1345678,
+                mem_used_bytes: 1234567,
+            })
+        );
     }
 }

@@ -122,6 +122,7 @@ impl Painter {
 
                 #[cfg(target_os = "linux")]
                 {
+                    // TODO: Maybe include compression ratio too?
                     graph_data(
                         &mut points,
                         "ZRM", // TODO: Maybe make this "ZRAM" once we figure out lining up things better

@@ -770,6 +770,15 @@ impl DataCollector {
     }
 }
 
+#[cfg(target_os = "linux")]
+fn page_size() -> u64 {
+    use std::sync::OnceLock;
+
+    static PAGE_SIZE: OnceLock<u64> = OnceLock::new();
+
+    *(PAGE_SIZE.get_or_init(|| rustix::param::page_size() as u64))
+}
+
 #[cfg(target_os = "freebsd")]
 /// Deserialize [libxo](https://www.freebsd.org/cgi/man.cgi?query=libxo&apropos=0&sektion=0&manpath=FreeBSD+13.1-RELEASE+and+Ports&arch=default&format=html) JSON data
 fn deserialize_xo<T>(key: &str, data: &[u8]) -> Result<T, std::io::Error>
