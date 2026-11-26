@@ -50,7 +50,7 @@ impl Styles {
             cache_style: hex!("#b16286"),
             swap_style: hex!("#fabd2f"),
             #[cfg(target_os = "linux")]
-            zram_style: hex!("#fe8019"),
+            zram_style: hex!("#d65d0e"),
             #[cfg(feature = "zfs")]
             arc_style: hex!("#689d6a"),
             #[cfg(feature = "gpu")]
