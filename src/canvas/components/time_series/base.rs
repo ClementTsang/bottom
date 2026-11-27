@@ -22,6 +22,7 @@ pub(crate) struct GraphData<'a, F = f64> {
     values: Option<&'a ChunkedData<F>>,
     style: Style,
     name: Option<Cow<'a, str>>,
+    name_fallback: Option<Cow<'a, str>>,
 }
 
 impl<'a, F> GraphData<'a, F> {
@@ -42,6 +43,12 @@ impl<'a, F> GraphData<'a, F> {
 
     pub fn name(mut self, name: Cow<'a, str>) -> Self {
         self.name = Some(name);
+        self
+    }
+
+    /// The name to use in the legend instead if `name` wouldn't fit.
+    pub fn name_fallback(mut self, name_fallback: Cow<'a, str>) -> Self {
+        self.name_fallback = Some(name_fallback);
         self
     }
 }
@@ -209,6 +216,7 @@ fn create_dataset<F: Copy + Default + Into<f64>>(data: GraphData<'_, F>) -> Data
         values,
         style,
         name,
+        name_fallback,
     } = data;
 
     let Some(values) = values else {
@@ -220,8 +228,14 @@ fn create_dataset<F: Copy + Default + Into<f64>>(data: GraphData<'_, F>) -> Data
         .data(time, values)
         .graph_type(GraphType::Line);
 
-    if let Some(name) = name {
+    let dataset = if let Some(name) = name {
         dataset.name(name)
+    } else {
+        dataset
+    };
+
+    if let Some(name_fallback) = name_fallback {
+        dataset.name_fallback(name_fallback)
     } else {
         dataset
     }

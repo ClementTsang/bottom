@@ -147,11 +147,11 @@ selected_text = "#fff"
 
 These can be set under `[styles]`:
 
-| Config field    | Details                                                                                      | Examples                      |
-| --------------- | -------------------------------------------------------------------------------------------- | ----------------------------- |
-| `theme`         | A built-in theme name, or `"auto"`, `"dark"`, `"light"` for dark/light detection             | `theme = "auto"`              |
-| `theme_dark`    | Theme to use for dark backgrounds or when `theme = "dark"`; use `"custom"` for custom palette | `theme_dark = "nord"`         |
-| `theme_light`   | Theme to use for light backgrounds or when `theme = "light"`; use `"custom"` for custom palette | `theme_light = "default-light"` |
+| Config field  | Details                                                                                         | Examples                        |
+| ------------- | ----------------------------------------------------------------------------------------------- | ------------------------------- |
+| `theme`       | A built-in theme name, or `"auto"`, `"dark"`, `"light"` for dark/light detection                | `theme = "auto"`                |
+| `theme_dark`  | Theme to use for dark backgrounds or when `theme = "dark"`; use `"custom"` for custom palette   | `theme_dark = "nord"`           |
+| `theme_light` | Theme to use for light backgrounds or when `theme = "light"`; use `"custom"` for custom palette | `theme_light = "default-light"` |
 
 #### CPU
 
@@ -180,6 +180,7 @@ These can be set under `[styles.memory]`:
 | `ram_colour`   | The colour of the RAM label and graph line                                     | `ram_colour = "Red"`                     |
 | `cache_colour` | The colour of the cache label and graph line. Does not do anything on Windows. | `cache_colour = "#ffffff"`               |
 | `swap_colour`  | The colour of the swap label and graph line                                    | `swap_colour = "255, 0, 255"`            |
+| `zram_colour`  | The colour of the zram label and graph line. Only works on Linux.              | `zram_colour = "Green"`                  |
 | `arc_colour`   | The colour of the ARC label and graph line                                     | `arc_colour = "Blue"`                    |
 | `gpu_colours`  | Colour of each GPU's memory label and graph line. Read in order.               | `gpu_colours = ["Red", "Blue", "Green"]` |
 

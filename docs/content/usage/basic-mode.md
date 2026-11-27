@@ -26,10 +26,12 @@ basic = true
 ## Notes
 
 In this mode, widgets that use tables (temperatures, processes, disks, and batteries) are only shown one at a time.
-One can switch between these widgets either by clicking the arrow buttons or by using the general widget selection shortcuts (for example, ++ctrl+left++ or ++H++)
-to switch which widget is shown.
+One can switch between these widgets either by clicking the arrow buttons or by using the general widget selection
+shortcuts (for example, ++ctrl+left++ or ++H++) to switch which widget is shown.
 
 Also note that in this mode, widget expansion and custom layouts are disabled.
+
+<!--TODO: Maybe add more details on the basic mode widgets... or maybe even add separate widget sections for them, maybe if we make them more generalized! -->
 
 ## Key bindings
 

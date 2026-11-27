@@ -355,6 +355,13 @@ impl Painter {
                     }
                 }
 
+                #[cfg(target_os = "linux")]
+                {
+                    if data.zram_harvest.is_some() {
+                        mem_rows += 1;
+                    }
+                }
+
                 #[cfg(feature = "gpu")]
                 {
                     mem_rows += data.gpu_harvest.len() as u16; // add row(s) for gpu

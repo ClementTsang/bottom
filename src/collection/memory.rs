@@ -19,6 +19,9 @@ cfg_select! {
 #[cfg(feature = "zfs")]
 pub mod arc;
 
+#[cfg(target_os = "linux")]
+pub mod zram;
+
 #[derive(Debug, Clone)]
 pub struct MemData {
     pub used_bytes: u64,

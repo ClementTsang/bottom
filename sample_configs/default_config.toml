@@ -396,6 +396,9 @@
 # Shows cache and buffer memory. Linux only.
 #cache_memory = false
 
+# Shows zram usage. Linux only.
+#zram = false
+
 # Subtract ARC memory that can be freed from memory usage. Only available if the ZFS feature is enabled when built.
 #free_arc = false
 
@@ -496,6 +499,7 @@
 #ram_colour = "light magenta"
 #cache_colour = "light red"
 #swap_colour = "light yellow"
+#zram_colour = "yellow"
 #arc_colour = "light cyan"
 #gpu_colours = ["light blue", "light red", "cyan", "green", "blue", "red"]
 

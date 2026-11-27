@@ -6,8 +6,12 @@ use ratatui::{
     style::Style,
 };
 
+#[cfg(target_os = "linux")]
+use super::mem_basic::zram_fraction_label;
 #[cfg(feature = "gpu")]
 use crate::collection::duplicate_gpu_names;
+#[cfg(target_os = "linux")]
+use crate::collection::memory::zram::ZramHarvest;
 use crate::{
     app::{App, data::Values},
     canvas::{
@@ -36,23 +40,43 @@ fn memory_legend_label(name: &str, data: Option<&MemData>) -> String {
     }
 }
 
-/// Get graph data.
+/// Convert zram info into a combined memory label showing both compressed and
+/// uncompressed usage. Also returns a fallback label for use if the box is too small.
+#[cfg(target_os = "linux")]
+fn zram_legend_label(name: &str, zram: Option<&ZramHarvest>) -> (String, Option<String>) {
+    match zram.and_then(|zram| Some((zram, zram.as_mem_data()?))) {
+        Some((zram, usage)) => (
+            format!(
+                "{name}:{:3.0}%   {}",
+                usage.percentage(),
+                zram_fraction_label(zram)
+            ),
+            Some(memory_legend_label(name, Some(&usage))),
+        ),
+        None => (memory_legend_label(name, None), None),
+    }
+}
+
+/// Get graph data. `label_fn` returns the legend label, and optionally a
+/// shorter label to use if the main label doesn't fit.
 #[inline]
 fn graph_data<'a>(
-    out: &mut Vec<GraphData<'a>>, name: &str, last_harvest: Option<&'a MemData>,
+    out: &mut Vec<GraphData<'a>>, label_fn: impl FnOnce() -> (String, Option<String>),
     time: &'a [Instant], values: &'a Values, style: Style,
 ) {
     // TODO: Make this if not visible instead...?
     if !values.no_elements() {
-        let label = memory_legend_label(name, last_harvest).into();
+        let (label, fallback) = label_fn();
+        let graph_data = GraphData::default()
+            .name(label.into())
+            .time(time)
+            .values(values)
+            .style(style);
 
-        out.push(
-            GraphData::default()
-                .name(label)
-                .time(time)
-                .values(values)
-                .style(style),
-        );
+        out.push(match fallback {
+            Some(fallback) => graph_data.name_fallback(fallback.into()),
+            None => graph_data,
+        });
     }
 }
 
@@ -79,6 +103,12 @@ impl Painter {
                 if data.swap_harvest.is_some() {
                     size += 1; // add capacity for SWAP
                 }
+                #[cfg(target_os = "linux")]
+                {
+                    if data.zram_harvest.is_some() {
+                        size += 1; // add capacity for ZRAM
+                    }
+                }
                 #[cfg(feature = "zfs")]
                 {
                     if data.arc_harvest.is_some() {
@@ -98,8 +128,7 @@ impl Painter {
                 // no entries
                 graph_data(
                     &mut points,
-                    "RAM",
-                    data.ram_harvest.as_ref(),
+                    || (memory_legend_label("RAM", data.ram_harvest.as_ref()), None),
                     time,
                     &time_series.ram,
                     self.styles.ram_style,
@@ -107,19 +136,36 @@ impl Painter {
 
                 graph_data(
                     &mut points,
-                    "SWP",
-                    data.swap_harvest.as_ref(),
+                    || (memory_legend_label("SWP", data.swap_harvest.as_ref()), None),
                     time,
                     &time_series.swap,
                     self.styles.swap_style,
                 );
 
+                #[cfg(target_os = "linux")]
+                {
+                    // TODO: Maybe include compression ratio too?
+                    graph_data(
+                        &mut points,
+                        // TODO: Maybe make this "ZRAM" once we figure out lining up things better
+                        || zram_legend_label("ZRM", data.zram_harvest.as_ref()),
+                        time,
+                        &time_series.zram_mem,
+                        self.styles.zram_style,
+                    );
+                }
+
                 #[cfg(not(target_os = "windows"))]
                 {
                     graph_data(
                         &mut points,
-                        "CACHE", // TODO: Figure out how to line this up better
-                        data.cache_harvest.as_ref(),
+                        // TODO: Figure out how to line this up better
+                        || {
+                            (
+                                memory_legend_label("CACHE", data.cache_harvest.as_ref()),
+                                None,
+                            )
+                        },
                         time,
                         &time_series.cache_mem,
                         self.styles.cache_style,
@@ -130,8 +176,7 @@ impl Painter {
                 {
                     graph_data(
                         &mut points,
-                        "ARC",
-                        data.arc_harvest.as_ref(),
+                        || (memory_legend_label("ARC", data.arc_harvest.as_ref()), None),
                         time,
                         &time_series.arc_mem,
                         self.styles.arc_style,

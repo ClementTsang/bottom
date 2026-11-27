@@ -12,17 +12,40 @@ You can change where the legend for the graph is placed within the widget itself
 legend_position = "top-left"
 ```
 
-## Collect/show cache memory
+## Collect and show cache memory
 
 On Linux, you can change whether the memory used by [cache/slabs](https://serverfault.com/a/1025189) is collected and
 shown. By default, it is `false`.
-
-<!--TODO: Note this affects basic too... should I separate out a "general memory" setting and specific graph ones?-->
 
 ```toml
 [memory_graph]
 cache_memory = true
 ```
+
+## Collect and show zram usage
+
+On Linux, you can enable `zram` to show [zram](https://docs.kernel.org/admin-guide/blockdev/zram.html) usage.
+Usage is over all zram devices and is shown as the uncompressed size of the stored data versus the total uncompressed
+capacity. Also note that if zram is used as swap, this usage is currently also included in the swap
+usage.
+
+It is disabled (`false`) by default. For example, to enable it:
+
+```toml
+[memory_graph]
+zram = true
+```
+
+## Disable GPU usage
+
+GPU memory usage is collected by default. To disable it, do:
+
+```toml
+[flags]
+disable_gpu = true
+```
+
+Note that for now, this disables all other GPU features, though this is likely to change in the future to be more granular.
 
 ## Short GPU names
 

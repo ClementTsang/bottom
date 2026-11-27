@@ -37,6 +37,7 @@ temp_graph_color_styles = [
 ram_color = "light magenta"
 cache_color = "light red"
 swap_color = "light yellow"
+zram_color = "light green"
 arc_color = "light cyan"
 gpu_colors = ["light blue", "light red", "cyan", "green", "blue", "red"]
 

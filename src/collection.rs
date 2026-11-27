@@ -62,6 +62,8 @@ pub struct Data {
     pub list_of_batteries: Option<Vec<batteries::BatteryData>>,
     #[cfg(feature = "zfs")]
     pub arc: Option<memory::MemData>,
+    #[cfg(target_os = "linux")]
+    pub zram: Option<memory::zram::ZramHarvest>,
     #[cfg(feature = "gpu")]
     pub gpu_memory: Option<Vec<(GpuKey, memory::MemData)>>,
     #[cfg(feature = "gpu")]
@@ -87,6 +89,8 @@ impl Default for Data {
             list_of_batteries: None,
             #[cfg(feature = "zfs")]
             arc: None,
+            #[cfg(target_os = "linux")]
+            zram: None,
             #[cfg(feature = "gpu")]
             gpu_memory: None,
             #[cfg(feature = "gpu")]
@@ -112,6 +116,10 @@ impl Data {
         #[cfg(feature = "zfs")]
         {
             self.arc = None;
+        }
+        #[cfg(target_os = "linux")]
+        {
+            self.zram = None;
         }
         #[cfg(feature = "gpu")]
         {
@@ -656,6 +664,11 @@ impl DataCollector {
             }
 
             self.data.swap = memory::get_swap_usage(self);
+
+            #[cfg(target_os = "linux")]
+            if self.widgets_to_harvest.use_zram {
+                self.data.zram = memory::zram::get_zram_usage();
+            }
         }
     }
 
@@ -755,6 +768,15 @@ impl DataCollector {
             self.sys.system.total_memory()
         }
     }
+}
+
+#[cfg(target_os = "linux")]
+fn page_size() -> u64 {
+    use std::sync::OnceLock;
+
+    static PAGE_SIZE: OnceLock<u64> = OnceLock::new();
+
+    *(PAGE_SIZE.get_or_init(|| rustix::param::page_size() as u64))
 }
 
 #[cfg(target_os = "freebsd")]

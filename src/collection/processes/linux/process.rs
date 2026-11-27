@@ -5,7 +5,6 @@ use std::{
     fs::File,
     io::{self, BufRead, BufReader, Read},
     path::PathBuf,
-    sync::OnceLock,
 };
 
 use anyhow::anyhow;
@@ -16,9 +15,10 @@ use rustix::{
     path::Arg,
 };
 
-use crate::collection::processes::{Pid, linux::is_str_numeric};
-
-static PAGESIZE: OnceLock<u64> = OnceLock::new();
+use crate::collection::{
+    page_size,
+    processes::{Pid, linux::is_str_numeric},
+};
 
 #[inline]
 fn next_part<'a>(iter: &mut impl Iterator<Item = &'a str>) -> Result<&'a str, io::Error> {
@@ -163,7 +163,7 @@ impl Stat {
     /// Returns the Resident Set Size in bytes.
     #[inline]
     pub fn rss_bytes(&self) -> u64 {
-        self.rss * PAGESIZE.get_or_init(|| rustix::param::page_size() as u64)
+        self.rss * page_size()
     }
 }
 
