@@ -83,7 +83,9 @@ fn try_drawing(
     }
 }
 
-/// Clean up the terminal before returning it to the user. Note that this will not error if any cleanup step fails, for simplicity's sake, though it will warn if some more important steps fail.
+/// Clean up the terminal before returning it to the user. Note that this will
+/// not error if any cleanup step fails, for simplicity's sake, though it will
+/// warn if some more important steps fail.
 fn cleanup_terminal(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>, terminal_features: TerminalFeatures,
 ) {
@@ -130,7 +132,8 @@ fn check_if_terminal() {
     }
 }
 
-/// This manually resets stdout back to normal state; you probably only want to call this in the case of a panic.
+/// This manually resets stdout back to normal state; you probably only want to
+/// call this in the case of a panic.
 pub fn reset_stdout() {
     let mut stdout_val = stdout();
     let _ = disable_raw_mode();
