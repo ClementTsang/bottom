@@ -45,7 +45,8 @@ use crossterm::{
     cursor::Show,
     event::{
         DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
-        Event, KeyEventKind, MouseEventKind, poll, read,
+        Event, KeyEventKind, KeyboardEnhancementFlags, MouseEventKind, PopKeyboardEnhancementFlags,
+        PushKeyboardEnhancementFlags, poll, read,
     },
     execute,
     terminal::{
@@ -75,38 +76,46 @@ fn try_drawing(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App, painter: &mut canvas::Painter,
 ) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
-        cleanup_terminal(terminal, app.terminal_features)?;
+        cleanup_terminal(terminal, app.terminal_features);
         Err(err.into())
     } else {
         Ok(())
     }
 }
 
-/// Clean up the terminal before returning it to the user.
+/// Clean up the terminal before returning it to the user. Note that this will
+/// not error if any cleanup step fails, for simplicity's sake, though it will
+/// warn if some more important steps fail.
 fn cleanup_terminal(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>, terminal_features: TerminalFeatures,
-) -> anyhow::Result<()> {
-    disable_raw_mode()?;
+) {
+    if let Err(err) = disable_raw_mode() {
+        eprintln!("Failed to disable raw mode: {err:?}");
+    };
+
+    let stdout_val = terminal.backend_mut();
+
+    if let Err(err) = stdout_val.show_cursor() {
+        eprintln!("Failed to re-enable cursor: {err:?}");
+    }
 
     if terminal_features.mouse_capture_enabled {
-        let _ = execute!(terminal.backend_mut(), DisableMouseCapture);
+        let _ = execute!(stdout_val, DisableMouseCapture);
     }
 
     if terminal_features.bracketed_paste_enabled {
-        let _ = execute!(terminal.backend_mut(), DisableBracketedPaste);
+        let _ = execute!(stdout_val, DisableBracketedPaste);
     }
 
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-    terminal.show_cursor()?;
+    let _ = execute!(stdout_val, LeaveAlternateScreen);
+    let _ = execute!(stdout_val, PopKeyboardEnhancementFlags);
 
     if terminal_features.custom_name_enabled {
         // Reset terminal window title to default (blank apparently does so).
-        if let Err(err) = execute!(terminal.backend_mut(), SetTitle("")) {
+        if let Err(err) = execute!(stdout_val, SetTitle("")) {
             eprintln!("Failed to reset terminal title: {err:?}");
         }
     }
-
-    Ok(())
 }
 
 /// Check and report to the user if the current environment is not a terminal.
@@ -123,17 +132,19 @@ fn check_if_terminal() {
     }
 }
 
-/// This manually resets stdout back to normal state.
+/// This manually resets stdout back to normal state; you probably only want to
+/// call this in the case of a panic.
 pub fn reset_stdout() {
-    let mut stdout = stdout();
+    let mut stdout_val = stdout();
     let _ = disable_raw_mode();
-    let _ = execute!(stdout, DisableMouseCapture);
-    let _ = execute!(stdout, DisableBracketedPaste);
-    let _ = execute!(stdout, LeaveAlternateScreen);
-    let _ = execute!(stdout, Show);
+    let _ = execute!(stdout_val, Show);
+    let _ = execute!(stdout_val, DisableMouseCapture);
+    let _ = execute!(stdout_val, DisableBracketedPaste);
+    let _ = execute!(stdout_val, LeaveAlternateScreen);
+    let _ = execute!(stdout_val, PopKeyboardEnhancementFlags);
     // We unconditionally reset the terminal title back to the default here by
     // doing this.
-    let _ = execute!(stdout, SetTitle(""));
+    let _ = execute!(stdout_val, SetTitle(""));
 }
 
 /// A panic hook to properly restore the terminal in the case of a panic.
@@ -408,6 +419,12 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
         None => {}
     }
 
+    // I think it's fine to just swallow the error here.
+    let _ = execute!(
+        stdout_val,
+        PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES)
+    );
+
     execute!(stdout_val, EnterAlternateScreen)?;
 
     // Note that some operating systems (basically Windows 8.1 and older) don't
@@ -536,7 +553,7 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // I think doing it in this order is safe...
     // TODO: maybe move the cancellation token to the ctrl-c handler?
     cancellation_token.cancel();
-    cleanup_terminal(&mut terminal, terminal_features)?;
+    cleanup_terminal(&mut terminal, terminal_features);
 
     Ok(())
 }

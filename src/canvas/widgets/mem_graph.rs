@@ -40,7 +40,7 @@ fn memory_legend_label(name: &str, data: Option<&MemData>) -> String {
     }
 }
 
-/// Convert compressed memory info into a combined memory label showing both
+/// Convert compressed memory info into a legend label that shows both
 /// compressed and uncompressed usage. Also returns a fallback label for use if
 /// the box is too small.
 #[cfg(target_os = "linux")]
