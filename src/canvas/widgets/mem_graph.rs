@@ -41,7 +41,8 @@ fn memory_legend_label(name: &str, data: Option<&MemData>) -> String {
 }
 
 /// Convert zram info into a combined memory label showing both compressed and
-/// uncompressed usage. Also returns a fallback label for use if the box is too small.
+/// uncompressed usage. Also returns a fallback label for use if the box is too
+/// small.
 #[cfg(target_os = "linux")]
 fn zram_legend_label(name: &str, zram: Option<&ZramHarvest>) -> (String, Option<String>) {
     match zram.and_then(|zram| Some((zram, zram.as_mem_data()?))) {
@@ -147,7 +148,8 @@ impl Painter {
                     // TODO: Maybe include compression ratio too?
                     graph_data(
                         &mut points,
-                        // TODO: Maybe make this "ZRAM" once we figure out lining up things better
+                        // TODO: Maybe make this "ZRAM" once we figure out
+                        // lining up things better
                         || zram_legend_label("ZRM", data.zram_harvest.as_ref()),
                         time,
                         &time_series.zram_mem,

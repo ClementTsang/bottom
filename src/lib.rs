@@ -130,7 +130,8 @@ fn check_if_terminal() {
     }
 }
 
-/// This manually resets stdout back to normal state; you probably only want to call this in the case of a panic.
+/// This manually resets stdout back to normal state; you probably only want to
+/// call this in the case of a panic.
 pub fn reset_stdout() {
     let mut stdout_val = stdout();
     let _ = disable_raw_mode();

@@ -74,7 +74,8 @@ fn parse_mm_stat(contents: &str) -> Option<MmStat> {
     })
 }
 
-/// Reads a given path representing a zram device, returning a partial [`ZramHarvest`].
+/// Reads a given path representing a zram device, returning a partial
+/// [`ZramHarvest`].
 fn read_device(dev: &Path) -> Option<ZramHarvest> {
     let disk_size: u64 = fs::read_to_string(dev.join("disksize"))
         .ok()?
@@ -97,8 +98,8 @@ fn read_device(dev: &Path) -> Option<ZramHarvest> {
     })
 }
 
-/// Returns aggregated zram usage. Returns `None` if there are no initialized zram
-/// devices.
+/// Returns aggregated zram usage. Returns `None` if there are no initialized
+/// zram devices.
 pub(crate) fn get_zram_usage() -> Option<ZramHarvest> {
     let mut result = ZramHarvest::default();
     let mut found = false;
