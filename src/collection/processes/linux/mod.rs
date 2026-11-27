@@ -296,7 +296,15 @@ fn read_proc(
             nice: stat.nice,
             priority: stat.priority,
             #[cfg(target_os = "linux")]
-            num_threads: stat.num_threads,
+            num_threads: {
+                // Thread rows report 0 so that summing a process with its threads
+                // doesn't count the threads twice.
+                if thread_parent.is_some() {
+                    0
+                } else {
+                    stat.num_threads
+                }
+            },
         },
         new_process_times,
     ))

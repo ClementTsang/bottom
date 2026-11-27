@@ -326,6 +326,10 @@ impl ProcWidgetData {
             self.gpu_mem_usage = self.gpu_mem_usage + other.gpu_mem_usage;
             self.gpu_usage += other.gpu_usage;
         }
+        #[cfg(target_os = "linux")]
+        {
+            self.num_threads += other.num_threads;
+        }
     }
 
     fn to_string(&self, column: &ProcColumn) -> String {
@@ -537,5 +541,21 @@ mod test {
         let mut unknown = ProcWidgetData::from_data(&ProcessHarvest::default(), false, false);
         unknown.add(&known);
         assert_eq!(unknown.swap_bytes, Some(100));
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_num_threads_addition() {
+        let process = ProcessHarvest {
+            num_threads: 3,
+            ..Default::default()
+        };
+        let other = ProcessHarvest {
+            num_threads: 4,
+            ..Default::default()
+        };
+        let mut data = ProcWidgetData::from_data(&process, false, false);
+        data.add(&ProcWidgetData::from_data(&other, false, false));
+        assert_eq!(data.num_threads, 7);
     }
 }
