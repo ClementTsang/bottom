@@ -287,6 +287,8 @@ enum Data<'a, F> {
 pub struct Dataset<'a, F: Copy + Default + Into<f64> = f64> {
     /// Name of the dataset (used in the legend if shown)
     name: Option<Line<'a>>,
+    /// Name used in the legend instead of `name` if `name` wouldn't fit
+    name_fallback: Option<Line<'a>>,
     /// A reference to data.
     data: Data<'a, F>,
     /// Symbol used for each points of this dataset
@@ -306,6 +308,28 @@ impl<'a, F: Copy + Default + Into<f64>> Dataset<'a, F> {
     {
         self.name = Some(name.into());
         self
+    }
+
+    /// Sets the name used in the legend instead of the main name if the main
+    /// name wouldn't fit.
+    #[must_use = "method moves the value of self and returns the modified value"]
+    pub fn name_fallback<S>(mut self, name_fallback: S) -> Dataset<'a, F>
+    where
+        S: Into<Line<'a>>,
+    {
+        self.name_fallback = Some(name_fallback.into());
+        self
+    }
+
+    /// Returns the name to show in the legend if there is `max_width` space,
+    /// preferring the main name.
+    fn legend_name(&self, max_width: u16) -> Option<&Line<'a>> {
+        let name = self.name.as_ref()?;
+
+        match &self.name_fallback {
+            Some(fallback) if name.width() as u16 > max_width => Some(fallback),
+            _ => Some(name),
+        }
     }
 
     /// Sets the data points of this dataset
@@ -602,19 +626,24 @@ impl<'a, F: Copy + Default + Into<f64>> TimeChart<'a, F> {
         }
 
         if let Some(legend_position) = self.legend_position {
+            let [max_legend_width] = Layout::horizontal([self.hidden_legend_constraints.0])
+                .flex(Flex::Start)
+                .areas(layout.graph_area);
+
             let entry_widths: Vec<u16> = self
                 .datasets
                 .iter()
-                .filter_map(|d| Some(d.name.as_ref()?.width() as u16))
+                .filter_map(|d| {
+                    Some(
+                        d.legend_name(max_legend_width.width.saturating_sub(2))?
+                            .width() as u16,
+                    )
+                })
                 .collect();
 
             let entry_count = entry_widths.len() as u16;
 
             if entry_count > 0 {
-                let [max_legend_width] = Layout::horizontal([self.hidden_legend_constraints.0])
-                    .flex(Flex::Start)
-                    .areas(layout.graph_area);
-
                 let [max_legend_height] = Layout::vertical([self.hidden_legend_constraints.1])
                     .flex(Flex::Start)
                     .areas(layout.graph_area);
@@ -919,7 +948,7 @@ impl<F: Copy + Default + Into<f64>> Widget for TimeChart<'_, F> {
             for (i, (dataset_name, dataset_style)) in self
                 .datasets
                 .iter()
-                .filter_map(|ds| Some((ds.name.as_ref()?, ds.style())))
+                .filter_map(|ds| Some((ds.legend_name(max_width)?, ds.style())))
                 .enumerate()
                 .take((legend_area.height - 2) as usize)
             {
@@ -1194,6 +1223,26 @@ mod tests {
             "    │Very long name│",
             "    │    Short name│",
             "    └──────────────┘",
+            "                    ",
+        ]);
+        assert_buffer_eq!(buffer, expected);
+    }
+
+    #[test]
+    fn dataset_legend_uses_fallback_name() {
+        let dataset = Dataset::<f64>::default()
+            .name("Very long name")
+            .name_fallback("Short");
+        let widget =
+            TimeChart::new(vec![dataset]).hidden_legend_constraints((10.into(), 100.into()));
+        let mut buffer = Buffer::empty(Rect::new(0, 0, 20, 4));
+
+        widget.render(buffer.area, &mut buffer);
+
+        let expected = Buffer::with_lines(vec![
+            "             ┌─────┐",
+            "             │Short│",
+            "             └─────┘",
             "                    ",
         ]);
         assert_buffer_eq!(buffer, expected);

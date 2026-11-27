@@ -40,35 +40,43 @@ fn memory_legend_label(name: &str, data: Option<&MemData>) -> String {
     }
 }
 
-/// Convert zram info into a combined memory label, showing both compressed and
-/// uncompressed usage.
+/// Convert zram info into a combined memory label showing both compressed and
+/// uncompressed usage. Also returns a fallback label for use if the box is too small.
 #[cfg(target_os = "linux")]
-fn zram_legend_label(name: &str, zram: Option<&ZramHarvest>) -> String {
+fn zram_legend_label(name: &str, zram: Option<&ZramHarvest>) -> (String, Option<String>) {
     match zram.and_then(|zram| Some((zram, zram.as_mem_data()?))) {
-        Some((zram, usage)) => format!(
-            "{name}:{:3.0}%   {}",
-            usage.percentage(),
-            zram_fraction_label(zram)
+        Some((zram, usage)) => (
+            format!(
+                "{name}:{:3.0}%   {}",
+                usage.percentage(),
+                zram_fraction_label(zram)
+            ),
+            Some(memory_legend_label(name, Some(&usage))),
         ),
-        None => memory_legend_label(name, None),
+        None => (memory_legend_label(name, None), None),
     }
 }
 
-/// Get graph data.
+/// Get graph data. `label_fn` returns the legend label, and optionally a
+/// shorter label to use if the main label doesn't fit.
 #[inline]
 fn graph_data<'a>(
-    out: &mut Vec<GraphData<'a>>, label_fn: impl FnOnce() -> String, time: &'a [Instant],
-    values: &'a Values, style: Style,
+    out: &mut Vec<GraphData<'a>>, label_fn: impl FnOnce() -> (String, Option<String>),
+    time: &'a [Instant], values: &'a Values, style: Style,
 ) {
     // TODO: Make this if not visible instead...?
     if !values.no_elements() {
-        out.push(
-            GraphData::default()
-                .name(label_fn().into())
-                .time(time)
-                .values(values)
-                .style(style),
-        );
+        let (label, fallback) = label_fn();
+        let graph_data = GraphData::default()
+            .name(label.into())
+            .time(time)
+            .values(values)
+            .style(style);
+
+        out.push(match fallback {
+            Some(fallback) => graph_data.name_fallback(fallback.into()),
+            None => graph_data,
+        });
     }
 }
 
@@ -120,7 +128,7 @@ impl Painter {
                 // no entries
                 graph_data(
                     &mut points,
-                    || memory_legend_label("RAM", data.ram_harvest.as_ref()),
+                    || (memory_legend_label("RAM", data.ram_harvest.as_ref()), None),
                     time,
                     &time_series.ram,
                     self.styles.ram_style,
@@ -128,7 +136,7 @@ impl Painter {
 
                 graph_data(
                     &mut points,
-                    || memory_legend_label("SWP", data.swap_harvest.as_ref()),
+                    || (memory_legend_label("SWP", data.swap_harvest.as_ref()), None),
                     time,
                     &time_series.swap,
                     self.styles.swap_style,
@@ -152,7 +160,12 @@ impl Painter {
                     graph_data(
                         &mut points,
                         // TODO: Figure out how to line this up better
-                        || memory_legend_label("CACHE", data.cache_harvest.as_ref()),
+                        || {
+                            (
+                                memory_legend_label("CACHE", data.cache_harvest.as_ref()),
+                                None,
+                            )
+                        },
                         time,
                         &time_series.cache_mem,
                         self.styles.cache_style,
@@ -163,7 +176,7 @@ impl Painter {
                 {
                     graph_data(
                         &mut points,
-                        || memory_legend_label("ARC", data.arc_harvest.as_ref()),
+                        || (memory_legend_label("ARC", data.arc_harvest.as_ref()), None),
                         time,
                         &time_series.arc_mem,
                         self.styles.arc_style,
