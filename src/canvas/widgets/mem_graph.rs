@@ -154,7 +154,8 @@ impl Painter {
                     // TODO: Maybe include compression ratio too?
                     graph_data(
                         &mut points,
-                        // TODO: Maybe make this "ZRAM" once we figure out lining up things better
+                        // TODO: Maybe make this "ZRAM" once we figure out
+                        // lining up things better
                         || {
                             compressed_legend_label(
                                 "ZRM",

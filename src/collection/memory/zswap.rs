@@ -93,13 +93,14 @@ fn pool_limit(max_pool_percent: Option<&str>, mem_total_bytes: u64) -> u64 {
 pub(crate) fn get_zswap_usage(mem_total_bytes: u64) -> Option<ZswapHarvest> {
     let zswap_usage = parse_meminfo(&fs::read_to_string("/proc/meminfo").ok()?)?;
 
-    // If this can't be read, assume it's enabled since the meminfo fields exist.
+    // If this can't be read, assume it's enabled since the meminfo fields
+    // exist.
     let zswap_enabled = fs::read_to_string("/sys/module/zswap/parameters/enabled")
         .map(|s| !s.trim_start().starts_with(['N', 'n', '0']))
         .unwrap_or(true);
 
-    // Note that if zswap gets disabled at runtime, it won't evict still-existing
-    // data, so we'll continue showing until that is cleared.
+    // Note that if zswap gets disabled at runtime, it won't evict
+    // still-existing data, so we'll continue showing until that is cleared.
     if !zswap_enabled && zswap_usage.compressed_bytes == 0 && zswap_usage.original_bytes == 0 {
         return None;
     }

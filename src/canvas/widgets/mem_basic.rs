@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+#[cfg(target_os = "linux")]
+use ratatui::style::Modifier;
 use ratatui::{
     Frame,
     layout::{Constraint, Direction, Layout, Rect},
@@ -11,9 +13,6 @@ use crate::{
     collection::memory::MemData,
     get_binary_unit_and_denominator,
 };
-#[cfg(target_os = "linux")]
-use ratatui::style::Modifier;
-
 #[cfg(target_os = "linux")]
 use crate::{collection::memory::CompressedMemData, utils::data_units::get_binary_bytes};
 
