@@ -388,7 +388,6 @@ impl ProcWidgetState {
                         // default configs better for Windows? As currently otherwise there's a
                         // mismatch.
                     ];
-                    // Add Threads column on Linux
                     #[cfg(target_os = "linux")]
                     default_columns.push(Threads);
 

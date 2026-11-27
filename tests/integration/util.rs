@@ -138,7 +138,11 @@ pub fn spawn_btm_in_pty(args: &[&str]) -> (Box<dyn MasterPty>, Box<dyn Child>) {
 
     let mut final_args = args.to_vec();
 
-    if !args.contains(&"-C") {
+    if !(args.contains(&"-C")
+        || args.contains(&"--config_location")
+        || args.contains(&"--config-location")
+        || args.contains(&"--config"))
+    {
         final_args.extend_from_slice(&DEFAULT_CFG);
     }
 

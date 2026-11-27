@@ -344,7 +344,7 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     }
 
     // Read from config file.
-    let config = get_or_create_config(args.general.config_location.as_deref())?;
+    let config = get_or_create_config(args.general.config.as_deref())?;
 
     // Get a possible app title. We do this here to avoid having to store it.
     let title = get_terminal_title(&args, &config);
