@@ -54,11 +54,11 @@ fn bin_bytes_string(value: u64) -> String {
 }
 
 /// Convert zram info into a label of the form
-/// `compressed (uncompressed)/total`.
+/// `compressed (uncompressed)/total`, inspired by htop.
 #[cfg(target_os = "linux")]
 pub(super) fn zram_fraction_label(zram: &ZramHarvest) -> String {
     format!(
-        "{} ({})/{}",
+        "{}({})/{}",
         bin_bytes_string(zram.compressed_bytes()),
         bin_bytes_string(zram.original_size_bytes),
         bin_bytes_string(zram.capacity_bytes)
