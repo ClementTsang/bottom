@@ -12,7 +12,7 @@
         <meta name="author" content="Clement Tsang">
       
       
-        <link rel="canonical" href="https://bottom.pages.dev/stable/contribution/development/dev_env/">
+        <link rel="canonical" href="https://bottom.pages.dev/stable/contribution/development/dev_tips/">
       
       
         <link rel="prev" href="../../packaging-and-distribution/">
@@ -29,7 +29,7 @@
     
     
       
-        <title>Development Environment - bottom</title>
+        <title>Development Tips - bottom</title>
       
     
     
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#development-environment" class="md-skip">
+        <a href="#developer-tips" class="md-skip">
           Skip to content
         </a>
       
@@ -130,7 +130,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Development Environment
+              Development Tips
             
           </span>
         </div>
@@ -1859,6 +1859,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Tips
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -1866,7 +1884,7 @@
   <span class="md-ellipsis">
     
   
-    Development Environment
+    Development Tips
   
 
     
@@ -1875,6 +1893,75 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#rust-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rust setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#profiling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Profiling
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#build-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build cache
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build cache">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#kache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Kache
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -2052,7 +2139,7 @@
 
 
   
-    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/contribution/development/dev_env.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/ClementTsang/bottom/edit/main/docs/content/contribution/development/dev_tips.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
     </a>
@@ -2060,15 +2147,41 @@
   
 
 
-<h1 id="development-environment"><a class="toclink" href="#development-environment">Development Environment</a></h1>
+<h1 id="developer-tips"><a class="toclink" href="#developer-tips">Developer Tips</a></h1>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>This section is currently WIP.</p>
+<p>This section is intended for people who wish to work on/build/distribute bottom, not general users.
+Also note that this doc will change over time and is somewhat always a work-in-progress.</p>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>This section is intended for people who wish to work on/build/distribute bottom, not general users.</p>
-</div>
+<p>This section of the docs provides some basic guidance, tips, and tricks for working on bottom.</p>
+<h2 id="rust-setup"><a class="toclink" href="#rust-setup">Rust setup</a></h2>
+<p>Follow the standard <a href="https://rust-lang.org/tools/install/">Rust installation guide</a> to set Rust up. Development
+is typically done on the latest stable installation.</p>
+<h2 id="profiling"><a class="toclink" href="#profiling">Profiling</a></h2>
+<p>I've personally used a few tools for profiling:</p>
+<ul>
+<li><a href="https://github.com/mstange/samply"><strong>Samply</strong></a>: I like this one a lot for CPU profiling, since it works with the
+  Firefox profiler for a nice interface.</li>
+<li>
+<p><a href="https://valgrind.org/docs/manual/dh-manual.html"><strong>DHAT</strong></a>: This is useful for heap analysis. The dhat allocator is
+  actually already in <code>src/lib.rs</code>, albeit commented out. To use it, pull in the <a href="https://crates.io/crates/dhat">dhat crate</a>
+  and uncomment the following lines:</p>
+<div class="highlight"><pre><span></span><code><span class="k">static</span><span class="w"> </span><span class="n">ALLOC</span><span class="p">:</span><span class="w"> </span><span class="nc">dhat</span><span class="p">::</span><span class="n">Alloc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dhat</span><span class="p">::</span><span class="n">Alloc</span>
+
+<span class="c1">//...</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="n">_profiler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dhat</span><span class="p">::</span><span class="n">Profiler</span><span class="p">::</span><span class="n">new_heap</span><span class="p">();</span>
+</code></pre></div>
+</li>
+</ul>
+<h2 id="build-cache"><a class="toclink" href="#build-cache">Build cache</a></h2>
+<p>A local build cache can really speed things up while developing. While Cargo's built-in cache can suffice if you're
+just doing simple changes, if you're working on multiple changes over a few worktrees, there can be a lot of wasted
+space and time. At the moment I really like <a href="https://github.com/kunobi-ninja/kache">Kache</a>.
+<a href="https://github.com/mozilla/sccache">sccache</a> is pretty good too. Follow their guides on setting things up if you
+think you would find this useful - note these are also pretty useful for general Rust dev too!</p>
+<h3 id="kache"><a class="toclink" href="#kache">Kache</a></h3>
+<p>A note on Kache - if you use this, disable the test runner env vars, as I've found they don't work on at least Linux.</p>
 
 
 
@@ -2089,7 +2202,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="September 12, 2022 08:14:19">September 12, 2022</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 27, 2026 21:21:17">November 27, 2026</span>
   </span>
 
     
