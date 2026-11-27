@@ -45,7 +45,8 @@ use crossterm::{
     cursor::Show,
     event::{
         DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture,
-        Event, KeyEventKind, MouseEventKind, poll, read,
+        Event, KeyEventKind, KeyboardEnhancementFlags, MouseEventKind, PopKeyboardEnhancementFlags,
+        PushKeyboardEnhancementFlags, poll, read,
     },
     execute,
     terminal::{
@@ -87,21 +88,25 @@ fn cleanup_terminal(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>, terminal_features: TerminalFeatures,
 ) -> anyhow::Result<()> {
     disable_raw_mode()?;
+    let stdout_val = terminal.backend_mut();
+
+    stdout_val.show_cursor()?;
 
     if terminal_features.mouse_capture_enabled {
-        let _ = execute!(terminal.backend_mut(), DisableMouseCapture);
+        let _ = execute!(stdout_val, DisableMouseCapture);
     }
 
     if terminal_features.bracketed_paste_enabled {
-        let _ = execute!(terminal.backend_mut(), DisableBracketedPaste);
+        let _ = execute!(stdout_val, DisableBracketedPaste);
     }
 
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
-    terminal.show_cursor()?;
+    execute!(stdout_val, LeaveAlternateScreen)?;
+
+    let _ = execute!(stdout_val, PopKeyboardEnhancementFlags);
 
     if terminal_features.custom_name_enabled {
         // Reset terminal window title to default (blank apparently does so).
-        if let Err(err) = execute!(terminal.backend_mut(), SetTitle("")) {
+        if let Err(err) = execute!(stdout_val, SetTitle("")) {
             eprintln!("Failed to reset terminal title: {err:?}");
         }
     }
@@ -123,17 +128,18 @@ fn check_if_terminal() {
     }
 }
 
-/// This manually resets stdout back to normal state.
+/// This manually resets stdout back to normal state; you probably only want to call this in the case of a panic.
 pub fn reset_stdout() {
-    let mut stdout = stdout();
+    let mut stdout_val = stdout();
     let _ = disable_raw_mode();
-    let _ = execute!(stdout, DisableMouseCapture);
-    let _ = execute!(stdout, DisableBracketedPaste);
-    let _ = execute!(stdout, LeaveAlternateScreen);
-    let _ = execute!(stdout, Show);
+    let _ = execute!(stdout_val, Show);
+    let _ = execute!(stdout_val, DisableMouseCapture);
+    let _ = execute!(stdout_val, DisableBracketedPaste);
+    let _ = execute!(stdout_val, LeaveAlternateScreen);
+    let _ = execute!(stdout_val, PopKeyboardEnhancementFlags);
     // We unconditionally reset the terminal title back to the default here by
     // doing this.
-    let _ = execute!(stdout, SetTitle(""));
+    let _ = execute!(stdout_val, SetTitle(""));
 }
 
 /// A panic hook to properly restore the terminal in the case of a panic.
@@ -407,6 +413,12 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
         }
         None => {}
     }
+
+    // I think it's fine to just swallow the error here.
+    let _ = execute!(
+        stdout_val,
+        PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES)
+    );
 
     execute!(stdout_val, EnterAlternateScreen)?;
 
