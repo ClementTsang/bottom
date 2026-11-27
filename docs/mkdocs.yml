@@ -193,7 +193,7 @@ nav:
       - "Documentation": contribution/documentation.md
       - "Packaging and Distribution": contribution/packaging-and-distribution.md
       - "Development":
-          - "Development Environment": contribution/development/dev_env.md
+          - "Development Tips": contribution/development/dev_tips.md
           - "Testing": contribution/development/testing.md
           - "Logging": contribution/development/logging.md
           - "Build Process": contribution/development/build_process.md
