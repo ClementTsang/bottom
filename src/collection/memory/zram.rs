@@ -28,6 +28,12 @@ impl ZramHarvest {
             total_bytes,
         })
     }
+
+    /// Return the compressed size of the stored data, capped to the
+    /// uncompressed size. In bytes.
+    pub fn compressed_bytes(&self) -> u64 {
+        self.compressed_size_bytes.min(self.original_size_bytes)
+    }
 }
 
 impl AddAssign for ZramHarvest {

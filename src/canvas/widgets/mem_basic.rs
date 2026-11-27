@@ -11,6 +11,11 @@ use crate::{
     collection::memory::MemData,
     get_binary_unit_and_denominator,
 };
+#[cfg(target_os = "linux")]
+use ratatui::style::Modifier;
+
+#[cfg(target_os = "linux")]
+use crate::{collection::memory::zram::ZramHarvest, utils::data_units::get_binary_bytes};
 
 /// Convert memory info into a string representing a fraction.
 #[inline]
@@ -37,6 +42,38 @@ fn memory_label(data: &MemData, is_percentage: bool) -> Cow<'static, str> {
         memory_percentage_label(data)
     } else {
         memory_fraction_label(data)
+    }
+}
+
+/// Returns a binary-prefixed string with one decimal place
+/// (e.g. `1.5GiB`).
+#[cfg(target_os = "linux")]
+fn bin_bytes_string(value: u64) -> String {
+    let (value, unit) = get_binary_bytes(value);
+    format!("{value:.1}{unit}")
+}
+
+/// Convert zram info into a label of the form
+/// `compressed (uncompressed)/total`.
+#[cfg(target_os = "linux")]
+pub(super) fn zram_fraction_label(zram: &ZramHarvest) -> String {
+    format!(
+        "{} ({})/{}",
+        bin_bytes_string(zram.compressed_bytes()),
+        bin_bytes_string(zram.original_size_bytes),
+        bin_bytes_string(zram.capacity_bytes)
+    )
+}
+
+/// Convert zram info into a label showing both compressed and uncompressed
+/// usage, where `usage` is the uncompressed usage.
+#[cfg(target_os = "linux")]
+fn zram_label(zram: &ZramHarvest, usage: &MemData, is_percentage: bool) -> String {
+    if is_percentage {
+        let compressed = zram.compressed_bytes() as f64 / usage.total_bytes.get() as f64;
+        format!("{:3.0}% ({:.0}%)", compressed * 100.0, usage.percentage())
+    } else {
+        zram_fraction_label(zram)
     }
 }
 
@@ -102,15 +139,23 @@ impl Painter {
 
         #[cfg(target_os = "linux")]
         {
-            if let Some(zram_harvest) = &data.zram_harvest {
-                let zram_percentage = zram_harvest.percentage();
-                let zram_label = memory_label(zram_harvest, app_state.basic_mode_use_percent);
+            if let Some(zram_harvest) = &data.zram_harvest
+                && let Some(usage) = zram_harvest.as_mem_data()
+            {
+                let compressed_ratio =
+                    zram_harvest.compressed_bytes() as f64 / usage.total_bytes.get() as f64;
+                let is_percentage = app_state.basic_mode_use_percent;
 
                 draw_widgets.push(
                     PipeGauge::default()
-                        .ratio(zram_percentage / 100.0)
+                        .ratio(usage.percentage() / 100.0)
+                        .leading_segment(
+                            compressed_ratio,
+                            self.styles.zram_style.add_modifier(Modifier::DIM),
+                        )
                         .start_label("ZRM")
-                        .inner_label(zram_label)
+                        .inner_label(zram_label(zram_harvest, &usage, is_percentage))
+                        .inner_label_fallback(memory_label(&usage, is_percentage))
                         .label_style(self.styles.zram_style)
                         .gauge_style(self.styles.zram_style)
                         .bar_type(self.styles.bar_type),

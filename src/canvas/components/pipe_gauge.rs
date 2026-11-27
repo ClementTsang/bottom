@@ -57,8 +57,10 @@ fn get_unicode_block(frac: f64) -> &'static str {
 pub struct PipeGauge<'a> {
     block: Option<Block<'a>>,
     ratio: f64,
+    leading_segment: Option<(f64, Style)>,
     start_label: Option<Line<'a>>,
     inner_label: Option<Line<'a>>,
+    inner_label_fallback: Option<Line<'a>>,
     label_style: Style,
     gauge_style: Style,
     hide_parts: LabelLimit,
@@ -70,8 +72,10 @@ impl Default for PipeGauge<'_> {
         Self {
             block: None,
             ratio: 0.0,
+            leading_segment: None,
             start_label: None,
             inner_label: None,
+            inner_label_fallback: None,
             label_style: Style::default(),
             gauge_style: Style::default(),
             hide_parts: LabelLimit::default(),
@@ -91,6 +95,18 @@ impl<'a> PipeGauge<'a> {
         self
     }
 
+    /// An optional segment drawn at the start of the filled portion of the
+    /// bar with its own style. This is useful if you want to show multiple
+    /// bar styles.
+    ///
+    /// `ratio` is a value from 0.0 to 1.0 of the whole bar.
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    pub fn leading_segment(mut self, ratio: f64, style: Style) -> Self {
+        self.leading_segment = Some((ratio.clamp(0.0, 1.0), style));
+
+        self
+    }
+
     /// The label displayed before the bar.
     pub fn start_label<T>(mut self, start_label: T) -> Self
     where
@@ -106,6 +122,17 @@ impl<'a> PipeGauge<'a> {
         T: Into<Line<'a>>,
     {
         self.inner_label = Some(inner_label.into());
+        self
+    }
+
+    /// A label to try to display instead of the normal inner label
+    /// if it wouldn't fit.
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    pub fn inner_label_fallback<T>(mut self, inner_label_fallback: T) -> Self
+    where
+        T: Into<Line<'a>>,
+    {
+        self.inner_label_fallback = Some(inner_label_fallback.into());
         self
     }
 
@@ -241,7 +268,8 @@ impl Widget for PipeGauge<'_> {
                 );
 
                 let bar_end = end.saturating_sub(1);
-                let filled_width = f64::from(bar_end.saturating_sub(start)) * self.ratio;
+                let bar_width = f64::from(bar_end.saturating_sub(start));
+                let filled_width = bar_width * self.ratio;
                 let pipe_end = bar_end.min(start + filled_width.floor() as u16);
 
                 let symbol = match self.bar_type {
@@ -250,16 +278,33 @@ impl Widget for PipeGauge<'_> {
                     BarType::Square => "■",
                 };
 
-                let bar_style = Style {
-                    fg: self.gauge_style.fg,
+                let to_bar_style = |style: Style| Style {
+                    fg: style.fg,
                     bg: None,
-                    add_modifier: self.gauge_style.add_modifier,
-                    sub_modifier: self.gauge_style.sub_modifier,
+                    add_modifier: style.add_modifier,
+                    sub_modifier: style.sub_modifier,
+                };
+                let bar_style = to_bar_style(self.gauge_style);
+
+                let (leading_end, leading_style, leading_covers_fill) = match self.leading_segment {
+                    Some((ratio, style)) => {
+                        let ratio = ratio.min(self.ratio);
+                        let leading_end = start + (bar_width * ratio).floor() as u16;
+
+                        (leading_end, to_bar_style(style), ratio >= self.ratio)
+                    }
+                    None => (start, bar_style, false),
                 };
 
                 for col in start..pipe_end {
+                    let style = if col < leading_end {
+                        leading_style
+                    } else {
+                        bar_style
+                    };
+
                     if let Some(cell) = buf.cell_mut((col, row)) {
-                        cell.set_symbol(symbol).set_style(bar_style);
+                        cell.set_symbol(symbol).set_style(style);
                     }
                 }
 
@@ -269,11 +314,23 @@ impl Widget for PipeGauge<'_> {
                     && pipe_end < bar_end
                     && let Some(cell) = buf.cell_mut((pipe_end, row))
                 {
+                    let style = if leading_covers_fill {
+                        leading_style
+                    } else {
+                        bar_style
+                    };
+
                     cell.set_symbol(get_unicode_block(filled_width.fract()))
-                        .set_style(bar_style);
+                        .set_style(style);
                 }
 
-                if (end_label.width() as u16) < end.saturating_sub(start) {
+                let label_space = end.saturating_sub(start);
+                let end_label = match self.inner_label_fallback {
+                    Some(fallback) if end_label.width() as u16 >= label_space => fallback,
+                    _ => end_label,
+                };
+
+                if (end_label.width() as u16) < label_space {
                     let gauge_end = gauge_area
                         .right()
                         .saturating_sub(end_label.width() as u16 + 1);

@@ -6,8 +6,12 @@ use ratatui::{
     style::Style,
 };
 
+#[cfg(target_os = "linux")]
+use super::mem_basic::zram_fraction_label;
 #[cfg(feature = "gpu")]
 use crate::collection::duplicate_gpu_names;
+#[cfg(target_os = "linux")]
+use crate::collection::memory::zram::ZramHarvest;
 use crate::{
     app::{App, data::Values},
     canvas::{
@@ -36,19 +40,31 @@ fn memory_legend_label(name: &str, data: Option<&MemData>) -> String {
     }
 }
 
+/// Convert zram info into a combined memory label, showing both compressed and
+/// uncompressed usage.
+#[cfg(target_os = "linux")]
+fn zram_legend_label(name: &str, zram: Option<&ZramHarvest>) -> String {
+    match zram.and_then(|zram| Some((zram, zram.as_mem_data()?))) {
+        Some((zram, usage)) => format!(
+            "{name}:{:3.0}%   {}",
+            usage.percentage(),
+            zram_fraction_label(zram)
+        ),
+        None => memory_legend_label(name, None),
+    }
+}
+
 /// Get graph data.
 #[inline]
 fn graph_data<'a>(
-    out: &mut Vec<GraphData<'a>>, name: &str, last_harvest: Option<&'a MemData>,
-    time: &'a [Instant], values: &'a Values, style: Style,
+    out: &mut Vec<GraphData<'a>>, label_fn: impl FnOnce() -> String, time: &'a [Instant],
+    values: &'a Values, style: Style,
 ) {
     // TODO: Make this if not visible instead...?
     if !values.no_elements() {
-        let label = memory_legend_label(name, last_harvest).into();
-
         out.push(
             GraphData::default()
-                .name(label)
+                .name(label_fn().into())
                 .time(time)
                 .values(values)
                 .style(style),
@@ -104,8 +120,7 @@ impl Painter {
                 // no entries
                 graph_data(
                     &mut points,
-                    "RAM",
-                    data.ram_harvest.as_ref(),
+                    || memory_legend_label("RAM", data.ram_harvest.as_ref()),
                     time,
                     &time_series.ram,
                     self.styles.ram_style,
@@ -113,8 +128,7 @@ impl Painter {
 
                 graph_data(
                     &mut points,
-                    "SWP",
-                    data.swap_harvest.as_ref(),
+                    || memory_legend_label("SWP", data.swap_harvest.as_ref()),
                     time,
                     &time_series.swap,
                     self.styles.swap_style,
@@ -125,8 +139,8 @@ impl Painter {
                     // TODO: Maybe include compression ratio too?
                     graph_data(
                         &mut points,
-                        "ZRM", // TODO: Maybe make this "ZRAM" once we figure out lining up things better
-                        data.zram_harvest.as_ref(),
+                        // TODO: Maybe make this "ZRAM" once we figure out lining up things better
+                        || zram_legend_label("ZRM", data.zram_harvest.as_ref()),
                         time,
                         &time_series.zram_mem,
                         self.styles.zram_style,
@@ -137,8 +151,8 @@ impl Painter {
                 {
                     graph_data(
                         &mut points,
-                        "CACHE", // TODO: Figure out how to line this up better
-                        data.cache_harvest.as_ref(),
+                        // TODO: Figure out how to line this up better
+                        || memory_legend_label("CACHE", data.cache_harvest.as_ref()),
                         time,
                         &time_series.cache_mem,
                         self.styles.cache_style,
@@ -149,8 +163,7 @@ impl Painter {
                 {
                     graph_data(
                         &mut points,
-                        "ARC",
-                        data.arc_harvest.as_ref(),
+                        || memory_legend_label("ARC", data.arc_harvest.as_ref()),
                         time,
                         &time_series.arc_mem,
                         self.styles.arc_style,
