@@ -83,7 +83,9 @@ fn try_drawing(
     }
 }
 
-/// Clean up the terminal before returning it to the user. Note that this will not error if any cleanup step fails, for simplicity's sake, though it will warn if some more important steps fail.
+/// Clean up the terminal before returning it to the user. Note that this will
+/// not error if any cleanup step fails, for simplicity's sake, though it will
+/// warn if some more important steps fail.
 fn cleanup_terminal(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>, terminal_features: TerminalFeatures,
 ) {
