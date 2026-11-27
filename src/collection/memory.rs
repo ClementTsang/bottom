@@ -22,10 +22,25 @@ pub mod arc;
 #[cfg(target_os = "linux")]
 pub mod zram;
 
+#[cfg(target_os = "linux")]
+pub mod zswap;
+
+/// Memory usage data.
 #[derive(Debug, Clone)]
 pub struct MemData {
     pub used_bytes: u64,
     pub total_bytes: NonZeroU64,
+}
+
+/// Memory usage data for things that store compressed data
+/// (e.g. zram, zswap).
+#[cfg(target_os = "linux")]
+#[derive(Debug, Clone)]
+pub struct CompressedMemData {
+    /// The usage to show as the gauge and graph value.
+    pub usage: MemData,
+    pub compressed_bytes: u64,
+    pub original_bytes: u64,
 }
 
 impl MemData {

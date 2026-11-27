@@ -649,6 +649,9 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 # Shows zram usage. Linux only.
 #zram = false
 
+# Shows zswap usage. Linux only.
+#zswap = false
+
 # Subtract ARC memory that can be freed from memory usage. Only available if the ZFS feature is enabled when built.
 #free_arc = false
 
@@ -750,6 +753,7 @@ pub(crate) const CONFIG_TEXT: &str = r#"# This is a default config file for bott
 #cache_colour = "light red"
 #swap_colour = "light yellow"
 #zram_colour = "yellow"
+#zswap_colour = "cyan"
 #arc_colour = "light cyan"
 #gpu_colours = ["light blue", "light red", "cyan", "green", "blue", "red"]
 

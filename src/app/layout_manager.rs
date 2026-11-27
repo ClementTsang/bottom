@@ -1041,6 +1041,7 @@ pub struct UsedWidgets {
     pub use_mem: bool,
     pub use_cache: bool,
     pub use_zram: bool,
+    pub use_zswap: bool,
     pub use_gpu: bool,
     pub use_gpu_graph: bool,
     pub use_net: bool,

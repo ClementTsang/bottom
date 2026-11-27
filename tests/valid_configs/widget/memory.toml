@@ -3,5 +3,6 @@
 [memory_graph]
 cache_memory = true
 zram = true
+zswap = true
 free_arc = true
 legend_position = "left"

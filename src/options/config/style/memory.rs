@@ -27,6 +27,12 @@ pub(crate) struct MemoryStyle {
     #[serde(alias = "zram_color")]
     pub(crate) zram_colour: Option<ColourStr>,
 
+    /// The colour of the zswap label and graph line. Only does anything on
+    /// Linux.
+    #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+    #[serde(alias = "zswap_color")]
+    pub(crate) zswap_colour: Option<ColourStr>,
+
     /// The colour of the ARC label and graph line.
     #[serde(alias = "arc_color")]
     pub(crate) arc_colour: Option<ColourStr>,

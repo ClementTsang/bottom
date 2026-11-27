@@ -7,11 +7,11 @@ use ratatui::{
 };
 
 #[cfg(target_os = "linux")]
-use super::mem_basic::zram_fraction_label;
+use super::mem_basic::compressed_fraction_label;
 #[cfg(feature = "gpu")]
 use crate::collection::duplicate_gpu_names;
 #[cfg(target_os = "linux")]
-use crate::collection::memory::zram::ZramHarvest;
+use crate::collection::memory::CompressedMemData;
 use crate::{
     app::{App, data::Values},
     canvas::{
@@ -40,18 +40,21 @@ fn memory_legend_label(name: &str, data: Option<&MemData>) -> String {
     }
 }
 
-/// Convert zram info into a combined memory label showing both compressed and
-/// uncompressed usage. Also returns a fallback label for use if the box is too small.
+/// Convert compressed memory info into a combined memory label showing both
+/// compressed and uncompressed usage. Also returns a fallback label for use if
+/// the box is too small.
 #[cfg(target_os = "linux")]
-fn zram_legend_label(name: &str, zram: Option<&ZramHarvest>) -> (String, Option<String>) {
-    match zram.and_then(|zram| Some((zram, zram.as_mem_data()?))) {
-        Some((zram, usage)) => (
+fn compressed_legend_label(
+    name: &str, data: Option<CompressedMemData>,
+) -> (String, Option<String>) {
+    match data {
+        Some(data) => (
             format!(
                 "{name}:{:3.0}%   {}",
-                usage.percentage(),
-                zram_fraction_label(zram)
+                data.usage.percentage(),
+                compressed_fraction_label(&data)
             ),
-            Some(memory_legend_label(name, Some(&usage))),
+            Some(memory_legend_label(name, Some(&data.usage))),
         ),
         None => (memory_legend_label(name, None), None),
     }
@@ -108,6 +111,10 @@ impl Painter {
                     if data.zram_harvest.is_some() {
                         size += 1; // add capacity for ZRAM
                     }
+
+                    if data.zswap_harvest.is_some() {
+                        size += 1;
+                    }
                 }
                 #[cfg(feature = "zfs")]
                 {
@@ -148,10 +155,32 @@ impl Painter {
                     graph_data(
                         &mut points,
                         // TODO: Maybe make this "ZRAM" once we figure out lining up things better
-                        || zram_legend_label("ZRM", data.zram_harvest.as_ref()),
+                        || {
+                            compressed_legend_label(
+                                "ZRM",
+                                data.zram_harvest
+                                    .as_ref()
+                                    .and_then(|z| z.compressed_mem_data()),
+                            )
+                        },
                         time,
                         &time_series.zram_mem,
                         self.styles.zram_style,
+                    );
+
+                    graph_data(
+                        &mut points,
+                        || {
+                            compressed_legend_label(
+                                "ZSW",
+                                data.zswap_harvest
+                                    .as_ref()
+                                    .and_then(|z| z.compressed_mem_data()),
+                            )
+                        },
+                        time,
+                        &time_series.zswap_mem,
+                        self.styles.zswap_style,
                     );
                 }
 

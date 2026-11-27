@@ -66,6 +66,10 @@ pub struct TimeSeriesData {
     /// zram data.
     pub zram_mem: Values,
 
+    #[cfg(target_os = "linux")]
+    /// zswap data.
+    pub zswap_mem: Values,
+
     #[cfg(feature = "gpu")]
     /// GPU memory data. As it is stored in a BTreeMap, it's inherently
     /// sorted.
@@ -173,6 +177,12 @@ impl TimeSeriesData {
                 self.zram_mem.push(zram.percentage());
             } else {
                 self.zram_mem.insert_break();
+            }
+
+            if let Some(zswap) = data.zswap.as_ref().and_then(|zswap| zswap.as_mem_data()) {
+                self.zswap_mem.push(zswap.percentage());
+            } else {
+                self.zswap_mem.insert_break();
             }
         }
 
@@ -379,6 +389,9 @@ impl TimeSeriesData {
 
         #[cfg(target_os = "linux")]
         let _ = self.zram_mem.prune_and_shrink_to_fit(end);
+
+        #[cfg(target_os = "linux")]
+        let _ = self.zswap_mem.prune_and_shrink_to_fit(end);
 
         #[cfg(feature = "gpu")]
         {

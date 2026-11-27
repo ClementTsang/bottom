@@ -25,6 +25,7 @@ cache_memory = true
 ## Collect and show zram usage
 
 On Linux, you can enable `zram` to show [zram](https://docs.kernel.org/admin-guide/blockdev/zram.html) usage.
+
 Usage is over all zram devices and is shown as the uncompressed size of the stored data versus the total uncompressed
 capacity. Also note that if zram is used as swap, this usage is currently also included in the swap
 usage.
@@ -34,6 +35,21 @@ It is disabled (`false`) by default. For example, to enable it:
 ```toml
 [memory_graph]
 zram = true
+```
+
+## Collect and show zswap usage
+
+On Linux, you can enable `zswap` to show [zswap](https://docs.kernel.org/admin-guide/mm/zswap.html) usage.
+Note this requires kernel 5.19 or newer.
+
+When enabled, the compressed size, uncompressed size, and maximum pool size are shown. Note that
+as pages stored in zswap are also counted as swap usage, they are subtracted from it when the zram feature is enabled.
+
+It is disabled (`false`) by default. For example, to enable it:
+
+```toml
+[memory_graph]
+zswap = true
 ```
 
 ## Disable GPU usage
