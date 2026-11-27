@@ -371,7 +371,7 @@ impl ProcWidgetState {
                     })
                     .collect(),
                 _ => {
-                    let mut default_columns = vec![
+                    let default_columns = [
                         if is_count { Count } else { Pid },
                         if is_command { Command } else { Name },
                         CpuPercent,
@@ -388,8 +388,6 @@ impl ProcWidgetState {
                         // default configs better for Windows? As currently otherwise there's a
                         // mismatch.
                     ];
-                    #[cfg(target_os = "linux")]
-                    default_columns.push(Threads);
 
                     default_columns.into_iter().map(make_column).collect()
                 }

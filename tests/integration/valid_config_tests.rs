@@ -181,7 +181,7 @@ fn test_proc_columns() {
 #[cfg(all(target_os = "linux", feature = "default"))]
 #[test]
 fn test_proc_columns_all_features_linux() {
-    run_and_kill_cfg("./tests/valid_configs/proc_columns_all_features_linux.toml");
+    run_and_kill_cfg("./tests/valid_configs/os_specific/proc_columns_all_features_linux.toml");
 }
 
 #[cfg(target_os = "linux")]
