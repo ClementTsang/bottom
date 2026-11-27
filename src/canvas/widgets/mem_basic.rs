@@ -71,7 +71,7 @@ fn compressed_label(data: &CompressedMemData, is_percentage: bool) -> String {
     if is_percentage {
         let total = data.usage.total_bytes.get() as f64;
         format!(
-            "{:3.0}% ({:.0}%)",
+            "{:3.0}%({:.0}%)",
             data.compressed_bytes as f64 / total * 100.0,
             data.original_bytes as f64 / total * 100.0
         )
