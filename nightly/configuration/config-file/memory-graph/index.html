@@ -1412,10 +1412,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#collectshow-cache-memory" class="md-nav__link">
+  <a href="#collect-and-show-cache-memory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Collect/show cache memory
+        Collect and show cache memory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#collect-and-show-zram-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Collect and show zram usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disable-gpu-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disable GPU usage
       
     </span>
   </a>
@@ -2149,14 +2171,27 @@
 <span class="c1"># One of ["none", "top-left", "top", "top-right", "left", "right", "bottom-left", "bottom", "bottom-right"]</span>
 <span class="n">legend_position</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"top-left"</span>
 </code></pre></div>
-<h2 id="collectshow-cache-memory"><a class="toclink" href="#collectshow-cache-memory">Collect/show cache memory</a></h2>
+<h2 id="collect-and-show-cache-memory"><a class="toclink" href="#collect-and-show-cache-memory">Collect and show cache memory</a></h2>
 <p>On Linux, you can change whether the memory used by <a href="https://serverfault.com/a/1025189">cache/slabs</a> is collected and
 shown. By default, it is <code>false</code>.</p>
-<!--TODO: Note this affects basic too... should I separate out a "general memory" setting and specific graph ones?-->
-
 <div class="highlight"><pre><span></span><code><span class="k">[memory_graph]</span>
 <span class="n">cache_memory</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 </code></pre></div>
+<h2 id="collect-and-show-zram-usage"><a class="toclink" href="#collect-and-show-zram-usage">Collect and show zram usage</a></h2>
+<p>On Linux, you can enable <code>zram</code> to show <a href="https://docs.kernel.org/admin-guide/blockdev/zram.html">zram</a> usage.
+Usage is over all zram devices and is shown as the uncompressed size of the stored data versus the total uncompressed
+capacity. Also note that if zram is used as swap, this usage is currently also included in the swap
+usage.</p>
+<p>It is disabled (<code>false</code>) by default. For example, to enable it:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[memory_graph]</span>
+<span class="n">zram</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</code></pre></div>
+<h2 id="disable-gpu-usage"><a class="toclink" href="#disable-gpu-usage">Disable GPU usage</a></h2>
+<p>GPU memory usage is collected by default. To disable it, do:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[flags]</span>
+<span class="n">disable_gpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</code></pre></div>
+<p>Note that for now, this disables all other GPU features, though this is likely to change in the future to be more granular.</p>
 <h2 id="short-gpu-names"><a class="toclink" href="#short-gpu-names">Short GPU names</a></h2>
 <p>If GPU support is enabled, you can use <code>short_gpu_names</code> to display simplified GPU names in the memory graph widget
 instead of the full GPU names. If enabled, then if there's only one GPU, it'll just list the entry as <code>GPU</code>;
@@ -2191,7 +2226,7 @@ by default.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 30, 2026 04:43:20">May 30, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 27, 2026 05:09:15">November 27, 2026</span>
   </span>
 
     
