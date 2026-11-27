@@ -133,4 +133,14 @@ mod tests {
             })
         );
     }
+
+    #[test]
+    fn compressed_bytes_is_capped() {
+        let zram = ZramHarvest {
+            original_size_bytes: 10,
+            compressed_size_bytes: 20,
+            ..Default::default()
+        };
+        assert_eq!(zram.compressed_bytes(), 10);
+    }
 }

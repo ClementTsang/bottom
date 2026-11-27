@@ -344,6 +344,8 @@ impl Widget for PipeGauge<'_> {
 
 #[cfg(test)]
 mod tests {
+    use ratatui::style::Color;
+
     use super::*;
 
     #[test]
@@ -452,5 +454,46 @@ mod tests {
             render_test_gauge(1.0, BarType::Block, Some("CPU"), Some("100%")),
             "CPU[███100%]"
         );
+    }
+
+    #[test]
+    fn test_leading_segment() {
+        let area = Rect::new(0, 0, 12, 1);
+        let mut buf = Buffer::empty(area);
+        PipeGauge::default()
+            .ratio(0.5)
+            .leading_segment(0.2, Style::default().fg(Color::Red))
+            .gauge_style(Style::default().fg(Color::Blue))
+            .render(area, &mut buf);
+
+        let colours: Vec<_> = (1..6).map(|x| buf[(x, 0)].fg).collect();
+        assert_eq!(
+            colours,
+            [
+                Color::Red,
+                Color::Red,
+                Color::Blue,
+                Color::Blue,
+                Color::Blue
+            ]
+        );
+    }
+
+    #[test]
+    fn test_inner_label_fallback() {
+        let render = |label: &str| {
+            let area = Rect::new(0, 0, 12, 1);
+            let mut buf = Buffer::empty(area);
+            PipeGauge::default()
+                .ratio(0.5)
+                .inner_label(label.to_owned())
+                .inner_label_fallback("50%")
+                .render(area, &mut buf);
+
+            (0..12).map(|x| buf[(x, 0)].symbol()).collect::<String>()
+        };
+
+        assert_eq!(render("5.0B"), "[||||| 5.0B]");
+        assert_eq!(render("5.0B/100.0B"), "[|||||  50%]");
     }
 }
