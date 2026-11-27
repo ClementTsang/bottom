@@ -240,6 +240,9 @@ pub struct ProcWidgetData {
     #[cfg(unix)]
     pub nice: i32,
     pub priority: i32,
+    /// The number of threads in the process (Linux only).
+    #[cfg(target_os = "linux")]
+    pub num_threads: u32,
 }
 
 impl ProcWidgetData {
@@ -290,6 +293,8 @@ impl ProcWidgetData {
             #[cfg(unix)]
             nice: process.nice,
             priority: process.priority,
+            #[cfg(target_os = "linux")]
+            num_threads: process.num_threads,
         }
     }
 
@@ -353,6 +358,8 @@ impl ProcWidgetData {
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage),
+            #[cfg(target_os = "linux")]
+            ProcColumn::Threads => self.num_threads.to_string(),
         }
     }
 }
@@ -402,6 +409,8 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage).into(),
+            #[cfg(target_os = "linux")]
+            ProcColumn::Threads => self.num_threads.to_string().into(),
         })
     }
 

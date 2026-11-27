@@ -166,6 +166,10 @@ pub struct ProcessHarvest {
 
     /// The kernel scheduling priority.
     pub priority: i32,
+
+    /// The number of threads in the process (Linux only for now).
+    #[cfg(target_os = "linux")]
+    pub num_threads: u32,
     // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,

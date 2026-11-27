@@ -166,6 +166,8 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         GpuMemPercent => SortColumn::new(GpuMemPercent).default_descending(),
         #[cfg(feature = "gpu")]
         GpuUtilPercent => SortColumn::new(GpuUtilPercent).default_descending(),
+        #[cfg(target_os = "linux")]
+        Threads => SortColumn::new(Threads).default_descending(),
     }
 }
 
@@ -204,6 +206,8 @@ pub enum ProcWidgetColumn {
     GpuMem,
     #[cfg(feature = "gpu")]
     GpuUtil,
+    #[cfg(target_os = "linux")]
+    Threads,
 }
 
 // This is temporary. Switch back to `ProcColumn` later!
@@ -359,13 +363,15 @@ impl ProcWidgetState {
                             }
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuUtil => GpuUtilPercent,
+                            #[cfg(target_os = "linux")]
+                            ProcWidgetColumn::Threads => Threads,
                         };
 
                         make_column(col)
                     })
                     .collect(),
                 _ => {
-                    let default_columns = [
+                    let mut default_columns = vec![
                         if is_count { Count } else { Pid },
                         if is_command { Command } else { Name },
                         CpuPercent,
@@ -382,6 +388,9 @@ impl ProcWidgetState {
                         // default configs better for Windows? As currently otherwise there's a
                         // mismatch.
                     ];
+                    // Add Threads column on Linux
+                    #[cfg(target_os = "linux")]
+                    default_columns.push(Threads);
 
                     default_columns.into_iter().map(make_column).collect()
                 }
@@ -414,6 +423,8 @@ impl ProcWidgetState {
                     GpuMemValue | GpuMemPercent => ProcWidgetColumn::GpuMem,
                     #[cfg(feature = "gpu")]
                     GpuUtilPercent => ProcWidgetColumn::GpuUtil,
+                    #[cfg(target_os = "linux")]
+                    Threads => ProcWidgetColumn::Threads,
                 }
             })
             .collect::<IndexSet<_>>();
@@ -1238,6 +1249,8 @@ mod test {
             #[cfg(unix)]
             nice: 0,
             priority: -20,
+            #[cfg(target_os = "linux")]
+            num_threads: 0,
         };
 
         let b = ProcWidgetData {

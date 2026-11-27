@@ -43,6 +43,8 @@ pub enum ProcColumn {
     GpuMemPercent,
     #[cfg(feature = "gpu")]
     GpuUtilPercent,
+    #[cfg(target_os = "linux")]
+    Threads,
 }
 
 impl ProcColumn {
@@ -71,6 +73,8 @@ impl ProcColumn {
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => &["GMem", "GMem%"],
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => &["GPU%"],
+            #[cfg(target_os = "linux")]
+            ProcColumn::Threads => &["Threads"],
             #[cfg(unix)]
             ProcColumn::Nice => &["Nice"],
             ProcColumn::Priority => &["Priority"],
@@ -106,6 +110,8 @@ impl ColumnHeader for ProcColumn {
             ProcColumn::GpuMemPercent => "GMem%",
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => "GPU%",
+            #[cfg(target_os = "linux")]
+            ProcColumn::Threads => "Threads",
         }
         .into()
     }
@@ -241,6 +247,10 @@ impl SortsRow for ProcColumn {
             ProcColumn::GpuUtilPercent => {
                 data.sort_by(|a, b| sort_partial_fn(descending)(a.gpu_usage, b.gpu_usage));
             }
+            #[cfg(target_os = "linux")]
+            ProcColumn::Threads => {
+                data.sort_by(|a, b| sort_partial_fn(descending)(a.num_threads, b.num_threads));
+            }
         }
     }
 }
@@ -272,6 +282,8 @@ impl ProcColumn {
             "gmem" | "gmem%" => Some(ProcColumn::GpuMemPercent),
             #[cfg(feature = "gpu")]
             "gpu%" => Some(ProcColumn::GpuUtilPercent),
+            #[cfg(target_os = "linux")]
+            "threads" => Some(ProcColumn::Threads),
             _ => None,
         }
     }
@@ -311,6 +323,8 @@ impl From<&ProcColumn> for ProcWidgetColumn {
             ProcColumn::GpuMemPercent | ProcColumn::GpuMemValue => ProcWidgetColumn::GpuMem,
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => ProcWidgetColumn::GpuUtil,
+            #[cfg(target_os = "linux")]
+            ProcColumn::Threads => ProcWidgetColumn::Threads,
         }
     }
 }

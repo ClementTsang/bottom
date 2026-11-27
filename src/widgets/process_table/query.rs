@@ -201,6 +201,8 @@ enum PrefixType {
     GpuMemoryBytes,
     #[cfg(feature = "gpu")]
     GpuMemoryPercentage,
+    #[cfg(target_os = "linux")]
+    Threads,
 }
 
 impl std::str::FromStr for PrefixType {
@@ -245,6 +247,11 @@ impl std::str::FromStr for PrefixType {
             }
         } else if multi_eq_ignore_ascii_case!(s, "priority") {
             result = Priority;
+        } else if multi_eq_ignore_ascii_case!(s, "threads") {
+            #[cfg(target_os = "linux")]
+            {
+                result = Threads;
+            }
         }
         #[cfg(feature = "gpu")]
         {

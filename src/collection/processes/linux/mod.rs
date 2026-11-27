@@ -295,6 +295,8 @@ fn read_proc(
             #[cfg(unix)]
             nice: stat.nice,
             priority: stat.priority,
+            #[cfg(target_os = "linux")]
+            num_threads: stat.num_threads,
         },
         new_process_times,
     ))
