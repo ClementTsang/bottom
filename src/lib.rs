@@ -76,21 +76,26 @@ fn try_drawing(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App, painter: &mut canvas::Painter,
 ) -> anyhow::Result<()> {
     if let Err(err) = painter.draw_data(terminal, app) {
-        cleanup_terminal(terminal, app.terminal_features)?;
+        cleanup_terminal(terminal, app.terminal_features);
         Err(err.into())
     } else {
         Ok(())
     }
 }
 
-/// Clean up the terminal before returning it to the user.
+/// Clean up the terminal before returning it to the user. Note that this will not error if any cleanup step fails, for simplicity's sake, though it will warn if some more important steps fail.
 fn cleanup_terminal(
     terminal: &mut Terminal<CrosstermBackend<Stdout>>, terminal_features: TerminalFeatures,
-) -> anyhow::Result<()> {
-    disable_raw_mode()?;
+) {
+    if let Err(err) = disable_raw_mode() {
+        eprintln!("Failed to disable raw mode: {err:?}");
+    };
+
     let stdout_val = terminal.backend_mut();
 
-    stdout_val.show_cursor()?;
+    if let Err(err) = stdout_val.show_cursor() {
+        eprintln!("Failed to re-enable cursor: {err:?}");
+    }
 
     if terminal_features.mouse_capture_enabled {
         let _ = execute!(stdout_val, DisableMouseCapture);
@@ -100,8 +105,7 @@ fn cleanup_terminal(
         let _ = execute!(stdout_val, DisableBracketedPaste);
     }
 
-    execute!(stdout_val, LeaveAlternateScreen)?;
-
+    let _ = execute!(stdout_val, LeaveAlternateScreen);
     let _ = execute!(stdout_val, PopKeyboardEnhancementFlags);
 
     if terminal_features.custom_name_enabled {
@@ -110,8 +114,6 @@ fn cleanup_terminal(
             eprintln!("Failed to reset terminal title: {err:?}");
         }
     }
-
-    Ok(())
 }
 
 /// Check and report to the user if the current environment is not a terminal.
@@ -548,7 +550,7 @@ pub fn start_bottom(enable_error_hook: &mut bool) -> anyhow::Result<()> {
     // I think doing it in this order is safe...
     // TODO: maybe move the cancellation token to the ctrl-c handler?
     cancellation_token.cancel();
-    cleanup_terminal(&mut terminal, terminal_features)?;
+    cleanup_terminal(&mut terminal, terminal_features);
 
     Ok(())
 }
