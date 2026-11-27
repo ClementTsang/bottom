@@ -17,8 +17,6 @@ legend_position = "top-left"
 On Linux, you can change whether the memory used by [cache/slabs](https://serverfault.com/a/1025189) is collected and
 shown. By default, it is `false`.
 
-<!--TODO: Note this affects basic too... should I separate out a "general memory" setting and specific graph ones?-->
-
 ```toml
 [memory_graph]
 cache_memory = true
