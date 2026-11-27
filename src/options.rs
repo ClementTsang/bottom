@@ -1853,7 +1853,9 @@ mod test {
 
         // Skip this test if the file already exists.
         if !case_1.exists() {
-            assert_eq!(get_config_path(None), Some(case_1));
+            assert_eq!(get_config_path(None), Some(case_1.clone()));
+        } else {
+            println!("Skipping case 1 config test as the default config path is populated.");
         }
 
         // Case two: no previous config, XDG var exists.
@@ -1866,9 +1868,12 @@ mod test {
         case_2.push("/tmp");
         case_2.push(DEFAULT_CONFIG_FILE_LOCATION);
 
-        // Skip this test if the file already exists.
-        if !case_2.exists() {
+        // Skip this test if the file already exists (note we have to also
+        // check case_1 since otherwise it could exist and thus fail case_2).
+        if !case_1.exists() && !case_2.exists() {
             assert_eq!(get_config_path(None), Some(case_2));
+        } else {
+            println!("Skipping case 2 config test as the default config path is populated.");
         }
 
         // Case one: old non-XDG exists already, XDG var exists.
