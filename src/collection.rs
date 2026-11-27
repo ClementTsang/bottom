@@ -683,6 +683,7 @@ impl DataCollector {
                 // swap usage. Only subtract for system-wide swap.
                 if self.cgroup_memory_data.swap.is_none()
                     && let Some(zswap) = &self.data.zswap
+                    && zswap.pool_limit_bytes > 0
                     && let Some(swap) = &mut self.data.swap
                 {
                     swap.used_bytes = swap.used_bytes.saturating_sub(zswap.original_size_bytes);
