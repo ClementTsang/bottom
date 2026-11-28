@@ -188,7 +188,7 @@ pub(crate) trait UnixProcessExt {
                 nice,
                 priority,
                 #[cfg(target_os = "macos")]
-                num_threads: get_thread_count(pid).unwrap_or(0),
+                num_threads: get_thread_count(pid).ok(),
             });
         }
 

@@ -80,7 +80,9 @@ impl ProcessAttribute {
             #[cfg(feature = "gpu")]
             ProcessAttribute::GpuMemoryBytes(cmp) => cmp.check(process.gpu_mem as f64),
             #[cfg(any(target_os = "linux", target_os = "macos"))]
-            ProcessAttribute::Threads(cmp) => cmp.check(process.num_threads as f64),
+            ProcessAttribute::Threads(cmp) => {
+                process.num_threads.is_some_and(|n| cmp.check(n as f64))
+            }
         }
     }
 }

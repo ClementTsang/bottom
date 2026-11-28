@@ -242,7 +242,7 @@ pub struct ProcWidgetData {
     pub priority: i32,
     /// The number of threads in the process.
     #[cfg(any(target_os = "linux", target_os = "macos"))]
-    pub num_threads: u32,
+    pub num_threads: Option<u32>,
 }
 
 impl ProcWidgetData {
@@ -328,7 +328,11 @@ impl ProcWidgetData {
         }
         #[cfg(any(target_os = "linux", target_os = "macos"))]
         {
-            self.num_threads += other.num_threads;
+            self.num_threads = match (self.num_threads, other.num_threads) {
+                (Some(a), Some(b)) => Some(a + b),
+                (Some(a), None) | (None, Some(a)) => Some(a),
+                (None, None) => None,
+            };
         }
     }
 
@@ -363,7 +367,10 @@ impl ProcWidgetData {
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage),
             #[cfg(any(target_os = "linux", target_os = "macos"))]
-            ProcColumn::Threads => self.num_threads.to_string(),
+            ProcColumn::Threads => self
+                .num_threads
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| "N/A".to_string()),
         }
     }
 }
@@ -414,7 +421,11 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage).into(),
             #[cfg(any(target_os = "linux", target_os = "macos"))]
-            ProcColumn::Threads => self.num_threads.to_string().into(),
+            ProcColumn::Threads => self
+                .num_threads
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| "N/A".to_string())
+                .into(),
         })
     }
 
@@ -547,15 +558,27 @@ mod test {
     #[test]
     fn test_num_threads_addition() {
         let process = ProcessHarvest {
-            num_threads: 3,
+            num_threads: Some(3),
             ..Default::default()
         };
         let other = ProcessHarvest {
-            num_threads: 4,
+            num_threads: Some(4),
             ..Default::default()
         };
         let mut data = ProcWidgetData::from_data(&process, false, false);
         data.add(&ProcWidgetData::from_data(&other, false, false));
-        assert_eq!(data.num_threads, 7);
+        assert_eq!(data.num_threads, Some(7));
+
+        let unknown = ProcessHarvest::default();
+        data.add(&ProcWidgetData::from_data(&unknown, false, false));
+        assert_eq!(data.num_threads, Some(7));
+
+        let mut unknown = ProcWidgetData::from_data(&unknown, false, false);
+        unknown.add(&ProcWidgetData::from_data(
+            &ProcessHarvest::default(),
+            false,
+            false,
+        ));
+        assert_eq!(unknown.num_threads, None);
     }
 }

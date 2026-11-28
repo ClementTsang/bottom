@@ -249,7 +249,7 @@ impl SortsRow for ProcColumn {
             }
             #[cfg(any(target_os = "linux", target_os = "macos"))]
             ProcColumn::Threads => {
-                data.sort_by(|a, b| sort_partial_fn(descending)(a.num_threads, b.num_threads));
+                data.sort_by(|a, b| sort_partial_fn(descending)(&a.num_threads, &b.num_threads));
             }
         }
     }

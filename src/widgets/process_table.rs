@@ -880,7 +880,11 @@ impl ProcWidgetState {
                     pwd.time = pwd.time.max(process.time);
                     #[cfg(any(target_os = "linux", target_os = "macos"))]
                     {
-                        pwd.num_threads += process.num_threads;
+                        pwd.num_threads = match (pwd.num_threads, process.num_threads) {
+                            (Some(a), Some(b)) => Some(a + b),
+                            (Some(a), None) | (None, Some(a)) => Some(a),
+                            (None, None) => None,
+                        };
                     }
                     #[cfg(feature = "gpu")]
                     {
@@ -1251,7 +1255,7 @@ mod test {
             nice: 0,
             priority: -20,
             #[cfg(any(target_os = "linux", target_os = "macos"))]
-            num_threads: 0,
+            num_threads: Some(0),
         };
 
         let b = ProcWidgetData {
@@ -1900,7 +1904,7 @@ mod test {
         let parent = ProcessHarvest {
             pid: 1,
             name: "a".into(),
-            num_threads: 3,
+            num_threads: Some(3),
             ..Default::default()
         };
         let threads = [10, 11].map(|tid| ProcessHarvest {
@@ -1909,14 +1913,14 @@ mod test {
             name: "a".into(),
             #[cfg(target_os = "linux")]
             process_type: ProcessType::ProcessThread,
-            num_threads: 0,
+            num_threads: Some(0),
             ..Default::default()
         });
         let child = ProcessHarvest {
             pid: 2,
             parent_pid: Some(1),
             name: "a".into(),
-            num_threads: 4,
+            num_threads: Some(4),
             ..Default::default()
         };
 
@@ -1932,7 +1936,7 @@ mod test {
         state.mode = ProcWidgetMode::Grouped;
         let grouped = state.get_normal_data(&process_data.process_harvest);
         assert_eq!(grouped.len(), 1);
-        assert_eq!(grouped[0].num_threads, 7);
+        assert_eq!(grouped[0].num_threads, Some(7));
 
         let mut tree_collapsed = TreeCollapsed::new(false);
         tree_collapsed.collapse(1);
@@ -1941,6 +1945,6 @@ mod test {
         stored_data.process_data = process_data;
         let tree = state.get_tree_data(&tree_collapsed, &stored_data);
         assert_eq!(tree.len(), 1);
-        assert_eq!(tree[0].num_threads, 7);
+        assert_eq!(tree[0].num_threads, Some(7));
     }
 }

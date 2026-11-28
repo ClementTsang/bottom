@@ -300,9 +300,9 @@ fn read_proc(
                 // Thread rows report 0 so that summing a process with its threads
                 // doesn't count the threads twice.
                 if thread_parent.is_some() {
-                    0
+                    Some(0)
                 } else {
-                    stat.num_threads
+                    Some(stat.num_threads)
                 }
             },
         },
