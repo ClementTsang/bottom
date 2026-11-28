@@ -281,7 +281,7 @@ pub(crate) fn get_thread_count(pid: Pid) -> Result<u32> {
             mem::size_of::<libc::proc_taskinfo>() as libc::c_int,
         )
     };
-    if ret > mem::size_of::<libc::proc_taskinfo>() as i32 {
+    if ret == mem::size_of::<libc::proc_taskinfo>() as i32 {
         // SAFETY: ret being the size of the struct means proc_pidinfo wrote
         // the correct amount of bytes into our buffer.
         let thread_num = unsafe { info.assume_init().pti_threadnum };

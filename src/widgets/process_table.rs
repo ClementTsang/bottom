@@ -878,7 +878,7 @@ impl ProcWidgetState {
                     pwd.total_read += process.total_read;
                     pwd.total_write += process.total_write;
                     pwd.time = pwd.time.max(process.time);
-                    #[cfg(target_os = "linux")]
+                    #[cfg(any(target_os = "linux", target_os = "macos"))]
                     {
                         pwd.num_threads += process.num_threads;
                     }
