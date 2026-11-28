@@ -1907,6 +1907,7 @@ mod test {
             pid: tid,
             parent_pid: Some(1),
             name: "a".into(),
+            #[cfg(target_os = "linux")]
             process_type: ProcessType::ProcessThread,
             num_threads: 0,
             ..Default::default()

@@ -358,6 +358,7 @@ mod test {
         assert_eq!(mem::align_of::<kinfo_proc>(), 8);
     }
 
+    #[test]
     fn test_assert_proc_taskinfo_size() {
         assert!(
             mem::size_of::<libc::proc_taskinfo>() > 0,
