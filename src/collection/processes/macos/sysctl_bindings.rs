@@ -259,6 +259,44 @@ pub(crate) struct eproc {
     pub e_spare: [c_long; 4],
 }
 
+/// Obtain the number of threads for a process via the `libproc` API.
+///
+/// Uses the public `libc::proc_pidinfo` wrapper... which is very much
+/// [undocumented](https://zameermanji.com/blog/2021/8/1/counting-open-file-descriptors-on-macos/)
+/// for whatever reason. This does appear to be the right way to do it
+/// though - `PROC_PIDTASKINFO` returns Mach task-level metrics, like
+/// memory, CPU, and - what we want - thread counts.
+pub(crate) fn get_thread_count(pid: Pid) -> Result<u32> {
+    let mut info = mem::MaybeUninit::<libc::proc_taskinfo>::uninit();
+    // SAFETY: This is inherently unsafe as it is a syscall.
+    // That said, this should be fine - we check the ret value,
+    // which returns the number of bytes written to the buffer.
+    //
+    // NOTE: if you ever touch this again, make sure that when you
+    // use ret that it is the size of proc_taskinfo!
+    let ret = unsafe {
+        libc::proc_pidinfo(
+            pid,
+            libc::PROC_PIDTASKINFO,
+            0,
+            info.as_mut_ptr() as *mut libc::c_void,
+            mem::size_of::<libc::proc_taskinfo>() as libc::c_int,
+        )
+    };
+
+    if ret == mem::size_of::<libc::proc_taskinfo>() as i32 {
+        // SAFETY: ret being the size of the struct means proc_pidinfo wrote
+        // the correct amount of bytes into our buffer.
+        let thread_num = unsafe { info.assume_init().pti_threadnum };
+
+        // libc::proc_taskinfo.pti_threadnum is an i32 - generally should
+        // be safe to cast but I guess just to be safe...
+        Ok(thread_num.try_into()?)
+    } else {
+        bail!("failed to get thread count for pid {pid}");
+    }
+}
+
 /// Obtains the [`kinfo_proc`] given a process PID.
 ///
 /// Based on the implementation from [heim](https://github.com/heim-rs/heim/blob/master/heim-process/src/sys/macos/bindings/process.rs#L235).
@@ -321,5 +359,15 @@ mod test {
 
         assert_eq!(mem::size_of::<kinfo_proc>(), 672);
         assert_eq!(mem::align_of::<kinfo_proc>(), 8);
+    }
+
+    #[test]
+    fn test_assert_proc_taskinfo_size() {
+        assert!(
+            mem::size_of::<libc::proc_taskinfo>() > 0,
+            "get_thread_count depends on this being true"
+        );
+
+        assert!(get_thread_count(std::process::id() as i32).unwrap() >= 1);
     }
 }

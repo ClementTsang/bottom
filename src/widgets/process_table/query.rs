@@ -201,7 +201,7 @@ enum PrefixType {
     GpuMemoryBytes,
     #[cfg(feature = "gpu")]
     GpuMemoryPercentage,
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     Threads,
 }
 
@@ -252,13 +252,13 @@ impl std::str::FromStr for PrefixType {
         } else if multi_eq_ignore_ascii_case!(s, "priority") {
             result = Priority;
         } else if multi_eq_ignore_ascii_case!(s, "threads") {
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             {
                 result = Threads;
             }
-            #[cfg(not(target_os = "linux"))]
+            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
             {
-                return Err(QueryError::new("'threads' only works on Linux"));
+                return Err(QueryError::new("'threads' only works on Linux/macOS"));
             }
         }
         #[cfg(feature = "gpu")]
@@ -1209,25 +1209,27 @@ mod tests {
         parse_query_no_options("cpu = ! 5").unwrap_err();
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn threads_query() {
         let query = parse_query_no_options("threads > 5").unwrap();
 
         let many = ProcessHarvest {
-            num_threads: 10,
+            num_threads: Some(10),
             ..Default::default()
         };
         let few = ProcessHarvest {
-            num_threads: 2,
+            num_threads: Some(2),
             ..Default::default()
         };
+        let unknown = ProcessHarvest::default();
 
         assert!(query.check(&many, false));
         assert!(!query.check(&few, false));
+        assert!(!query.check(&unknown, false));
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     #[test]
     fn threads_query_unsupported() {
         let err = parse_query_no_options("threads > 5").unwrap_err();

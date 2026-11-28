@@ -167,9 +167,10 @@ pub struct ProcessHarvest {
     /// The kernel scheduling priority.
     pub priority: i32,
 
-    /// The number of threads in the process (Linux only for now).
-    #[cfg(target_os = "linux")]
-    pub num_threads: u32,
+    /// The number of threads in the process. `None` if it could not be read
+    /// (e.g. on macOS, processes owned by other users without root).
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub num_threads: Option<u32>,
     // TODO: Additional fields
     // pub rss_kb: u64,
     // pub virt_kb: u64,

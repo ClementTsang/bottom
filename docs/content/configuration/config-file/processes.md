@@ -45,7 +45,7 @@ The values are case-insensitive.
     Note that there are also some columns that only work on certain platforms:
 
     - `nice` only works on Linux.
-    - `threads` only works on Linux at the moment.
+    - `threads` only works on Linux and macOS at the moment.
 
     Additionally, some columns may not work if certain features are disabled during compilation
     (e.g. the GPU columns will not work if the `gpu` feature is disabled).

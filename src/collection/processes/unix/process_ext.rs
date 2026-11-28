@@ -8,6 +8,8 @@ use sysinfo::ProcessStatus;
 use super::{ProcessHarvest, process_status_str};
 #[cfg(target_os = "macos")]
 use crate::collection::processes::macos::sysctl_bindings;
+#[cfg(target_os = "macos")]
+use crate::collection::processes::macos::sysctl_bindings::get_thread_count;
 use crate::{
     collection::{DataCollector, Pid, error::CollectionResult},
     utils::int_hash::IntHashMap,
@@ -185,6 +187,8 @@ pub(crate) trait UnixProcessExt {
                 #[cfg(unix)]
                 nice,
                 priority,
+                #[cfg(target_os = "macos")]
+                num_threads: get_thread_count(pid).ok(),
             });
         }
 

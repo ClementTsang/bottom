@@ -240,9 +240,9 @@ pub struct ProcWidgetData {
     #[cfg(unix)]
     pub nice: i32,
     pub priority: i32,
-    /// The number of threads in the process (Linux only).
-    #[cfg(target_os = "linux")]
-    pub num_threads: u32,
+    /// The number of threads in the process.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    pub num_threads: Option<u32>,
 }
 
 impl ProcWidgetData {
@@ -293,7 +293,7 @@ impl ProcWidgetData {
             #[cfg(unix)]
             nice: process.nice,
             priority: process.priority,
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             num_threads: process.num_threads,
         }
     }
@@ -326,9 +326,13 @@ impl ProcWidgetData {
             self.gpu_mem_usage = self.gpu_mem_usage + other.gpu_mem_usage;
             self.gpu_usage += other.gpu_usage;
         }
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         {
-            self.num_threads += other.num_threads;
+            self.num_threads = match (self.num_threads, other.num_threads) {
+                (Some(a), Some(b)) => Some(a + b),
+                (Some(a), None) | (None, Some(a)) => Some(a),
+                (None, None) => None,
+            };
         }
     }
 
@@ -362,8 +366,11 @@ impl ProcWidgetData {
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage),
-            #[cfg(target_os = "linux")]
-            ProcColumn::Threads => self.num_threads.to_string(),
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Threads => self
+                .num_threads
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| "N/A".to_string()),
         }
     }
 }
@@ -413,8 +420,12 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage).into(),
-            #[cfg(target_os = "linux")]
-            ProcColumn::Threads => self.num_threads.to_string().into(),
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            ProcColumn::Threads => self
+                .num_threads
+                .map(|n| n.to_string())
+                .unwrap_or_else(|| "N/A".to_string())
+                .into(),
         })
     }
 
@@ -543,19 +554,31 @@ mod test {
         assert_eq!(unknown.swap_bytes, Some(100));
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn test_num_threads_addition() {
         let process = ProcessHarvest {
-            num_threads: 3,
+            num_threads: Some(3),
             ..Default::default()
         };
         let other = ProcessHarvest {
-            num_threads: 4,
+            num_threads: Some(4),
             ..Default::default()
         };
         let mut data = ProcWidgetData::from_data(&process, false, false);
         data.add(&ProcWidgetData::from_data(&other, false, false));
-        assert_eq!(data.num_threads, 7);
+        assert_eq!(data.num_threads, Some(7));
+
+        let unknown = ProcessHarvest::default();
+        data.add(&ProcWidgetData::from_data(&unknown, false, false));
+        assert_eq!(data.num_threads, Some(7));
+
+        let mut unknown = ProcWidgetData::from_data(&unknown, false, false);
+        unknown.add(&ProcWidgetData::from_data(
+            &ProcessHarvest::default(),
+            false,
+            false,
+        ));
+        assert_eq!(unknown.num_threads, None);
     }
 }
