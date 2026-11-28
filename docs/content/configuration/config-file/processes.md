@@ -27,9 +27,28 @@ You can configure which columns are shown by the process widget by setting the `
 
 ```toml
 [processes]
-# Pick which columns you want to use in any order.
-columns = ["cpu%", "mem%", "pid", "name", "read", "write", "tread", "twrite", "state", "user", "time", "gmem%", "gpu%"]
+# Pick which columns you want to use in any order..
+columns = ["cpu%", "mem%", "mem", "virt", "swap", "pid", "name", "command", "read", "write", "tread", "twrite", "state", "user", "time", "priority", "gmem", "gmem%", "gpu%", "count"]
 ```
+
+By default, the following columns are used:
+
+```toml
+[processes]
+columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority"]
+```
+
+The values are case-insensitive.
+
+!!! Info
+
+    Note that there are also some columns that only work on certain platforms:
+
+    - `nice` only works on Linux.
+    - `threads` only works on Linux at the moment.
+
+    Additionally, some columns may not work if certain features are disabled during compilation
+    (e.g. the GPU columns will not work if the `gpu` feature is disabled).
 
 ## Default Sort Column
 
@@ -40,7 +59,7 @@ By default, the process widget starts sorted by CPU usage in descending order. Y
 default_sort = "mem"
 ```
 
-Any of the column names accepted by `columns` work here (e.g. `"cpu%"`, `"mem"`, `"pid"`, `"name"`, `"read"`). If the
+Any of the column names accepted by `columns` work here (e.g. `"cpu%"`, `"mem"`, `"pid"`, `"name"`, `"read"`, `"threads"`). If the
 column you pick is not actually shown by the widget, the built-in default is used instead.
 
 The same setting is also exposed as a CLI flag, which takes precedence over the config file:

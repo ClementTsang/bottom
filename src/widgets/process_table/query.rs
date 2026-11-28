@@ -201,6 +201,8 @@ enum PrefixType {
     GpuMemoryBytes,
     #[cfg(feature = "gpu")]
     GpuMemoryPercentage,
+    #[cfg(target_os = "linux")]
+    Threads,
 }
 
 impl std::str::FromStr for PrefixType {
@@ -243,8 +245,21 @@ impl std::str::FromStr for PrefixType {
             {
                 result = Nice;
             }
+            #[cfg(not(unix))]
+            {
+                return Err(QueryError::new("'nice' only works on Unix platforms"));
+            }
         } else if multi_eq_ignore_ascii_case!(s, "priority") {
             result = Priority;
+        } else if multi_eq_ignore_ascii_case!(s, "threads") {
+            #[cfg(target_os = "linux")]
+            {
+                result = Threads;
+            }
+            #[cfg(not(target_os = "linux"))]
+            {
+                return Err(QueryError::new("'threads' only works on Linux"));
+            }
         }
         #[cfg(feature = "gpu")]
         {
@@ -1192,6 +1207,31 @@ mod tests {
         parse_query_no_options("cpu =!").unwrap_err();
         parse_query_no_options("cpu = !").unwrap_err();
         parse_query_no_options("cpu = ! 5").unwrap_err();
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn threads_query() {
+        let query = parse_query_no_options("threads > 5").unwrap();
+
+        let many = ProcessHarvest {
+            num_threads: 10,
+            ..Default::default()
+        };
+        let few = ProcessHarvest {
+            num_threads: 2,
+            ..Default::default()
+        };
+
+        assert!(query.check(&many, false));
+        assert!(!query.check(&few, false));
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    #[test]
+    fn threads_query_unsupported() {
+        let err = parse_query_no_options("threads > 5").unwrap_err();
+        assert!(err.to_string().contains("Linux"));
     }
 
     /// `!=` with a non-numeric RHS should fail.

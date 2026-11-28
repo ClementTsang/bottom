@@ -166,6 +166,8 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         GpuMemPercent => SortColumn::new(GpuMemPercent).default_descending(),
         #[cfg(feature = "gpu")]
         GpuUtilPercent => SortColumn::new(GpuUtilPercent).default_descending(),
+        #[cfg(target_os = "linux")]
+        Threads => SortColumn::new(Threads).default_descending(),
     }
 }
 
@@ -204,6 +206,8 @@ pub enum ProcWidgetColumn {
     GpuMem,
     #[cfg(feature = "gpu")]
     GpuUtil,
+    #[cfg(target_os = "linux")]
+    Threads,
 }
 
 // This is temporary. Switch back to `ProcColumn` later!
@@ -359,6 +363,8 @@ impl ProcWidgetState {
                             }
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuUtil => GpuUtilPercent,
+                            #[cfg(target_os = "linux")]
+                            ProcWidgetColumn::Threads => Threads,
                         };
 
                         make_column(col)
@@ -414,6 +420,8 @@ impl ProcWidgetState {
                     GpuMemValue | GpuMemPercent => ProcWidgetColumn::GpuMem,
                     #[cfg(feature = "gpu")]
                     GpuUtilPercent => ProcWidgetColumn::GpuUtil,
+                    #[cfg(target_os = "linux")]
+                    Threads => ProcWidgetColumn::Threads,
                 }
             })
             .collect::<IndexSet<_>>();
@@ -870,6 +878,10 @@ impl ProcWidgetState {
                     pwd.total_read += process.total_read;
                     pwd.total_write += process.total_write;
                     pwd.time = pwd.time.max(process.time);
+                    #[cfg(target_os = "linux")]
+                    {
+                        pwd.num_threads += process.num_threads;
+                    }
                     #[cfg(feature = "gpu")]
                     {
                         pwd.gpu_usage += process.gpu_util;
@@ -1238,6 +1250,8 @@ mod test {
             #[cfg(unix)]
             nice: 0,
             priority: -20,
+            #[cfg(target_os = "linux")]
+            num_threads: 0,
         };
 
         let b = ProcWidgetData {
@@ -1871,5 +1885,61 @@ mod test {
             .get_tree_data(&tree_collapsed, &tree_stored_data)
             .len();
         assert!(filtered_tree_results == 1);
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn test_summed_num_threads() {
+        let init_columns = [
+            ProcWidgetColumn::PidOrCount,
+            ProcWidgetColumn::ProcNameOrCommand,
+            ProcWidgetColumn::Threads,
+        ];
+        let mut state = init_default_state(&init_columns);
+
+        let parent = ProcessHarvest {
+            pid: 1,
+            name: "a".into(),
+            num_threads: 3,
+            ..Default::default()
+        };
+        let threads = [10, 11].map(|tid| ProcessHarvest {
+            pid: tid,
+            parent_pid: Some(1),
+            name: "a".into(),
+            process_type: ProcessType::ProcessThread,
+            num_threads: 0,
+            ..Default::default()
+        });
+        let child = ProcessHarvest {
+            pid: 2,
+            parent_pid: Some(1),
+            name: "a".into(),
+            num_threads: 4,
+            ..Default::default()
+        };
+
+        let mut process_data = ProcessData::default();
+        for process in threads.into_iter().chain([parent, child]) {
+            process_data.process_harvest.insert(process.pid, process);
+        }
+        process_data
+            .process_parent_mapping
+            .insert(1, vec![2, 10, 11]);
+        process_data.orphan_pids = vec![1];
+
+        state.mode = ProcWidgetMode::Grouped;
+        let grouped = state.get_normal_data(&process_data.process_harvest);
+        assert_eq!(grouped.len(), 1);
+        assert_eq!(grouped[0].num_threads, 7);
+
+        let mut tree_collapsed = TreeCollapsed::new(false);
+        tree_collapsed.collapse(1);
+        state.mode = ProcWidgetMode::Tree(tree_collapsed.clone());
+        let mut stored_data = InnerData::default();
+        stored_data.process_data = process_data;
+        let tree = state.get_tree_data(&tree_collapsed, &stored_data);
+        assert_eq!(tree.len(), 1);
+        assert_eq!(tree[0].num_threads, 7);
     }
 }

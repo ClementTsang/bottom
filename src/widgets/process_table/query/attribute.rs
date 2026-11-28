@@ -41,6 +41,8 @@ pub(super) enum ProcessAttribute {
     GpuMemoryPercentage(NumericalQuery),
     #[cfg(feature = "gpu")]
     GpuMemoryBytes(NumericalQuery),
+    #[cfg(target_os = "linux")]
+    Threads(NumericalQuery),
 }
 
 impl ProcessAttribute {
@@ -77,6 +79,8 @@ impl ProcessAttribute {
             ProcessAttribute::GpuMemoryPercentage(cmp) => cmp.check(process.gpu_mem_percent as f64),
             #[cfg(feature = "gpu")]
             ProcessAttribute::GpuMemoryBytes(cmp) => cmp.check(process.gpu_mem as f64),
+            #[cfg(target_os = "linux")]
+            ProcessAttribute::Threads(cmp) => cmp.check(process.num_threads as f64),
         }
     }
 }
@@ -136,6 +140,8 @@ pub(super) fn new_numerical_attribute(
         PrefixType::GpuMemoryBytes => Ok(ProcessAttribute::GpuMemoryBytes(query)),
         #[cfg(feature = "gpu")]
         PrefixType::GpuMemoryPercentage => Ok(ProcessAttribute::GpuMemoryPercentage(query)),
+        #[cfg(target_os = "linux")]
+        PrefixType::Threads => Ok(ProcessAttribute::Threads(query)),
         _ => Err(QueryError::new(format!(
             "process attribute type {prefix_type:?} is not a supported numerical attribute"
         ))),

@@ -34,11 +34,13 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2329](https://github.com/ClementTsang/bottom/pull/2329): Add a GPU usage graph widget.
 - [#1843](https://github.com/ClementTsang/bottom/pull/1843): Automatically switch between light and dark themes based on terminal background colour.
 - [#2340](https://github.com/ClementTsang/bottom/pull/2340): Add basic zram usage display on Linux.
-- [#2347](https://github.com/ClementTsang/bottom/pull/2347): Add basic zswap usage display on Linux.
+- [#2347](https://github.com/ClementTsang/bottom/pull/2347): Add basic zswap usage display for Linux.
+- [#2351](https://github.com/ClementTsang/bottom/pull/2351): Add thread count column for the process widget for Linux.
 
 ### Changes
 
 - [#2296](https://github.com/ClementTsang/bottom/pull/2296): Better truncate CPU usage strings with small widths.
+- [#2351](https://github.com/ClementTsang/bottom/pull/2351): Show `--config` instead of `--config_location` in help menu; `config_location` (and `config-location`) remain valid aliases.
 
 ### Bug Fixes
 

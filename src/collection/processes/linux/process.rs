@@ -67,8 +67,10 @@ pub(crate) struct Stat {
     pub priority: i32,
 
     /// The nice value (user-settable scheduling hint).
-    #[cfg(unix)]
     pub nice: i32,
+
+    /// The number of threads in the process.
+    pub num_threads: u32,
 }
 
 impl Stat {
@@ -137,7 +139,7 @@ impl Stat {
         // nice
         let nice: i32 = next_part(&mut rest)?.parse()?;
         // num_threads
-        let _ = next_part(&mut rest)?;
+        let num_threads: u32 = next_part(&mut rest)?.parse()?;
         // itrealvalue
         let _ = next_part(&mut rest)?;
 
@@ -157,6 +159,7 @@ impl Stat {
             is_kernel_thread,
             priority,
             nice,
+            num_threads,
         })
     }
 

@@ -136,9 +136,18 @@ pub fn spawn_btm_in_pty(args: &[&str]) -> (Box<dyn MasterPty>, Box<dyn Child>) {
         }
     };
 
-    let args = if args.is_empty() { &DEFAULT_CFG } else { args };
+    let mut final_args = args.to_vec();
+
+    if !(args.contains(&"-C")
+        || args.contains(&"--config_location")
+        || args.contains(&"--config-location")
+        || args.contains(&"--config"))
+    {
+        final_args.extend_from_slice(&DEFAULT_CFG);
+    }
+
     let mut prev = "";
-    for arg in args.iter() {
+    for arg in final_args.iter() {
         if prev == "-C" {
             // This is the config file; make sure we set it to absolute path!
             cmd.arg(abs_path(arg));
@@ -148,7 +157,6 @@ pub fn spawn_btm_in_pty(args: &[&str]) -> (Box<dyn MasterPty>, Box<dyn Child>) {
 
         prev = arg;
     }
-
     (pair.master, pair.slave.spawn_command(cmd).unwrap())
 }
 

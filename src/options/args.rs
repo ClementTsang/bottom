@@ -124,9 +124,9 @@ pub struct GeneralArgs {
                     If it doesn't exist, a default config file is created at the path. If no path is provided, \
                     the default config location will be used.",
         alias = "config-location",
-        alias = "config",
+        alias = "config_location",
     )]
-    pub config_location: Option<PathBuf>,
+    pub config: Option<PathBuf>,
 
     #[arg(
         short = 't',

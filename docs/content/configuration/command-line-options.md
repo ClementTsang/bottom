@@ -10,7 +10,7 @@ see information on these options by running `btm -h`, or run `btm --help` to dis
 | `--terminal_title`                  | Sets a custom string displayed in the terminal title; add `{hostname}` to substitute it for your hostname. |
 | `--autohide_time`                   | Temporarily shows the time scale in graphs.                                                                |
 | `-b`, `--basic`                     | Hides graphs and uses a more basic look.                                                                   |
-| `-C`, `--config_location <PATH>`    | Sets the location of the config file.                                                                      |
+| `-C`, `--config <PATH>`             | Sets the location of the config file.                                                                      |
 | `-t`, `--default_time_value <TIME>` | Default time value for graphs.                                                                             |
 | `--default_widget_count <N>`        | Sets the N'th selected widget type as the default.                                                         |
 | `--default_widget_type <WIDGET>`    | Sets the default widget type. Use --help for more info.                                                    |
