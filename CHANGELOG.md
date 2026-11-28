@@ -40,6 +40,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 ### Changes
 
 - [#2296](https://github.com/ClementTsang/bottom/pull/2296): Better truncate CPU usage strings with small widths.
+- [#2351](https://github.com/ClementTsang/bottom/pull/2351): Show `--config` instead of `--config_location` in help menu; `config_location` (and `config-location`) remain valid aliases.
 
 ### Bug Fixes
 
