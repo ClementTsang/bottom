@@ -271,7 +271,9 @@ pub(crate) fn get_thread_count(pid: Pid) -> Result<u32> {
     // SAFETY: This is inherently unsafe as it is a syscall.
     // That said, this should be fine - we check the ret value,
     // which returns the number of bytes written to the buffer.
-    // NOTE: we should ensure that ret is the size of the struct!
+    //
+    // NOTE: if you ever touch this again, make sure that when you
+    // use ret that it is the size of proc_taskinfo!
     let ret = unsafe {
         libc::proc_pidinfo(
             pid,
@@ -281,14 +283,15 @@ pub(crate) fn get_thread_count(pid: Pid) -> Result<u32> {
             mem::size_of::<libc::proc_taskinfo>() as libc::c_int,
         )
     };
+
     if ret == mem::size_of::<libc::proc_taskinfo>() as i32 {
         // SAFETY: ret being the size of the struct means proc_pidinfo wrote
         // the correct amount of bytes into our buffer.
         let thread_num = unsafe { info.assume_init().pti_threadnum };
 
-        // libc::proc_taskinfo.pti_threadnum is an i32 - this should generally
-        // be safe to directly cast, as it is greater than 0 at least.
-        Ok(thread_num as u32)
+        // libc::proc_taskinfo.pti_threadnum is an i32 - generally should
+        // be safe to cast but I guess just to be safe...
+        Ok(thread_num.try_into()?)
     } else {
         bail!("failed to get thread count for pid {pid}");
     }
@@ -364,5 +367,7 @@ mod test {
             mem::size_of::<libc::proc_taskinfo>() > 0,
             "get_thread_count depends on this being true"
         );
+
+        assert!(get_thread_count(std::process::id() as i32).unwrap() >= 1);
     }
 }
