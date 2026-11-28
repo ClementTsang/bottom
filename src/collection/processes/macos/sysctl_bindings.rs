@@ -3,7 +3,7 @@
 
 use std::mem;
 
-use anyhow::{Result, anyhow, bail};
+use anyhow::{Result, bail};
 use libc::{
     CTL_KERN, KERN_PROC, KERN_PROC_PID, MAXCOMLEN, boolean_t, c_char, c_long, c_short, c_uchar,
     c_ushort, c_void, dev_t, gid_t, itimerval, pid_t, rusage, sigset_t, timeval, uid_t, xucred,
