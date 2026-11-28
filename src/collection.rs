@@ -359,7 +359,11 @@ impl DataCollector {
         // it can cause segfaults.
 
         if self.widgets_to_harvest.use_cpu || self.widgets_to_harvest.use_proc {
-            self.sys.system.refresh_cpu_all();
+            // TODO: Consider calling `refresh_cpu_list` on the slower refresh
+            // list... from the docs, this apparently only matters in the rare
+            // case CPU lists can somehow update, but... y'know, must as well
+            // if it's just on the slow list.
+            self.sys.system.refresh_cpu_usage();
         }
 
         if self.widgets_to_harvest.use_mem || self.widgets_to_harvest.use_proc {
