@@ -258,7 +258,7 @@ impl std::str::FromStr for PrefixType {
             }
             #[cfg(not(target_os = "linux"))]
             {
-                return Err(QueryError::new("'threads' only works on Linux'"));
+                return Err(QueryError::new("'threads' only works on Linux"));
             }
         }
         #[cfg(feature = "gpu")]
