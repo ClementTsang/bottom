@@ -27,17 +27,28 @@ You can configure which columns are shown by the process widget by setting the `
 
 ```toml
 [processes]
-# Pick which columns you want to use in any order. Capitalization does not matter.
-columns = ["cpu%", "mem%", "pid", "name", "read", "write", "tread", "twrite", "state", "user", "time", "Priority", "gmem", "gmem%", "gpu%"]
+# Pick which columns you want to use in any order..
+columns = ["cpu%", "mem%", "mem", "virt", "swap", "pid", "name", "command", "read", "write", "tread", "twrite", "state", "user", "time", "priority", "gmem", "gmem%", "gpu%", "count"]
 ```
 
-Note that there are also some columns that only work on certain platforms:
+By default, the following columns are used:
 
-- `nice` only works on Linux.
-- `threads` only works on Linux at the moment.
+```toml
+[processes]
+columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "R/s", "W/s", "T.Read", "T.Write", "User", "State", "GMem%", "GPU%", "Priority"]
+```
 
-Additionally, some columns may not work if certain features are disabled during compilation
-(e.g. the GPU columns will not work if the `gpu` feature is disabled).
+The values are case-insensitive.
+
+!!! Info
+
+    Note that there are also some columns that only work on certain platforms:
+
+    - `nice` only works on Linux.
+    - `threads` only works on Linux at the moment.
+
+    Additionally, some columns may not work if certain features are disabled during compilation
+    (e.g. the GPU columns will not work if the `gpu` feature is disabled).
 
 ## Default Sort Column
 

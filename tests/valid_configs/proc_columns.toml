@@ -1,2 +1,2 @@
 [processes]
-columns = ["PID", "Name", "CPU%", "Mem%", "Virt", "Rps", "Wps", "TRead", "Twrite", "User", "State", "Time", "Priority"]
+columns = ["cpu%", "mem%", "mem", "virt", "swap", "pid", "name", "command", "read", "write", "tread", "twrite", "state", "user", "time", "priority", "count"]
