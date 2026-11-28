@@ -98,7 +98,9 @@ up in terms of reported data.
 
 ## Why can't I see all my processes/process data on macOS?
 
-You may have to run the program with elevated privileges to work around it - for example:
+You may notice some process entries are missing, or perhaps some info for a process is missing (e.g. `N/A` values,
+some values always are 0, etc.). It is possible that you may have to run the program with elevated privileges in order
+for these entries to show up correctly.
 
 ```bash
 sudo btm
@@ -106,11 +108,14 @@ sudo btm
 
 !!! Warning
 
-    Please note that you should be certain that you trust any software you grant root privileges.
+    **Please note that you should be certain that you trust any software you grant root privileges!** Of course, I'm
+    not saying bottom is untrustworthy, but take this as a PSA to never blindly run things with `sudo`!
 
-    There are measures taken to try to maximize the amount of information obtained without elevated privileges. For example,
-    one can modify the instructions found on the [htop wiki](https://github.com/hishamhm/htop/wiki/macOS:-run-without-sudo)
-    on how to run htop without sudo for bottom. However, **please** understand the potential security risks before doing so!
+    There are measures taken to try to maximize the amount of information obtained without elevated privileges.
+    For example, one can modify the instructions found on the [htop wiki](https://github.com/hishamhm/htop/wiki/macOS:-run-without-sudo)
+    on how to run htop without sudo for bottom.
+
+For example, the process threads column may have entries that show `N/A` by default due to access restrictions.
 
 ## My configuration file isn't working
 
