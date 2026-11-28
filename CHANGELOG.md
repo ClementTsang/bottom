@@ -36,6 +36,7 @@ That said, these are more guidelines rather than hard rules, though the project 
 - [#2340](https://github.com/ClementTsang/bottom/pull/2340): Add basic zram usage display on Linux.
 - [#2347](https://github.com/ClementTsang/bottom/pull/2347): Add basic zswap usage display for Linux.
 - [#2351](https://github.com/ClementTsang/bottom/pull/2351): Add thread count column for the process widget for Linux.
+- [#2352](https://github.com/ClementTsang/bottom/pull/2352): Add thread count column for the process widget for macOS.
 
 ### Changes
 
