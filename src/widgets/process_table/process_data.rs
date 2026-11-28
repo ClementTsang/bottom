@@ -240,8 +240,8 @@ pub struct ProcWidgetData {
     #[cfg(unix)]
     pub nice: i32,
     pub priority: i32,
-    /// The number of threads in the process (Linux only).
-    #[cfg(target_os = "linux")]
+    /// The number of threads in the process.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     pub num_threads: u32,
 }
 
@@ -293,7 +293,7 @@ impl ProcWidgetData {
             #[cfg(unix)]
             nice: process.nice,
             priority: process.priority,
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             num_threads: process.num_threads,
         }
     }
@@ -326,7 +326,7 @@ impl ProcWidgetData {
             self.gpu_mem_usage = self.gpu_mem_usage + other.gpu_mem_usage;
             self.gpu_usage += other.gpu_usage;
         }
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         {
             self.num_threads += other.num_threads;
         }
@@ -362,7 +362,7 @@ impl ProcWidgetData {
             ProcColumn::GpuMemValue | ProcColumn::GpuMemPercent => self.gpu_mem_usage.to_string(),
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage),
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             ProcColumn::Threads => self.num_threads.to_string(),
         }
     }
@@ -413,7 +413,7 @@ impl DataToCell<ProcColumn> for ProcWidgetData {
             }
             #[cfg(feature = "gpu")]
             ProcColumn::GpuUtilPercent => format!("{:.1}%", self.gpu_usage).into(),
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             ProcColumn::Threads => self.num_threads.to_string().into(),
         })
     }
@@ -543,7 +543,7 @@ mod test {
         assert_eq!(unknown.swap_bytes, Some(100));
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn test_num_threads_addition() {
         let process = ProcessHarvest {

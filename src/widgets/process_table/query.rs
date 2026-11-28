@@ -201,7 +201,7 @@ enum PrefixType {
     GpuMemoryBytes,
     #[cfg(feature = "gpu")]
     GpuMemoryPercentage,
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     Threads,
 }
 
@@ -252,13 +252,13 @@ impl std::str::FromStr for PrefixType {
         } else if multi_eq_ignore_ascii_case!(s, "priority") {
             result = Priority;
         } else if multi_eq_ignore_ascii_case!(s, "threads") {
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             {
                 result = Threads;
             }
-            #[cfg(not(target_os = "linux"))]
+            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
             {
-                return Err(QueryError::new("'threads' only works on Linux"));
+                return Err(QueryError::new("'threads' only works on Linux/macOS"));
             }
         }
         #[cfg(feature = "gpu")]
@@ -1209,7 +1209,7 @@ mod tests {
         parse_query_no_options("cpu = ! 5").unwrap_err();
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn threads_query() {
         let query = parse_query_no_options("threads > 5").unwrap();
@@ -1227,7 +1227,7 @@ mod tests {
         assert!(!query.check(&few, false));
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     #[test]
     fn threads_query_unsupported() {
         let err = parse_query_no_options("threads > 5").unwrap_err();

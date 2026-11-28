@@ -166,7 +166,7 @@ fn make_column(column: ProcColumn) -> SortColumn<ProcColumn> {
         GpuMemPercent => SortColumn::new(GpuMemPercent).default_descending(),
         #[cfg(feature = "gpu")]
         GpuUtilPercent => SortColumn::new(GpuUtilPercent).default_descending(),
-        #[cfg(target_os = "linux")]
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
         Threads => SortColumn::new(Threads).default_descending(),
     }
 }
@@ -206,7 +206,7 @@ pub enum ProcWidgetColumn {
     GpuMem,
     #[cfg(feature = "gpu")]
     GpuUtil,
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     Threads,
 }
 
@@ -363,7 +363,7 @@ impl ProcWidgetState {
                             }
                             #[cfg(feature = "gpu")]
                             ProcWidgetColumn::GpuUtil => GpuUtilPercent,
-                            #[cfg(target_os = "linux")]
+                            #[cfg(any(target_os = "linux", target_os = "macos"))]
                             ProcWidgetColumn::Threads => Threads,
                         };
 
@@ -420,7 +420,7 @@ impl ProcWidgetState {
                     GpuMemValue | GpuMemPercent => ProcWidgetColumn::GpuMem,
                     #[cfg(feature = "gpu")]
                     GpuUtilPercent => ProcWidgetColumn::GpuUtil,
-                    #[cfg(target_os = "linux")]
+                    #[cfg(any(target_os = "linux", target_os = "macos"))]
                     Threads => ProcWidgetColumn::Threads,
                 }
             })
@@ -1250,7 +1250,7 @@ mod test {
             #[cfg(unix)]
             nice: 0,
             priority: -20,
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             num_threads: 0,
         };
 
@@ -1887,7 +1887,7 @@ mod test {
         assert!(filtered_tree_results == 1);
     }
 
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     #[test]
     fn test_summed_num_threads() {
         let init_columns = [
