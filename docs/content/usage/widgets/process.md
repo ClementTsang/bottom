@@ -157,23 +157,24 @@ You can also paste search queries (e.g. ++shift+insert++, ++ctrl+shift+v++).
 
 Note all keywords are case-insensitive. To search for a process/command that collides with a keyword, surround the term with quotes (e.x. `"cpu"`).
 
-| Keywords                        | Example                               | Description                                                                      |
-| ------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------- |
-|                                 | `btm`                                 | Matches by process or command name; supports regex                               |
-| `pid`                           | `pid=1044`                            | Matches by PID; supports regex                                                   |
-| `cpu` <br/> `cpu%`              | `cpu > 0.5`                           | Matches the CPU column; supports comparison operators                            |
-| `memb`                          | `memb > 1000 b`                       | Matches the memory column in terms of bytes; supports comparison operators       |
-| `mem` <br/> `mem%`              | `mem < 0.5`                           | Matches the memory column in terms of percent; supports comparison operators     |
-| `read` <br/> `r/s` <br/> `rps`  | `read = 1 mb`                         | Matches the read/s column in terms of bytes; supports comparison operators       |
-| `write` <br/> `w/s` <br/> `wps` | `write >= 1 kb`                       | Matches the write/s column in terms of bytes; supports comparison operators      |
-| `tread` <br/> `t.read`          | `tread <= 1024 gb`                    | Matches the total read column in terms of bytes; supports comparison operators    |
-| `twrite` <br/> `t.write`        | `twrite > 1024 tb`                    | Matches the total write column in terms of bytes; supports comparison operators  |
-| `user`                          | `user=root`                           | Matches by user; supports regex                                                  |
-| `state`                         | `state=running`                       | Matches by state; supports regex                                                 |
-| `()`                            | `(<COND 1> AND <COND 2>) OR <COND 3>` | Group together a condition                                                       |
-| `gmem`                          | `gmem > 1000 b`                       | Matches the gpu memory column in terms of bytes; supports comparison operators   |
-| `gmem%`                         | `gmem% < 0.5`                         | Matches the gpu memory column in terms of percent; supports comparison operators |
-| `gpu%`                          | `gpu% > 0`                            | Matches the gpu usage column in terms of percent; supports comparison operators  |
+| Keywords                        | Example                               | Description                                                                          |
+| ------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------ |
+|                                 | `btm`                                 | Matches by process or command name; supports regex                                   |
+| `pid`                           | `pid=1044`                            | Matches by PID; supports regex                                                       |
+| `cpu` <br/> `cpu%`              | `cpu > 0.5`                           | Matches the CPU column; supports comparison operators                                |
+| `memb`                          | `memb > 1000 b`                       | Matches the memory column in terms of bytes; supports comparison operators           |
+| `mem` <br/> `mem%`              | `mem < 0.5`                           | Matches the memory column in terms of percent; supports comparison operators         |
+| `read` <br/> `r/s` <br/> `rps`  | `read = 1 mb`                         | Matches the read/s column in terms of bytes; supports comparison operators           |
+| `write` <br/> `w/s` <br/> `wps` | `write >= 1 kb`                       | Matches the write/s column in terms of bytes; supports comparison operators          |
+| `tread` <br/> `t.read`          | `tread <= 1024 gb`                    | Matches the total read column in terms of bytes; supports comparison operators       |
+| `twrite` <br/> `t.write`        | `twrite > 1024 tb`                    | Matches the total write column in terms of bytes; supports comparison operators      |
+| `user`                          | `user=root`                           | Matches by user; supports regex                                                      |
+| `state`                         | `state=running`                       | Matches by state; supports regex                                                     |
+| `threads`                       | `threads > 10`                        | Matches the threads column; supports comparison operators (Linux only at the moment) |
+| `()`                            | `(<COND 1> AND <COND 2>) OR <COND 3>` | Group together a condition                                                           |
+| `gmem`                          | `gmem > 1000 b`                       | Matches the gpu memory column in terms of bytes; supports comparison operators       |
+| `gmem%`                         | `gmem% < 0.5`                         | Matches the gpu memory column in terms of percent; supports comparison operators     |
+| `gpu%`                          | `gpu% > 0`                            | Matches the gpu usage column in terms of percent; supports comparison operators      |
 
 #### Comparison operators
 
