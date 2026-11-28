@@ -190,6 +190,12 @@ fn test_linux_only() {
     run_and_kill_cfg("./tests/valid_configs/os_specific/linux.toml");
 }
 
+#[cfg(all(target_os = "macos", feature = "default"))]
+#[test]
+fn test_proc_columns_all_features_macos() {
+    run_and_kill_cfg("./tests/valid_configs/os_specific/proc_columns_all_features_macos.toml");
+}
+
 #[test]
 fn test_temp_disk_sort_columns() {
     run_and_kill_cfg("./tests/valid_configs/temp_disk_sort_columns.toml");
