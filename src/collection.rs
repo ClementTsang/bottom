@@ -64,6 +64,8 @@ pub struct Data {
     pub arc: Option<memory::MemData>,
     #[cfg(target_os = "linux")]
     pub zram: Option<memory::zram::ZramHarvest>,
+    #[cfg(target_os = "linux")]
+    pub zswap: Option<memory::zswap::ZswapHarvest>,
     #[cfg(feature = "gpu")]
     pub gpu_memory: Option<Vec<(GpuKey, memory::MemData)>>,
     #[cfg(feature = "gpu")]
@@ -91,6 +93,8 @@ impl Default for Data {
             arc: None,
             #[cfg(target_os = "linux")]
             zram: None,
+            #[cfg(target_os = "linux")]
+            zswap: None,
             #[cfg(feature = "gpu")]
             gpu_memory: None,
             #[cfg(feature = "gpu")]
@@ -120,6 +124,7 @@ impl Data {
         #[cfg(target_os = "linux")]
         {
             self.zram = None;
+            self.zswap = None;
         }
         #[cfg(feature = "gpu")]
         {
@@ -668,6 +673,21 @@ impl DataCollector {
             #[cfg(target_os = "linux")]
             if self.widgets_to_harvest.use_zram {
                 self.data.zram = memory::zram::get_zram_usage();
+            }
+
+            #[cfg(target_os = "linux")]
+            if self.widgets_to_harvest.use_zswap {
+                self.data.zswap = memory::zswap::get_zswap_usage(self.sys.system.total_memory());
+
+                // zswap pages still take up a swap slot, so they're included in
+                // swap usage. Only subtract for system-wide swap.
+                if self.cgroup_memory_data.swap.is_none()
+                    && let Some(zswap) = &self.data.zswap
+                    && zswap.pool_limit_bytes > 0
+                    && let Some(swap) = &mut self.data.swap
+                {
+                    swap.used_bytes = swap.used_bytes.saturating_sub(zswap.original_size_bytes);
+                }
             }
         }
     }

@@ -14,7 +14,7 @@ use crate::{
     get_binary_unit_and_denominator,
 };
 #[cfg(target_os = "linux")]
-use crate::{collection::memory::zram::ZramHarvest, utils::data_units::get_binary_bytes};
+use crate::{collection::memory::CompressedMemData, utils::data_units::get_binary_bytes};
 
 /// Convert memory info into a string representing a fraction.
 #[inline]
@@ -52,27 +52,31 @@ fn bin_bytes_string(value: u64) -> String {
     format!("{value:.1}{unit}")
 }
 
-/// Convert zram info into a label of the form
+/// Convert compressed memory info (e.g. zram) into a label of the form
 /// `compressed (uncompressed)/total`, inspired by htop.
 #[cfg(target_os = "linux")]
-pub(super) fn zram_fraction_label(zram: &ZramHarvest) -> String {
+pub(super) fn compressed_fraction_label(data: &CompressedMemData) -> String {
     format!(
         "{}({})/{}",
-        bin_bytes_string(zram.compressed_bytes()),
-        bin_bytes_string(zram.original_size_bytes),
-        bin_bytes_string(zram.capacity_bytes)
+        bin_bytes_string(data.compressed_bytes),
+        bin_bytes_string(data.original_bytes),
+        bin_bytes_string(data.usage.total_bytes.get())
     )
 }
 
-/// Convert zram info into a label showing both compressed and uncompressed
-/// usage, where `usage` is the uncompressed usage.
+/// Convert compressed memory info into a label showing both compressed and
+/// uncompressed usage relative to the total.
 #[cfg(target_os = "linux")]
-fn zram_label(zram: &ZramHarvest, usage: &MemData, is_percentage: bool) -> String {
+fn compressed_label(data: &CompressedMemData, is_percentage: bool) -> String {
     if is_percentage {
-        let compressed = zram.compressed_bytes() as f64 / usage.total_bytes.get() as f64;
-        format!("{:3.0}% ({:.0}%)", compressed * 100.0, usage.percentage())
+        let total = data.usage.total_bytes.get() as f64;
+        format!(
+            "{:3.0}%({:.0}%)",
+            data.compressed_bytes as f64 / total * 100.0,
+            data.original_bytes as f64 / total * 100.0
+        )
     } else {
-        zram_fraction_label(zram)
+        compressed_fraction_label(data)
     }
 }
 
@@ -138,12 +142,16 @@ impl Painter {
 
         #[cfg(target_os = "linux")]
         {
-            if let Some(zram_harvest) = &data.zram_harvest
-                && let Some(usage) = zram_harvest.as_mem_data()
+            let is_percentage = app_state.basic_mode_use_percent;
+
+            if let Some(zram) = data
+                .zram_harvest
+                .as_ref()
+                .and_then(|zram| zram.compressed_mem_data())
             {
+                let usage = &zram.usage;
                 let compressed_ratio =
-                    zram_harvest.compressed_bytes() as f64 / usage.total_bytes.get() as f64;
-                let is_percentage = app_state.basic_mode_use_percent;
+                    zram.compressed_bytes as f64 / usage.total_bytes.get() as f64;
 
                 draw_widgets.push(
                     PipeGauge::default()
@@ -153,10 +161,29 @@ impl Painter {
                             self.styles.zram_style.add_modifier(Modifier::DIM),
                         )
                         .start_label("ZRM")
-                        .inner_label(zram_label(zram_harvest, &usage, is_percentage))
-                        .inner_label_fallback(memory_label(&usage, is_percentage))
+                        .inner_label(compressed_label(&zram, is_percentage))
+                        .inner_label_fallback(memory_label(usage, is_percentage))
                         .label_style(self.styles.zram_style)
                         .gauge_style(self.styles.zram_style)
+                        .bar_type(self.styles.bar_type),
+                );
+            }
+
+            if let Some(zswap) = data
+                .zswap_harvest
+                .as_ref()
+                .and_then(|zswap| zswap.compressed_mem_data())
+            {
+                let usage = &zswap.usage;
+
+                draw_widgets.push(
+                    PipeGauge::default()
+                        .ratio(usage.percentage() / 100.0)
+                        .start_label("ZSW")
+                        .inner_label(compressed_label(&zswap, is_percentage))
+                        .inner_label_fallback(memory_label(usage, is_percentage))
+                        .label_style(self.styles.zswap_style)
+                        .gauge_style(self.styles.zswap_style)
                         .bar_type(self.styles.bar_type),
                 );
             }

@@ -18,6 +18,7 @@ This widget can also be configured to things like:
 - Display Nvidia and AMD GPU memory usage (enabled by default, `--disable_gpu` or `disable_gpu = true` to disable)
 - Show cache memory on non-Windows systems (`--enable_cache_memory` or set `cache_memory = true` to enable)
 - Show zram usage on Linux (`zram = true` to enable)
+- Show zswap usage on Linux (`zswap = true` to enable)
 
 ## Key bindings
 

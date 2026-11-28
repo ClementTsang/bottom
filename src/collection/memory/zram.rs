@@ -2,7 +2,7 @@
 
 use std::{fs, num::NonZeroU64, ops::AddAssign, path::Path};
 
-use super::MemData;
+use super::{CompressedMemData, MemData};
 
 /// zram-related data.
 ///
@@ -33,6 +33,15 @@ impl ZramHarvest {
     /// uncompressed size. In bytes.
     pub fn compressed_bytes(&self) -> u64 {
         self.compressed_size_bytes.min(self.original_size_bytes)
+    }
+
+    /// Return zram usage along with the compressed and uncompressed sizes.
+    pub fn compressed_mem_data(&self) -> Option<CompressedMemData> {
+        Some(CompressedMemData {
+            usage: self.as_mem_data()?,
+            compressed_bytes: self.compressed_bytes(),
+            original_bytes: self.original_size_bytes,
+        })
     }
 }
 

@@ -48,6 +48,8 @@ impl Styles {
             swap_style: colour!(SECOND_COLOUR),
             #[cfg(target_os = "linux")]
             zram_style: colour!(Color::Yellow),
+            #[cfg(target_os = "linux")]
+            zswap_style: colour!(Color::Cyan),
             #[cfg(feature = "zfs")]
             arc_style: colour!(THIRD_COLOUR),
             #[cfg(feature = "gpu")]
@@ -111,6 +113,8 @@ impl Styles {
             swap_style: colour!(Color::Red),
             #[cfg(target_os = "linux")]
             zram_style: colour!(Color::Magenta),
+            #[cfg(target_os = "linux")]
+            zswap_style: colour!(Color::Cyan),
             #[cfg(feature = "zfs")]
             arc_style: colour!(Color::LightBlue),
             #[cfg(feature = "gpu")]

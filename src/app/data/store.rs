@@ -15,7 +15,7 @@ use crate::collection::GpuKey;
 #[cfg(feature = "battery")]
 use crate::collection::batteries;
 #[cfg(target_os = "linux")]
-use crate::collection::memory::zram::ZramHarvest;
+use crate::collection::memory::{zram::ZramHarvest, zswap::ZswapHarvest};
 use crate::{
     app::{AppConfigFields, DataFilters, filter::Filter, layout_manager::UsedWidgets},
     collection::{
@@ -93,6 +93,8 @@ pub struct InnerData {
     pub(crate) arc_harvest: Option<MemData>,
     #[cfg(target_os = "linux")]
     pub(crate) zram_harvest: Option<ZramHarvest>,
+    #[cfg(target_os = "linux")]
+    pub(crate) zswap_harvest: Option<ZswapHarvest>,
     #[cfg(feature = "gpu")]
     /// GPU data. In sorted order by PCI address.
     pub(crate) gpu_harvest: Vec<(GpuKey, MemData)>,
@@ -135,6 +137,8 @@ impl Default for InnerData {
             arc_harvest: None,
             #[cfg(target_os = "linux")]
             zram_harvest: None,
+            #[cfg(target_os = "linux")]
+            zswap_harvest: None,
             #[cfg(feature = "gpu")]
             gpu_harvest: Vec::default(),
             #[cfg(feature = "gpu")]
@@ -201,6 +205,7 @@ impl InnerData {
         #[cfg(target_os = "linux")]
         {
             self.zram_harvest = data.zram;
+            self.zswap_harvest = data.zswap;
         }
 
         #[cfg(feature = "gpu")]

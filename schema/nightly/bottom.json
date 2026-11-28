@@ -901,6 +901,13 @@
             "boolean",
             "null"
           ]
+        },
+        "zswap": {
+          "description": "Whether to collect and display zswap usage. Only available on Linux.",
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       }
     },
@@ -964,6 +971,17 @@
         },
         "zram_colour": {
           "description": "The colour of the zram label and graph line. Only does anything on\nLinux.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColourStr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "zswap_colour": {
+          "description": "The colour of the zswap label and graph line. Only does anything on\nLinux.",
           "anyOf": [
             {
               "$ref": "#/$defs/ColourStr"

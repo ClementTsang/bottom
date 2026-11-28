@@ -21,6 +21,7 @@ left_legend = false
 
 [memory]
 zram = true
+zswap = true
 short_gpu_names = true
 
 [processes]

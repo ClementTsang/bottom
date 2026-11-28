@@ -360,6 +360,10 @@ impl Painter {
                     if data.zram_harvest.is_some() {
                         mem_rows += 1;
                     }
+
+                    if data.zswap_harvest.is_some() {
+                        mem_rows += 1;
+                    }
                 }
 
                 #[cfg(feature = "gpu")]
